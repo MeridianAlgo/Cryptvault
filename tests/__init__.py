@@ -1,0 +1,1 @@
+"""Test package for crypto chart analyzer."""
