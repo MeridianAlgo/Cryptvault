@@ -18,6 +18,7 @@
 
 ### 📊 **Professional Charting**
 - **TradingView-Style Charts**: Professional ASCII candlestick visualization
+- **Desktop GUI Charts**: Interactive matplotlib-based desktop application
 - **50+ Pattern Types**: Comprehensive pattern recognition library
 - **Real-time Analysis**: Sub-3 second analysis times
 - **Multi-timeframe Support**: 1h, 4h, 1d intervals
@@ -61,6 +62,10 @@ python cryptvault.py ADA 90 1d             # Cardano, 90 days, daily
 
 # Multi-asset analysis
 python cryptvault.py -m BTC ETH ADA        # Compare multiple assets
+
+# Desktop GUI Charts (Interactive)
+python cryptvault_cli.py --desktop         # Open desktop charting window
+python launch_desktop_charts.py            # Direct desktop launcher
 
 # Verbose mode (detailed analysis)
 python cryptvault.py BTC -v                # Additional ML model details

@@ -181,11 +181,23 @@ class PatternAnalyzer:
         # Generate chart
         chart_output = self.chart_renderer.render_chart(data_frame, filtered_patterns)
         
-        # Generate ML predictions
+        # Generate ML predictions with caching
         ml_predictions = None
         try:
             ml_predictions = self.ml_predictor.predict(data_frame, filtered_patterns)
             self.logger.info("ML predictions generated successfully")
+            
+            # Verify previous predictions if we have current price data
+            if hasattr(data_frame, 'symbol') and data_frame.symbol:
+                current_price = data_frame.data[-1].close if data_frame.data else None
+                if current_price:
+                    verification_results = self.ml_predictor.verify_cached_predictions({
+                        data_frame.symbol: current_price
+                    })
+                    
+                    if verification_results.get('verified_count', 0) > 0:
+                        self.logger.info(f"Verified {verification_results['verified_count']} predictions")
+            
         except Exception as e:
             self.logger.warning(f"ML prediction failed: {e}")
             ml_predictions = None

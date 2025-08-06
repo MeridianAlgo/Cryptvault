@@ -220,10 +220,100 @@ def start_live_analysis(symbol: str):
     except Exception as e:
         print(f"Live analysis error: {e}")
 
+def open_desktop_charts():
+    """Open desktop charts in a new window."""
+    try:
+        from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
+        
+        print("🚀 Opening CryptVault Desktop Charts...")
+        print("📊 A new window will open with interactive charts")
+        print("💡 Use the interface to analyze different cryptocurrencies")
+        
+        app = CryptVaultDesktopCharts()
+        app.run()
+        
+    except ImportError as e:
+        print("Desktop charts require additional packages:")
+        print("  pip install tkinter matplotlib numpy pandas")
+        print(f"Missing: {e}")
+    except Exception as e:
+        print(f"Desktop charts error: {e}")
+        import traceback
+        traceback.print_exc()
+
+def show_prediction_accuracy():
+    """Show ML prediction accuracy report."""
+    try:
+        from cryptvault.ml.prediction.predictor import MLPredictor
+        
+        print("🧠 CryptVault ML Prediction Accuracy Report")
+        print("=" * 60)
+        
+        predictor = MLPredictor()
+        
+        # Get accuracy report for last 30 days
+        report = predictor.get_prediction_accuracy_report(30)
+        
+        if 'error' in report:
+            print(f"❌ Error generating report: {report['error']}")
+            return
+        
+        if report.get('total_predictions', 0) == 0:
+            print("📊 No verified predictions found in the last 30 days")
+            print("💡 Make some predictions first, then check back in a week!")
+            return
+        
+        # Overall statistics
+        print(f"📈 Overall Accuracy: {report['overall_accuracy']:.1%}")
+        print(f"📊 Total Predictions: {report['total_predictions']}")
+        print(f"✅ Accurate Predictions: {report['accurate_predictions']}")
+        print(f"📉 Average Error: {report['average_error']:.1%}")
+        print()
+        
+        # Accuracy by symbol
+        if report.get('accuracy_by_symbol'):
+            print("🎯 Accuracy by Symbol:")
+            for symbol, data in report['accuracy_by_symbol'].items():
+                accuracy = data['accuracy_rate']
+                total = data['total']
+                confidence = data['avg_confidence']
+                print(f"  {symbol}: {accuracy:.1%} ({total} predictions, avg confidence: {confidence:.1%})")
+            print()
+        
+        # Recent predictions
+        if report.get('recent_predictions'):
+            print("📋 Recent Predictions:")
+            for pred in report['recent_predictions']:
+                symbol = pred['symbol']
+                predicted = pred['predicted']
+                actual = pred['actual']
+                accuracy = pred['accuracy']
+                date = pred['date']
+                
+                status = "✅" if accuracy >= 0.9 else "❌"
+                print(f"  {status} {symbol} on {date}: Predicted ${predicted:.2f}, Actual ${actual:.2f} (Score: {accuracy:.1%})")
+        
+        # Cache statistics
+        cache_stats = predictor.prediction_cache.get_cache_stats()
+        print()
+        print("💾 Cache Statistics:")
+        print(f"  Total Predictions: {cache_stats['total_predictions']}")
+        print(f"  Verified: {cache_stats['verified_predictions']}")
+        print(f"  Pending: {cache_stats['pending_predictions']}")
+        print(f"  Recent (7 days): {cache_stats['recent_predictions_7d']}")
+        print(f"  Cache Size: {cache_stats['cache_size_mb']:.2f} MB")
+        
+    except ImportError:
+        print("❌ ML prediction modules not available")
+    except Exception as e:
+        print(f"❌ Error showing accuracy report: {e}")
+        import traceback
+        traceback.print_exc()
+
 def interactive_mode():
     """Interactive CryptVault mode."""
     print("CryptVault Interactive Mode")
-    print("Commands: analyze, portfolio, compare, live, status, help, exit")
+    print("Commands: analyze, portfolio, compare, live, desktop, status, help, exit")
     
     while True:
         try:
@@ -237,6 +327,7 @@ def interactive_mode():
                 print("  portfolio <SYMBOL:AMOUNT> ... - Analyze portfolio")
                 print("  compare <SYMBOL> ... - Compare assets")
                 print("  live <SYMBOL> - Start live analysis")
+                print("  desktop - Open desktop charts window")
                 print("  status - Show API status")
                 print("  help - Show this help")
                 print("  exit - Exit interactive mode")
@@ -269,6 +360,8 @@ def interactive_mode():
                     start_live_analysis(parts[1])
                 else:
                     print("Usage: live <SYMBOL>")
+            elif command == 'desktop':
+                open_desktop_charts()
             else:
                 print("Unknown command. Type 'help' for available commands.")
                 
@@ -288,6 +381,7 @@ def main():
 Examples:
   python cryptvault_cli.py BTC 30 1d     # Bitcoin, 30 days, daily
   python cryptvault_cli.py ETH 14 4h     # Ethereum, 14 days, 4-hour
+  python cryptvault_cli.py --desktop     # Open desktop charts window
   python cryptvault_cli.py --demo        # Quick demo
         """
     )
@@ -310,6 +404,10 @@ Examples:
                        help='Compare multiple assets: BTC ETH ADA')
     parser.add_argument('--live', metavar='SYMBOL',
                        help='Start live analysis for symbol')
+    parser.add_argument('--desktop', '-d', action='store_true',
+                       help='Open desktop charts in new window')
+    parser.add_argument('--accuracy', action='store_true',
+                       help='Show ML prediction accuracy report')
     parser.add_argument('--interactive', '-i', action='store_true',
                        help='Interactive mode')
     parser.add_argument('--verbose', '-v', action='store_true',
@@ -331,6 +429,10 @@ Examples:
             compare_assets(args.compare)
         elif args.live:
             start_live_analysis(args.live)
+        elif args.desktop:
+            open_desktop_charts()
+        elif args.accuracy:
+            show_prediction_accuracy()
         elif args.interactive:
             interactive_mode()
         else:
