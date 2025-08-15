@@ -314,3 +314,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 *Made with ❤️ by [MeridianAlgo](https://github.com/MeridianAlgo)*
+<img width="500" height="500" alt="Quantum Meridian (1)" src="https://github.com/user-attachments/assets/3ea06475-be6d-4bf7-a311-c3cb9ccbf8e2" />
+
