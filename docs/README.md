@@ -278,9 +278,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 **Support**
 
-- 📧 **Email**: support@meridianalgo.com
+- 📧 **Email**: meridianalgo@gmail.com
 - 💬 **Issues**: [GitHub Issues](https://github.com/MeridianAlgo/CryptVault/issues)
-- 📖 **Documentation**: [Wiki](https://github.com/MeridianAlgo/CryptVault/wiki)
 - 🐦 **Twitter**: [@MeridianAlgo](https://twitter.com/MeridianAlgo)
 
 ## 🚀 **Roadmap**
