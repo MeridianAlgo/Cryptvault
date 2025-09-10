@@ -278,9 +278,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 **Support**
 
-- 📧 **Email**: support@meridianalgo.com
+- 📧 **Email**: meridianalgo@gmail.com
 - 💬 **Issues**: [GitHub Issues](https://github.com/MeridianAlgo/CryptVault/issues)
-- 📖 **Documentation**: [Wiki](https://github.com/MeridianAlgo/CryptVault/wiki)
 - 🐦 **Twitter**: [@MeridianAlgo](https://twitter.com/MeridianAlgo)
 
 ## 🚀 **Roadmap**
@@ -314,3 +313,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 *Made with ❤️ by [MeridianAlgo](https://github.com/MeridianAlgo)*
+<img width="10" height="10" alt="Quantum Meridian (1)" src="https://github.com/user-attachments/assets/3ea06475-be6d-4bf7-a311-c3cb9ccbf8e2" />
+
