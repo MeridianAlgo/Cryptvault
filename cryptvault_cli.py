@@ -9,6 +9,8 @@ A sophisticated cryptocurrency analysis tool that combines:
 - Technical analysis
 - Risk assessment
 
+Made with ❤️ by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)
+
 Usage:
     python cryptvault_cli.py [TICKER] [DAYS] [INTERVAL]
 
@@ -82,15 +84,74 @@ def analyze_cryptocurrency(ticker: str, days: int, interval: str, verbose: bool 
             trend = ml_pred['trend_forecast']
             print(f"Trend: {trend['trend_7d']} ({trend['trend_strength']})")
     
-    # Top patterns
+    # Top patterns with exact names and detailed info
     if results['patterns_found'] > 0:
-        print("Patterns:")
-        for i, pattern in enumerate(results['patterns'][:3], 1):
-            print(f"  {pattern['type']} ({pattern['confidence']})")
+        print("Detected Patterns:")
+        print("─" * 60)
+        for i, pattern in enumerate(results['patterns'][:5], 1):
+            pattern_type = pattern.get('type', 'Unknown Pattern')
+            confidence = pattern.get('confidence', '0%')
+            category = pattern.get('category', 'Unknown')
+            
+            # Pattern symbols for better visualization
+            pattern_symbols = {
+                'Double Bottom': '⩗', 'Double Top': '⩘',
+                'Triple Bottom': '⫸', 'Triple Top': '⫷',
+                'Head and Shoulders': '⩙', 'Inverse Head and Shoulders': '⩚',
+                'Ascending Triangle': '△', 'Descending Triangle': '▽',
+                'Expanding Triangle': '◇', 'Symmetrical Triangle': '◊',
+                'Bull Flag': '⚑', 'Bear Flag': '⚐',
+                'Bullish Divergence': '↗', 'Bearish Divergence': '↘',
+                'Hidden Bullish Divergence': '⤴', 'Hidden Bearish Divergence': '⤵',
+                'Rectangle': '▭', 'Diamond': '◈',
+                'Gartley': 'G', 'Butterfly': 'B', 'ABCD': 'A',
+                'Hammer': '🔨', 'Shooting Star': '☄', 'Doji': '✚'
+            }
+            
+            symbol = pattern_symbols.get(pattern_type, '⭐')
+            
+            # Confidence bar
+            conf_value = float(confidence.rstrip('%'))
+            conf_bars = int(conf_value / 10)
+            conf_bar = '█' * conf_bars + '░' * (10 - conf_bars)
+            
+            print(f"  {i}. {symbol} {pattern_type:<25} [{category}] [{conf_bar}] {confidence}")
+            
+            # Add key levels if available
+            if 'key_levels' in pattern and pattern['key_levels']:
+                key_info = []
+                if 'support_level' in pattern['key_levels']:
+                    key_info.append(f"Support: ${pattern['key_levels']['support_level']:.2f}")
+                if 'resistance_level' in pattern['key_levels']:
+                    key_info.append(f"Resistance: ${pattern['key_levels']['resistance_level']:.2f}")
+                if 'target_price' in pattern['key_levels']:
+                    key_info.append(f"Target: ${pattern['key_levels']['target_price']:.2f}")
+                
+                if key_info:
+                    print(f"      Key Levels: {' | '.join(key_info)}")
+        
+        if results['patterns_found'] > 5:
+            print(f"  ... and {results['patterns_found'] - 5} more patterns")
     
-    # Chart if verbose
+    # Open desktop chart instead of terminal chart
     if verbose and 'chart' in results and results['chart']:
-        print(results['chart'])
+        try:
+            from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
+            print("📊 Opening desktop chart window...")
+            app = CryptVaultDesktopCharts()
+            # Pre-populate with current analysis
+            app.current_data = results.get('raw_data')
+            app.current_patterns = results.get('patterns', [])
+            app.current_symbol = ticker.upper()
+            app._update_chart(results, ticker.upper())
+            app.run()
+        except ImportError as e:
+            print("Desktop charts not available, showing terminal chart:")
+            print(results['chart'])
+        except Exception as e:
+            print(f"Desktop chart error: {e}")
+            print("Showing terminal chart instead:")
+            print(results['chart'])
     
     return True
 

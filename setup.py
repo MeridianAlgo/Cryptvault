@@ -23,7 +23,7 @@ def read_requirements():
 setup(
     name="cryptvault",
     version="2.0.0",
-    author="MeridianAlgo",
+    author="MeridianAlgo Algorithmic Research Team (Quantum Meridian)",
     author_email="support@meridianalgo.com",
     description="Advanced AI-Powered Cryptocurrency Analysis Platform with 50+ Patterns & ML Ensemble",
     long_description=read_readme(),

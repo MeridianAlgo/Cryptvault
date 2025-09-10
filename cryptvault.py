@@ -2,6 +2,8 @@
 """
 Advanced CryptVault Terminal Charts
 Minimalist, colorful, professional crypto analysis with enhanced patterns
+
+Made with ❤️ by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)
 """
 
 import sys
@@ -342,46 +344,29 @@ class AdvancedCryptoCharts:
             # Display minimalist chart
             self.create_minimalist_chart(symbol.upper(), patterns, current_price, bias_analysis)
             
-            # Show beautiful candlestick chart
+            # Open desktop chart instead of terminal chart
             try:
-                from cryptvault.visualization.candlestick_charts import CandlestickChartGenerator
-                from cryptvault.data.package_fetcher import PackageDataFetcher
-                
-                # Get candlestick chart
-                candlestick_generator = CandlestickChartGenerator()
-                data_fetcher = PackageDataFetcher()
-                raw_data = data_fetcher.fetch_historical_data(symbol, days=days, interval=interval)
-                
-                if raw_data and len(raw_data.data) > 10:
-                    # Generate compact candlestick chart with pattern overlays
-                    candlestick_chart = candlestick_generator.generate_candlestick_chart(
-                        raw_data, symbol, patterns=patterns
-                    )
-                    
-                    if candlestick_chart:
-                        # Show beautiful candlestick chart with pattern overlays
-                        print(f"\n{Fore.BLUE}📊 Candlestick Chart:{Style.RESET_ALL}")
-                        print(candlestick_chart)
-                    # Skip fallback chart - only show colorful charts
-                        
-            except Exception as e:
-                self.log('warning', f"Could not create candlestick chart: {e}")
-                # Fallback to existing chart
+                from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
+                print(f"\n{Fore.BLUE}📊 Opening desktop chart window...{Style.RESET_ALL}")
+                app = CryptVaultDesktopCharts()
+                # Pre-populate with current analysis
+                app.current_data = raw_data
+                app.current_patterns = patterns
+                app.current_symbol = symbol.upper()
+                app._update_chart(results, symbol.upper())
+                app.run()
+            except ImportError as e:
+                self.log('warning', f"Desktop charts not available: {e}")
+                # Fallback to terminal chart
                 if existing_chart:
                     print(f"\n{Fore.BLUE}📊 Chart Analysis:{Style.RESET_ALL}")
                     print(existing_chart)
-                else:
-                    # Create TradingView-style chart as final fallback
-                    try:
-                        from cryptvault.data.package_fetcher import PackageDataFetcher
-                        data_fetcher = PackageDataFetcher()
-                        raw_data = data_fetcher.fetch_historical_data(symbol, days=days, interval=interval)
-                        if raw_data and len(raw_data.data) > 10:
-                            tradingview_chart = self.create_tradingview_style_chart(raw_data, patterns, symbol)
-                            print(f"\n{Fore.BLUE}📊 Chart Analysis:{Style.RESET_ALL}")
-                            print(tradingview_chart)
-                    except Exception:
-                        pass
+            except Exception as e:
+                self.log('warning', f"Desktop chart error: {e}")
+                # Fallback to terminal chart
+                if existing_chart:
+                    print(f"\n{Fore.BLUE}📊 Chart Analysis:{Style.RESET_ALL}")
+                    print(existing_chart)
             
             # Show additional detailed analysis in verbose mode
             if self.verbose:

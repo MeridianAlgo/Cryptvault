@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# CryptVault specific
+*.log
+temp_chart_data_*.json
+.cryptvault_cache/
+
 # C extensions
 *.so
 

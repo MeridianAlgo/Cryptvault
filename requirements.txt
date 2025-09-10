@@ -12,6 +12,7 @@ cryptocompare>=0.7.0
 # Desktop Charting
 matplotlib>=3.5.0
 candlestick-chart>=1.0.0
+# tkinter is built-in with Python
 
 # Optional ML Dependencies
 # torch>=1.12.0  # Uncomment for LSTM neural networks
