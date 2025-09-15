@@ -387,12 +387,6 @@ SOFTWARE.
 
 **Made with ❤️ by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)**
 
-### Core Contributors
-- **Dr. Alan Turing** - Lead AI/ML Research
-- **Satoshi Nakamoto** - Blockchain Architecture
-- **Warren Buffet** - Financial Strategy
-- **Elon Musk** - System Design
-
 ### Special Thanks
 - Cryptocurrency community for valuable feedback
 - Open-source contributors who helped improve the project
@@ -402,7 +396,7 @@ SOFTWARE.
 - **Documentation**: [https://meridianalgo.github.io/cryptvault](https://meridianalgo.github.io/cryptvault)
 - **GitHub**: [https://github.com/MeridianAlgo/Cryptvault](https://github.com/MeridianAlgo/Cryptvault)
 - **Issues**: [GitHub Issues](https://github.com/MeridianAlgo/Cryptvault/issues)
-- **Email**: support@meridianalgo.com
+- **Email**: meridianalgo@gmail.com
 - **Twitter**: [@MeridianAlgo](https://twitter.com/MeridianAlgo)
 
 ---
