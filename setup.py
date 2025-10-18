@@ -22,7 +22,7 @@ def read_requirements():
 
 setup(
     name="cryptvault",
-    version="2.0.0",
+    version="3.2.0-Public",
     author="MeridianAlgo Algorithmic Research Team (Quantum Meridian)",
     author_email="support@meridianalgo.com",
     description="Advanced AI-Powered Cryptocurrency Analysis Platform with 50+ Patterns & ML Ensemble",
@@ -40,15 +40,15 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
         "Environment :: Console",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=read_requirements(),
     extras_require={
         "ml": [

@@ -9,7 +9,7 @@ A sophisticated cryptocurrency analysis tool that combines:
 - Technical analysis
 - Risk assessment
 
-Made with ❤️ by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)
+Made by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)
 
 Usage:
     python cryptvault_cli.py [TICKER] [DAYS] [INTERVAL]
@@ -55,11 +55,11 @@ def analyze_cryptocurrency(ticker: str, days: int, interval: str, verbose: bool 
     results = analyzer.analyze_ticker(ticker, days=days, interval=interval)
     
     if not results['success']:
-        print(f"❌ Analysis failed: {results['error']}")
+        print(f"[ERROR] Analysis failed: {results['error']}")
         if 'suggestions' in results:
-            print("\n💡 Suggestions:")
+            print("\n[SUGGESTIONS]:")
             for suggestion in results['suggestions']:
-                print(f"  • {suggestion}")
+                print(f"  - {suggestion}")
         return False
     
     # Display results
@@ -105,7 +105,7 @@ def analyze_cryptocurrency(ticker: str, days: int, interval: str, verbose: bool 
                 'Hidden Bullish Divergence': '⤴', 'Hidden Bearish Divergence': '⤵',
                 'Rectangle': '▭', 'Diamond': '◈',
                 'Gartley': 'G', 'Butterfly': 'B', 'ABCD': 'A',
-                'Hammer': '🔨', 'Shooting Star': '☄', 'Doji': '✚'
+                'Hammer': 'H', 'Shooting Star': 'S', 'Doji': '+'
             }
             
             symbol = pattern_symbols.get(pattern_type, '⭐')
@@ -137,7 +137,7 @@ def analyze_cryptocurrency(ticker: str, days: int, interval: str, verbose: bool 
     if verbose and 'chart' in results and results['chart']:
         try:
             from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
-            print("📊 Opening desktop chart window...")
+            print("[CHART] Opening desktop chart window...")
             app = CryptVaultDesktopCharts()
             # Pre-populate with current analysis
             app.current_data = results.get('raw_data')
@@ -182,7 +182,7 @@ def show_api_status():
     
     print("Data Sources Status:")
     for source_name, available in sources.items():
-        status_icon = "✅" if available else "❌"
+        status_icon = "[OK]" if available else "[FAIL]"
         print(f"  {status_icon} {source_name.title()}: {'Available' if available else 'Not installed'}")
     
     # Show installation suggestions for missing packages
@@ -286,9 +286,9 @@ def open_desktop_charts():
     try:
         from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
         
-        print("🚀 Opening CryptVault Desktop Charts...")
-        print("📊 A new window will open with interactive charts")
-        print("💡 Use the interface to analyze different cryptocurrencies")
+        print("[LAUNCH] Opening CryptVault Desktop Charts...")
+        print("[INFO] A new window will open with interactive charts")
+        print("[TIP] Use the interface to analyze different cryptocurrencies")
         
         app = CryptVaultDesktopCharts()
         app.run()
@@ -307,7 +307,7 @@ def show_prediction_accuracy():
     try:
         from cryptvault.ml.prediction.predictor import MLPredictor
         
-        print("🧠 CryptVault ML Prediction Accuracy Report")
+        print("[ML] CryptVault ML Prediction Accuracy Report")
         print("=" * 60)
         
         predictor = MLPredictor()
@@ -316,24 +316,24 @@ def show_prediction_accuracy():
         report = predictor.get_prediction_accuracy_report(30)
         
         if 'error' in report:
-            print(f"❌ Error generating report: {report['error']}")
+            print(f"[ERROR] Error generating report: {report['error']}")
             return
         
         if report.get('total_predictions', 0) == 0:
-            print("📊 No verified predictions found in the last 30 days")
-            print("💡 Make some predictions first, then check back in a week!")
+            print("[INFO] No verified predictions found in the last 30 days")
+            print("[TIP] Make some predictions first, then check back in a week!")
             return
         
         # Overall statistics
-        print(f"📈 Overall Accuracy: {report['overall_accuracy']:.1%}")
-        print(f"📊 Total Predictions: {report['total_predictions']}")
-        print(f"✅ Accurate Predictions: {report['accurate_predictions']}")
-        print(f"📉 Average Error: {report['average_error']:.1%}")
+        print(f"[ACCURACY] Overall Accuracy: {report['overall_accuracy']:.1%}")
+        print(f"[STATS] Total Predictions: {report['total_predictions']}")
+        print(f"[STATS] Accurate Predictions: {report['accurate_predictions']}")
+        print(f"[STATS] Average Error: {report['average_error']:.1%}")
         print()
         
         # Accuracy by symbol
         if report.get('accuracy_by_symbol'):
-            print("🎯 Accuracy by Symbol:")
+            print("[ACCURACY] Accuracy by Symbol:")
             for symbol, data in report['accuracy_by_symbol'].items():
                 accuracy = data['accuracy_rate']
                 total = data['total']
@@ -343,7 +343,7 @@ def show_prediction_accuracy():
         
         # Recent predictions
         if report.get('recent_predictions'):
-            print("📋 Recent Predictions:")
+            print("[RECENT] Recent Predictions:")
             for pred in report['recent_predictions']:
                 symbol = pred['symbol']
                 predicted = pred['predicted']
@@ -351,13 +351,13 @@ def show_prediction_accuracy():
                 accuracy = pred['accuracy']
                 date = pred['date']
                 
-                status = "✅" if accuracy >= 0.9 else "❌"
+                status = "[OK]" if accuracy >= 0.9 else "[FAIL]"
                 print(f"  {status} {symbol} on {date}: Predicted ${predicted:.2f}, Actual ${actual:.2f} (Score: {accuracy:.1%})")
         
         # Cache statistics
         cache_stats = predictor.prediction_cache.get_cache_stats()
         print()
-        print("💾 Cache Statistics:")
+        print("[CACHE] Cache Statistics:")
         print(f"  Total Predictions: {cache_stats['total_predictions']}")
         print(f"  Verified: {cache_stats['verified_predictions']}")
         print(f"  Pending: {cache_stats['pending_predictions']}")
@@ -365,9 +365,9 @@ def show_prediction_accuracy():
         print(f"  Cache Size: {cache_stats['cache_size_mb']:.2f} MB")
         
     except ImportError:
-        print("❌ ML prediction modules not available")
+        print("[ERROR] ML prediction modules not available")
     except Exception as e:
-        print(f"❌ Error showing accuracy report: {e}")
+        print(f"[ERROR] Error showing accuracy report: {e}")
         import traceback
         traceback.print_exc()
 
@@ -473,7 +473,7 @@ Examples:
                        help='Interactive mode')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output with detailed charts')
-    parser.add_argument('--version', action='version', version='CryptVault 2.0.0')
+    parser.add_argument('--version', action='version', version='CryptVault 3.2.0-Public')
     
     args = parser.parse_args()
     

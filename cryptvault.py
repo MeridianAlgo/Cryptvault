@@ -3,7 +3,7 @@
 Advanced CryptVault Terminal Charts
 Minimalist, colorful, professional crypto analysis with enhanced patterns
 
-Made with ❤️ by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)
+Made by the MeridianAlgo Algorithmic Research Team (Quantum Meridian)
 """
 
 import sys
@@ -105,8 +105,8 @@ class AdvancedCryptoCharts:
             # Support/Resistance
             'Support': {'symbol': '─', 'bias': 'bullish', 'strength': 0.6},
             'Resistance': {'symbol': '─', 'bias': 'bearish', 'strength': 0.6},
-            'Support Break': {'symbol': '⚡', 'bias': 'bearish', 'strength': 0.8},
-            'Resistance Break': {'symbol': '⚡', 'bias': 'bullish', 'strength': 0.8},
+            'Support Break': {'symbol': '!', 'bias': 'bearish', 'strength': 0.8},
+            'Resistance Break': {'symbol': '!', 'bias': 'bullish', 'strength': 0.8},
             
             # Gap Patterns
             'Breakaway Gap': {'symbol': '⟐', 'bias': 'neutral', 'strength': 0.7},
@@ -115,11 +115,11 @@ class AdvancedCryptoCharts:
             'Common Gap': {'symbol': '⟐', 'bias': 'neutral', 'strength': 0.3},
             
             # Candlestick Patterns
-            'Doji': {'symbol': '✚', 'bias': 'neutral', 'strength': 0.5},
-            'Hammer': {'symbol': '🔨', 'bias': 'bullish', 'strength': 0.7},
-            'Shooting Star': {'symbol': '☄', 'bias': 'bearish', 'strength': 0.7},
-            'Engulfing Bull': {'symbol': '🟢', 'bias': 'bullish', 'strength': 0.75},
-            'Engulfing Bear': {'symbol': '🔴', 'bias': 'bearish', 'strength': 0.75},
+            'Doji': {'symbol': '+', 'bias': 'neutral', 'strength': 0.5},
+            'Hammer': {'symbol': 'H', 'bias': 'bullish', 'strength': 0.7},
+            'Shooting Star': {'symbol': 'S', 'bias': 'bearish', 'strength': 0.7},
+            'Engulfing Bull': {'symbol': 'B', 'bias': 'bullish', 'strength': 0.75},
+            'Engulfing Bear': {'symbol': 'b', 'bias': 'bearish', 'strength': 0.75},
         }
         
         # Color scheme
@@ -144,10 +144,10 @@ class AdvancedCryptoCharts:
         
         color = self.colors.get(level, Fore.WHITE)
         prefix = {
-            'info': '💡',
-            'warning': '⚠️ ',
-            'error': '❌',
-            'success': '✅'
+            'info': '[INFO]',
+            'warning': '[WARN]',
+            'error': '[ERROR]',
+            'success': '[OK]'
         }.get(level, '')
         
         print(f"{color}{prefix} {message}{Style.RESET_ALL}")
@@ -300,11 +300,11 @@ class AdvancedCryptoCharts:
     
     def analyze_crypto(self, symbol, days=60, interval='1d'):
         """Analyze cryptocurrency with loading animation"""
-        print(f"\n{Fore.CYAN + Style.BRIGHT}🚀 CryptVault - Crypto & Stock Analysis{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN + Style.BRIGHT}[CRYPTVAULT] Crypto & Stock Analysis{Style.RESET_ALL}")
         print(f"{Fore.WHITE}═" * 50 + Style.RESET_ALL)
         
         # Simple loading indicator
-        print(f"{Fore.CYAN}⚡ Analyzing {symbol.upper()}...{Style.RESET_ALL}", end='', flush=True)
+        print(f"{Fore.CYAN}[ANALYZING] {symbol.upper()}...{Style.RESET_ALL}", end='', flush=True)
         
         try:
             # Perform analysis
@@ -347,7 +347,7 @@ class AdvancedCryptoCharts:
             # Open desktop chart instead of terminal chart
             try:
                 from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
-                print(f"\n{Fore.BLUE}📊 Opening desktop chart window...{Style.RESET_ALL}")
+                print(f"\n{Fore.BLUE}[CHART] Opening desktop chart window...{Style.RESET_ALL}")
                 app = CryptVaultDesktopCharts()
                 # Pre-populate with current analysis
                 app.current_data = raw_data
@@ -359,13 +359,13 @@ class AdvancedCryptoCharts:
                 self.log('warning', f"Desktop charts not available: {e}")
                 # Fallback to terminal chart
                 if existing_chart:
-                    print(f"\n{Fore.BLUE}📊 Chart Analysis:{Style.RESET_ALL}")
+                    print(f"\n{Fore.BLUE}[CHART] Chart Analysis:{Style.RESET_ALL}")
                     print(existing_chart)
             except Exception as e:
                 self.log('warning', f"Desktop chart error: {e}")
                 # Fallback to terminal chart
                 if existing_chart:
-                    print(f"\n{Fore.BLUE}📊 Chart Analysis:{Style.RESET_ALL}")
+                    print(f"\n{Fore.BLUE}[CHART] Chart Analysis:{Style.RESET_ALL}")
                     print(existing_chart)
             
             # Show additional detailed analysis in verbose mode
@@ -376,10 +376,10 @@ class AdvancedCryptoCharts:
             ml_forecast = self.interpret_ml_predictions(ml_predictions, patterns, current_price)
             if ml_forecast:
                 forecast_color = self.colors.get(ml_forecast['trend'].lower(), Fore.WHITE)
-                print(f"\n{Fore.CYAN}🧠 ML Forecast:{Style.RESET_ALL} {forecast_color}{ml_forecast['trend'].upper()}{Style.RESET_ALL} ({ml_forecast['confidence']}% confidence)")
+                print(f"\n{Fore.CYAN}[ML] Forecast:{Style.RESET_ALL} {forecast_color}{ml_forecast['trend'].upper()}{Style.RESET_ALL} ({ml_forecast['confidence']}% confidence)")
                 
                 if ml_forecast.get('target_price'):
-                    print(f"{Fore.CYAN}🎯 Target Price:{Style.RESET_ALL} ${ml_forecast['target_price']:,.2f}")
+                    print(f"{Fore.CYAN}[TARGET] Price:{Style.RESET_ALL} ${ml_forecast['target_price']:,.2f}")
             
             # Performance metrics
             analysis_time = results.get('analysis_time_seconds', 0)
@@ -396,7 +396,7 @@ class AdvancedCryptoCharts:
     
     def analyze_multiple(self, symbols, days=60, interval='1d'):
         """Analyze multiple cryptocurrencies"""
-        print(f"\n{Fore.CYAN + Style.BRIGHT}🎯 Multi-Asset Analysis{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN + Style.BRIGHT}[MULTI-ASSET] Analysis{Style.RESET_ALL}")
         print(f"{Fore.WHITE}═" * 60 + Style.RESET_ALL)
         
         results = []
@@ -409,7 +409,7 @@ class AdvancedCryptoCharts:
         
         # Summary
         successful = sum(1 for _, success in results if success)
-        print(f"\n{Fore.CYAN}📊 Summary:{Style.RESET_ALL} {successful}/{len(symbols)} analyses completed")
+        print(f"\n{Fore.CYAN}[SUMMARY]:{Style.RESET_ALL} {successful}/{len(symbols)} analyses completed")
         
         return results
     
@@ -510,7 +510,7 @@ class AdvancedCryptoCharts:
     
     def _show_detailed_analysis(self, patterns, ml_predictions):
         """Show detailed analysis in verbose mode"""
-        print(f"\n{Fore.CYAN}📈 Detailed Pattern Analysis:{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN}[PATTERNS] Detailed Pattern Analysis:{Style.RESET_ALL}")
         
         if patterns:
             # Group patterns by type
@@ -680,7 +680,7 @@ class AdvancedCryptoCharts:
         # Add volume bars (TradingView style)
         if volumes:
             chart_lines.append("")
-            chart_lines.append(f"{Fore.CYAN}📊 Volume Profile:{Style.RESET_ALL}")
+            chart_lines.append(f"{Fore.CYAN}[VOLUME] Volume Profile:{Style.RESET_ALL}")
             
             max_volume = max(volumes) if volumes else 1
             volume_bar_width = 30
