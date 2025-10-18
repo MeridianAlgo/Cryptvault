@@ -133,25 +133,10 @@ def analyze_cryptocurrency(ticker: str, days: int, interval: str, verbose: bool 
         if results['patterns_found'] > 5:
             print(f"  ... and {results['patterns_found'] - 5} more patterns")
     
-    # Open desktop chart instead of terminal chart
+    # Show terminal chart in verbose mode (desktop charts can hang)
     if verbose and 'chart' in results and results['chart']:
-        try:
-            from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
-            print("[CHART] Opening desktop chart window...")
-            app = CryptVaultDesktopCharts()
-            # Pre-populate with current analysis
-            app.current_data = results.get('raw_data')
-            app.current_patterns = results.get('patterns', [])
-            app.current_symbol = ticker.upper()
-            app._update_chart(results, ticker.upper())
-            app.run()
-        except ImportError as e:
-            print("Desktop charts not available, showing terminal chart:")
-            print(results['chart'])
-        except Exception as e:
-            print(f"Desktop chart error: {e}")
-            print("Showing terminal chart instead:")
-            print(results['chart'])
+        print("\n[CHART] Terminal Chart:")
+        print(results['chart'])
     
     return True
 
@@ -159,21 +144,36 @@ def run_demo():
     """Run demo."""
     analyzer = PatternAnalyzer()
     
+    print("CryptVault v3.2.0-Public Demo")
+    print("=" * 60)
+    
     # Test functionality
     search_results = analyzer.search_tickers("bitcoin", limit=3)
     if search_results:
-        print("Found:")
+        print("\nSearch Results for 'bitcoin':")
         for result in search_results:
             print(f"  {result['symbol']}: {result['name']}")
     
-    supported = analyzer.get_supported_tickers()[:10]
-    print(f"Supported: {', '.join(supported)}")
+    # Show comprehensive list of supported assets
+    supported = analyzer.get_supported_tickers()
+    print(f"\nTotal Supported Assets: {len(supported)}")
+    print(f"\nTop Cryptocurrencies (20):")
+    crypto_list = [s for s in supported if s in ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'XRP', 'USDC', 'ADA', 'AVAX', 'DOGE', 'TRX', 'DOT', 'MATIC', 'LINK', 'TON', 'SHIB', 'LTC', 'BCH', 'UNI', 'ATOM']]
+    print(f"  {', '.join(crypto_list)}")
     
+    print(f"\nPopular Stocks (10):")
+    stock_list = [s for s in supported if s in ['AAPL', 'TSLA', 'GOOGL', 'MSFT', 'NVDA', 'AMZN', 'META', 'NFLX', 'AMD', 'INTC']]
+    print(f"  {', '.join(stock_list)}")
+    
+    print(f"\nAll {len(supported)} supported assets:")
+    print(f"  {', '.join(supported)}")
+    
+    print("\nCurrent Prices:")
     btc_price = analyzer.get_current_price("BTC")
     if btc_price:
-        print(f"BTC: ${btc_price:,.2f}")
+        print(f"  BTC: ${btc_price:,.2f}")
     else:
-        print("BTC: Price unavailable")
+        print("  BTC: Price unavailable")
 
 def show_api_status():
     """Show data source status."""

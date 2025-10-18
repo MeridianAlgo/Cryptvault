@@ -1,6 +1,6 @@
 # CryptVault Core Dependencies
-numpy>=1.19.0
-pandas>=1.3.0
+numpy>=1.19.0,<2.0.0
+pandas>=1.3.0,<2.0.0
 scikit-learn>=1.0.0
 colorama>=0.4.4
 
@@ -11,14 +11,13 @@ cryptocompare>=0.7.0
 
 # Desktop Charting
 matplotlib>=3.5.0
-candlestick-chart>=1.0.0
 # tkinter is built-in with Python
 
 # Optional ML Dependencies
 # torch>=1.12.0  # Uncomment for LSTM neural networks
 
 # Optional Fast Analysis
-fastquant>=0.1.8.0
+# fastquant>=0.1.8.0  # Optional - may have compatibility issues
 
 # Development Dependencies (optional)
 # pytest>=6.0

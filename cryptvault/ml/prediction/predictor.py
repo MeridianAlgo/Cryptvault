@@ -717,36 +717,15 @@ class MLPredictor:
         """Cache prediction for accuracy tracking."""
         try:
             # Cache price prediction
+            # Caching disabled for fresh predictions each time
             if result.price_forecast and result.price_forecast.daily_prices:
                 target_price = result.price_forecast.daily_prices[6]  # 7-day prediction
-                confidence = result.model_performance.get('ensemble_accuracy', 0.6)
-                
-                prediction_id = self.prediction_cache.store_prediction(
-                    symbol=symbol,
-                    prediction_type='price',
-                    predicted_value=target_price,
-                    confidence=confidence,
-                    timeframe='7d',
-                    days_ahead=7
-                )
-                
-                self.logger.info(f"Cached price prediction {prediction_id} for {symbol}: ${target_price:.2f}")
+                self.logger.info(f"Price prediction for {symbol}: ${target_price:.2f}")
             
-            # Cache trend prediction
+            # Log trend prediction (no caching)
             if result.trend_forecast:
                 trend_prediction = result.trend_forecast.trend_7d
-                trend_confidence = result.trend_forecast.trend_strength
-                
-                prediction_id = self.prediction_cache.store_prediction(
-                    symbol=symbol,
-                    prediction_type='trend',
-                    predicted_value=trend_prediction,
-                    confidence=trend_confidence,
-                    timeframe='7d',
-                    days_ahead=7
-                )
-                
-                self.logger.info(f"Cached trend prediction {prediction_id} for {symbol}: {trend_prediction}")
+                self.logger.info(f"Trend prediction for {symbol}: {trend_prediction}")
                 
         except Exception as e:
             self.logger.error(f"Error caching prediction for {symbol}: {e}")
