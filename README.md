@@ -1,4 +1,4 @@
-# CryptVault v3.2.2
+# CryptVault v3.2.4
 
 CryptVault delivers AI-assisted cryptocurrency analysis with rich pattern detection and polished charting experiences.
 
@@ -53,6 +53,7 @@ AAPL, TSLA, GOOGL, MSFT, NVDA, AMZN, META, NFLX, AMD, INTC, COIN, SQ, PYPL, V, M
 ### Core Documentation
 - **[Main README](docs/main_README.md)** - Complete product overview and features
 - **[CLI vs Core](docs/CLI_VS_CORE.md)** - Difference between cryptvault_cli.py and cryptvault.py
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Complete guide for developers
 - **[Final System Summary](docs/FINAL_SYSTEM_SUMMARY.md)** - System capabilities and achievements
 - **[Enhanced ML System](docs/ENHANCED_ML_SYSTEM.md)** - Machine learning implementation details
 - **[Beautiful Candlestick Charts](docs/BEAUTIFUL_CANDLESTICK_CHARTS.md)** - Charting system documentation

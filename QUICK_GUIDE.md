@@ -134,5 +134,5 @@ python cryptvault_cli.py --interactive
 
 ---
 
-**Version:** 3.2.2  
+**Version:** 3.2.4  
 **License:** MIT

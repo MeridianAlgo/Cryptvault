@@ -5,7 +5,7 @@ A terminal-based cryptocurrency chart pattern analyzer that identifies technical
 without requiring external APIs.
 """
 
-__version__ = "3.2.2"
+__version__ = "3.2.4"
 __author__ = "Crypto Chart Analyzer"
 
 from .data.models import PricePoint, PriceDataFrame
