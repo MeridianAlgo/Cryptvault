@@ -7,6 +7,7 @@ __pycache__/
 *.log
 temp_chart_data_*.json
 .cryptvault_cache/
+.cryptvault_predictions/
 
 # C extensions
 *.so
@@ -142,12 +143,11 @@ dmypy.json
 *.swo
 *~
 
-# Data files
-data/
+# Data files (but not cryptvault/data/ source code)
+/data/
 cache/
 temp/
 *.csv
-*.json
 *.pkl
 
 # API keys and secrets
