@@ -1,5 +1,5 @@
 ================================================================================
-CRYPTVAULT v3.2.2-Public - READY TO PUSH
+CRYPTVAULT v3.2.2 - READY TO PUSH
 ================================================================================
 
 All changes complete! Execute these commands to push to GitHub:
@@ -10,7 +10,7 @@ WHAT WAS DONE
 
 ✓ Organized root directory - Only essential files remain
 ✓ Moved all doc files to docs/ folder
-✓ Updated version to 3.2.2-Public everywhere
+✓ Updated version to 3.2.2 everywhere (PEP 440 compliant)
 ✓ Created CLI vs Core documentation explaining the difference
 ✓ Added support for 50+ cryptocurrencies (was only 10)
 ✓ Added support for 20+ stocks
@@ -98,7 +98,7 @@ V, MA, JPM, BAC, WMT, DIS, UBER, and more...
 TEST RESULTS
 ================================================================================
 
-✓ Version: CryptVault 3.2.2-Public
+✓ Version: CryptVault 3.2.2
 ✓ Demo: Shows all 70 supported assets
 ✓ BTC Analysis: 3.25s, 1 pattern, $106,885.07 with chart
 ✓ ETH Analysis: 3.26s, 2 patterns, $3,872.91
@@ -116,7 +116,7 @@ GIT COMMANDS TO EXECUTE
 git add .
 
 # Commit with descriptive message
-git commit -m "Release v3.2.2-Public: Multi-platform support and CLI documentation
+git commit -m "Release v3.2.2: Multi-platform support and CLI documentation
 
 Major Changes:
 - Added support for 50+ cryptocurrencies (up from 10)
@@ -163,7 +163,7 @@ Improvements:
 - CI/CD pipeline more robust"
 
 # Create annotated tag
-git tag -a v3.2.2-Public -m "CryptVault v3.2.2-Public
+git tag -a v3.2.2 -m "CryptVault v3.2.2
 
 Multi-platform support, enhanced crypto coverage, and comprehensive documentation.
 
@@ -189,25 +189,25 @@ Technical Improvements:
 
 # Push to GitHub
 git push origin main
-git push origin v3.2.2-Public
+git push origin v3.2.2
 
 ================================================================================
 QUICK COPY-PASTE
 ================================================================================
 
 git add .
-git commit -m "Release v3.2.2-Public: Multi-platform support and CLI documentation"
-git tag -a v3.2.2-Public -m "CryptVault v3.2.2-Public - Multi-platform support for 70+ assets"
+git commit -m "Release v3.2.2: Multi-platform support and CLI documentation"
+git tag -a v3.2.2 -m "CryptVault v3.2.2 - Multi-platform support for 70+ assets"
 git push origin main
-git push origin v3.2.2-Public
+git push origin v3.2.2
 
 ================================================================================
 AFTER PUSHING
 ================================================================================
 
 1. Go to: https://github.com/MeridianAlgo/Cryptvault/releases/new
-2. Select tag: v3.2.2-Public
-3. Title: "CryptVault v3.2.2-Public - Multi-Platform Support"
+2. Select tag: v3.2.2
+3. Title: "CryptVault v3.2.2 - Multi-Platform Support"
 4. Description: 
    - 50+ cryptocurrencies supported
    - 20+ stocks supported

@@ -1,4 +1,4 @@
-# CryptVault v3.2.2-Public
+# CryptVault v3.2.2
 
 CryptVault delivers AI-assisted cryptocurrency analysis with rich pattern detection and polished charting experiences.
 
