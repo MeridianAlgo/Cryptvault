@@ -144,7 +144,7 @@ def run_demo():
     """Run demo."""
     analyzer = PatternAnalyzer()
     
-    print("CryptVault v3.2.0-Public Demo")
+    print("CryptVault v3.2.2-Public Demo")
     print("=" * 60)
     
     # Test functionality
@@ -473,7 +473,7 @@ Examples:
                        help='Interactive mode')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output with detailed charts')
-    parser.add_argument('--version', action='version', version='CryptVault 3.2.0-Public')
+    parser.add_argument('--version', action='version', version='CryptVault 3.2.2-Public')
     
     args = parser.parse_args()
     

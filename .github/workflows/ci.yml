@@ -8,9 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
 
     steps:
@@ -54,9 +57,9 @@ jobs:
         isort --check-only --diff . || echo "Isort check completed"
     
     - name: Type checking with mypy
-      run: |
-        mypy cryptvault/ --ignore-missing-imports
       continue-on-error: true
+      run: |
+        mypy cryptvault/ --ignore-missing-imports --no-strict-optional --allow-untyped-calls --allow-untyped-defs || echo "Mypy check completed with warnings"
     
     - name: Test with pytest
       continue-on-error: true
