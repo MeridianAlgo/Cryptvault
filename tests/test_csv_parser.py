@@ -2,8 +2,8 @@
 
 import pytest
 from datetime import datetime
-from crypto_chart_analyzer.data.parsers import CSVParser
-from crypto_chart_analyzer.data.models import PriceDataFrame
+from cryptvault.data.parsers import CSVParser
+from cryptvault.data.models import PriceDataFrame
 
 
 class TestCSVParser:

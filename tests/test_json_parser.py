@@ -3,8 +3,8 @@
 import pytest
 import json
 from datetime import datetime
-from crypto_chart_analyzer.data.parsers import JSONParser
-from crypto_chart_analyzer.data.models import PriceDataFrame
+from cryptvault.data.parsers import JSONParser
+from cryptvault.data.models import PriceDataFrame
 
 
 class TestJSONParser:

@@ -2,8 +2,8 @@
 
 import pytest
 from datetime import datetime, timedelta
-from crypto_chart_analyzer.data.validator import DataValidator, ValidationError
-from crypto_chart_analyzer.data.models import PricePoint, PriceDataFrame
+from cryptvault.data.validator import DataValidator, ValidationError
+from cryptvault.data.models import PricePoint, PriceDataFrame
 
 
 class TestDataValidator:

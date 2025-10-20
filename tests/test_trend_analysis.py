@@ -2,8 +2,8 @@
 
 import pytest
 from datetime import datetime, timedelta
-from crypto_chart_analyzer.indicators.trend_analysis import TrendAnalysis, TrendLine, PeakTrough
-from crypto_chart_analyzer.data.models import PricePoint, PriceDataFrame
+from cryptvault.indicators.trend_analysis import TrendAnalysis, TrendLine, PeakTrough
+from cryptvault.data.models import PricePoint, PriceDataFrame
 
 
 class TestTrendAnalysis:

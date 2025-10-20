@@ -2,9 +2,9 @@
 
 import pytest
 from datetime import datetime, timedelta
-from crypto_chart_analyzer.patterns.geometric import GeometricPatternAnalyzer
-from crypto_chart_analyzer.patterns.types import PatternType
-from crypto_chart_analyzer.data.models import PricePoint, PriceDataFrame
+from cryptvault.patterns.geometric import GeometricPatternAnalyzer
+from cryptvault.patterns.types import PatternType
+from cryptvault.data.models import PricePoint, PriceDataFrame
 
 
 class TestTrianglePatterns:
@@ -284,7 +284,7 @@ class TestTrianglePatterns:
     def test_overlapping_pattern_filtering(self):
         """Test filtering of overlapping patterns."""
         # Create mock overlapping patterns
-        from crypto_chart_analyzer.patterns.types import DetectedPattern, PatternCategory, VolumeProfile
+        from cryptvault.patterns.types import DetectedPattern, PatternCategory, VolumeProfile
         
         pattern1 = DetectedPattern(
             pattern_type=PatternType.ASCENDING_TRIANGLE,

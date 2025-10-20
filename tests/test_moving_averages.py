@@ -1,7 +1,7 @@
 """Tests for moving averages functionality."""
 
 import pytest
-from crypto_chart_analyzer.indicators.moving_averages import MovingAverages
+from cryptvault.indicators.moving_averages import MovingAverages
 
 
 class TestMovingAverages:

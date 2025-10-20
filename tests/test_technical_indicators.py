@@ -2,8 +2,8 @@
 
 import pytest
 from datetime import datetime, timedelta
-from crypto_chart_analyzer.indicators.technical import TechnicalIndicators
-from crypto_chart_analyzer.data.models import PricePoint, PriceDataFrame
+from cryptvault.indicators.technical import TechnicalIndicators
+from cryptvault.data.models import PricePoint, PriceDataFrame
 
 
 class TestTechnicalIndicators:

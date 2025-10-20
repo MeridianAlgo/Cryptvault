@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime, timedelta
-from crypto_chart_analyzer.data.models import PricePoint, PriceDataFrame
+from cryptvault.data.models import PricePoint, PriceDataFrame
 
 
 class TestPricePoint:
