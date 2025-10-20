@@ -178,3 +178,30 @@ The CryptVault system now provides:
 - ✅ **Enhanced user experience** with visual appeal
 
 The integration successfully transforms CryptVault into a professional-grade terminal application with beautiful, informative candlestick charts that rival commercial trading platforms.
+
+
+---
+
+## Related Documentation
+
+### Chart Features
+- [Stock Support & Charts](STOCK_SUPPORT_AND_CHARTS.md) - Stock analysis guide
+- [Interactive Chart Guide](INTERACTIVE_CHART_GUIDE.md) - Interactive windows
+- [Chart Generation Results](CHART_GENERATION_RESULTS.md) - Example outputs
+
+### Technical Documentation
+- [Developer Guide](DEVELOPER_GUIDE.md) - Development documentation
+- [Enhanced ML System](ENHANCED_ML_SYSTEM.md) - Machine learning details
+- [Final System Summary](FINAL_SYSTEM_SUMMARY.md) - System capabilities
+
+### Getting Started
+- [Main README](../README.md) - Project overview
+- [Quick Guide](../QUICK_GUIDE.md) - Fast reference
+
+### Reference
+- [Documentation Index](INDEX.md) - Complete documentation index
+- [Changelog](CHANGELOG.md) - Version history
+
+---
+
+[📚 Documentation Index](INDEX.md) | [🏠 Main README](../README.md) | [🎨 Stock & Charts Guide](STOCK_SUPPORT_AND_CHARTS.md)

@@ -196,3 +196,28 @@ Help us improve platform support:
 - Update documentation
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for details.
+
+
+---
+
+## Related Documentation
+
+### Getting Started
+- [Main README](../README.md) - Project overview
+- [Quick Guide](../QUICK_GUIDE.md) - Fast reference
+- [Setup Guide](setup/SETUP_GUIDE.md) - Installation instructions
+
+### Features
+- [CLI vs Core](CLI_VS_CORE.md) - Understanding entry points
+- [Stock Support & Charts](STOCK_SUPPORT_AND_CHARTS.md) - Stock analysis guide
+- [Interactive Chart Guide](INTERACTIVE_CHART_GUIDE.md) - Interactive windows
+- [Developer Guide](DEVELOPER_GUIDE.md) - Development documentation
+
+### Reference
+- [Documentation Index](INDEX.md) - Complete documentation index
+- [Changelog](CHANGELOG.md) - Version history
+- [Contributing](../CONTRIBUTING.md) - Contribution guidelines
+
+---
+
+[📚 Documentation Index](INDEX.md) | [🏠 Main README](../README.md) | [🔧 Setup Guide](setup/SETUP_GUIDE.md)

@@ -169,9 +169,22 @@ class PackageDataFetcher:
             'XLM', 'XMR', 'ETC', 'HBAR', 'FIL', 'APT', 'ARB', 'VET', 'NEAR', 'ALGO',
             'ICP', 'GRT', 'AAVE', 'MKR', 'SNX', 'SAND', 'MANA', 'AXS', 'FTM', 'THETA',
             'EOS', 'XTZ', 'FLOW', 'EGLD', 'ZEC', 'CAKE', 'KLAY', 'RUNE', 'NEO', 'DASH',
-            # Popular Stocks
-            'AAPL', 'TSLA', 'GOOGL', 'MSFT', 'NVDA', 'AMZN', 'META', 'NFLX', 'AMD', 'INTC',
-            'COIN', 'SQ', 'PYPL', 'V', 'MA', 'JPM', 'BAC', 'WMT', 'DIS', 'UBER'
+            # Popular Stocks - Tech
+            'AAPL', 'TSLA', 'GOOGL', 'GOOG', 'MSFT', 'NVDA', 'AMZN', 'META', 'NFLX', 'AMD', 
+            'INTC', 'CRM', 'ORCL', 'ADBE', 'CSCO', 'AVGO', 'QCOM', 'TXN', 'INTU', 'IBM',
+            # Stocks - Finance
+            'JPM', 'BAC', 'WFC', 'GS', 'MS', 'C', 'BLK', 'SCHW', 'AXP', 'USB',
+            'V', 'MA', 'PYPL', 'SQ', 'COIN',
+            # Stocks - Consumer
+            'WMT', 'HD', 'MCD', 'NKE', 'SBUX', 'TGT', 'COST', 'LOW', 'DIS', 'CMCSA',
+            # Stocks - Healthcare
+            'JNJ', 'UNH', 'PFE', 'ABBV', 'TMO', 'MRK', 'ABT', 'DHR', 'LLY', 'BMY',
+            # Stocks - Energy & Industrial
+            'XOM', 'CVX', 'COP', 'SLB', 'BA', 'CAT', 'GE', 'MMM', 'HON', 'UPS',
+            # Stocks - Transportation & Rideshare
+            'UBER', 'LYFT', 'ABNB', 'DAL', 'UAL', 'AAL',
+            # ETFs
+            'SPY', 'QQQ', 'IWM', 'DIA', 'VOO', 'VTI', 'GLD', 'SLV'
         ]
     
     def get_current_price(self, symbol: str) -> Optional[float]:

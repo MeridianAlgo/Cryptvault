@@ -64,15 +64,19 @@ python cryptvault_cli.py AAPL 60 1d
 
 # With charts
 python cryptvault_cli.py BTC 60 1d --verbose
+
+# Generate chart with pattern overlays
+python generate_chart.py TSLA --days 90 --save tesla_chart.png
 ```
 
 ---
 
 ## Supported Assets
 
-**70+ Total Assets:**
+**120+ Total Assets:**
 - 50+ Cryptocurrencies (BTC, ETH, SOL, DOGE, LINK, etc.)
-- 20+ Stocks (AAPL, TSLA, GOOGL, MSFT, etc.)
+- 70+ Stocks (AAPL, TSLA, GOOGL, MSFT, NVDA, JPM, etc.)
+- ETFs (SPY, QQQ, IWM, DIA, VOO, VTI, GLD, SLV)
 
 ---
 
@@ -114,6 +118,11 @@ python cryptvault_cli.py --compare BTC ETH SOL
 
 # Interactive
 python cryptvault_cli.py --interactive
+
+# Generate chart with pattern overlays
+python generate_chart.py BTC --days 60
+python generate_chart.py AAPL --days 90 --save apple_chart.png
+python generate_chart.py TSLA --days 120 --interval 1d --save tesla.png
 ```
 
 ---
@@ -122,6 +131,7 @@ python cryptvault_cli.py --interactive
 
 - **[CLI vs Core](docs/CLI_VS_CORE.md)** - Detailed comparison
 - **[Platform Support](docs/PLATFORM_SUPPORT.md)** - OS-specific guides
+- **[Stock Support & Charts](docs/STOCK_SUPPORT_AND_CHARTS.md)** - Stock analysis and pattern overlays
 - **[Main README](docs/main_README.md)** - Complete documentation
 
 ---
@@ -136,3 +146,28 @@ python cryptvault_cli.py --interactive
 
 **Version:** 3.2.4  
 **License:** MIT
+
+
+---
+
+## Related Documentation
+
+### Getting Started
+- [Main README](../README.md) - Project overview
+- [Setup Complete](../SETUP_COMPLETE.md) - Setup summary
+- [Setup Guide](setup/SETUP_GUIDE.md) - Installation instructions
+
+### Features
+- [Stock Support & Charts](STOCK_SUPPORT_AND_CHARTS.md) - Stock analysis guide
+- [Interactive Chart Guide](INTERACTIVE_CHART_GUIDE.md) - Interactive windows
+- [CLI vs Core](CLI_VS_CORE.md) - Understanding entry points
+- [Platform Support](PLATFORM_SUPPORT.md) - OS compatibility
+
+### Reference
+- [Documentation Index](INDEX.md) - Complete documentation index
+- [Developer Guide](DEVELOPER_GUIDE.md) - Development documentation
+- [Contributing](../CONTRIBUTING.md) - Contribution guidelines
+
+---
+
+[📚 Documentation Index](INDEX.md) | [🏠 Main README](../README.md)
