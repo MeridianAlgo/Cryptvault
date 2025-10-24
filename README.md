@@ -17,14 +17,14 @@ pip install -r requirements.txt
 # Run demo
 python cryptvault_cli.py --demo
 
-# Analyze Bitcoin
+# Analyze Bitcoin (opens interactive chart by default)
 python cryptvault_cli.py BTC 60 1d
 
-# Analyze stocks
-python cryptvault_cli.py AAPL 60 1d
+# Save chart to file
+python cryptvault_cli.py AAPL 90 1d --save-chart apple.png
 
-# Generate chart with pattern overlays
-python generate_chart.py TSLA --days 90 --save tesla_chart.png
+# Text-only analysis (no chart)
+python cryptvault_cli.py ETH 60 1d --no-chart
 ```
 
 ### Platform Support
@@ -69,31 +69,50 @@ BTC, ETH, USDT, BNB, SOL, XRP, USDC, ADA, AVAX, DOGE, TRX, DOT, MATIC, LINK, TON
 **[Complete Documentation Index](docs/INDEX.md)** - Full documentation with all guides and references
 
 ### Quick Links
-- **[Quick Guide](QUICK_GUIDE.md)** - Fast reference guide
+- **[Quick Guide](docs/QUICK_GUIDE.md)** - Fast reference guide
 - **[Stock Support & Charts](docs/STOCK_SUPPORT_AND_CHARTS.md)** - Stock analysis and pattern overlays
 - **[Interactive Chart Guide](docs/INTERACTIVE_CHART_GUIDE.md)** - Using interactive matplotlib windows
 - **[CLI vs Core](docs/CLI_VS_CORE.md)** - Understanding the two entry points
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Complete development guide
-- **[Platform Support](docs/PLATFORM_SUPPORT.md)** - OS compatibility guide
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Testing and CI/CD documentation
 
 ### Additional Resources
-- **[Setup Guide](docs/setup/SETUP_GUIDE.md)** - Installation instructions
+- **[Platform Support](docs/PLATFORM_SUPPORT.md)** - OS compatibility guide
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute
 - **[Security Policy](SECURITY.md)** - Security guidelines
 - **[License](LICENSE)** - MIT License terms
 
 ## Chart Generation with Pattern Overlays
 
-CryptVault now includes a powerful chart generation tool that creates professional candlestick charts with pattern overlays using matplotlib:
+**CryptVault CLI now automatically generates matplotlib charts with pattern overlays!**
 
 ```bash
-# Open interactive chart window (default)
-python generate_chart.py BTC
-python generate_chart.py AAPL --days 60
-python generate_chart.py TSLA --days 90
+# Default: Opens interactive chart window with pattern overlays
+python cryptvault_cli.py BTC 60 1d
 
-# Save chart to file (optional)
-python generate_chart.py GOOGL --days 120 --save google.png
+# Save chart to file instead of displaying
+python cryptvault_cli.py AAPL 90 1d --save-chart apple.png
+
+# Disable chart generation (text-only analysis)
+python cryptvault_cli.py ETH 60 1d --no-chart
+```
+
+**Chart Features:**
+- Professional candlestick visualization
+- All detected patterns overlaid on chart
+- Interactive zoom, pan, and navigation
+- Volume bars with color coding
+- Support/resistance levels
+- Dark theme optimized for readability
+
+You can also use the standalone chart generator:
+
+```bash
+# Open interactive chart window
+python generate_chart.py BTC --days 60
+
+# Save chart to file
+python generate_chart.py TSLA --days 90 --save tesla.png
 ```
 
 **Features:**
@@ -117,13 +136,16 @@ python generate_chart.py GOOGL --days 120 --save google.png
 - Divergence Patterns
 - Diamond Patterns
 
-## CLI vs Core Application
+## CLI Application
 
-- **`cryptvault_cli.py`** is the interactive command-line entry point. It orchestrates data ingestion, pattern recognition, model execution, and optional desktop visualization for day-to-day usage.
-- **`cryptvault.py`** focuses on terminal-based chart rendering. It offers an expressive ASCII dashboard and low-level access for custom scripts or integrations that need the charting layer without the full CLI orchestration.
-- **`generate_chart.py`** creates professional matplotlib charts with pattern overlays. Perfect for generating reports, presentations, or detailed technical analysis with visual pattern indicators.
+- **`cryptvault_cli.py`** is the main command-line interface with integrated chart generation. It provides:
+  - Interactive analysis with pattern detection
+  - Professional matplotlib charts with pattern overlays
+  - Multi-asset comparisons and portfolio analysis
+  - Desktop visualization and chart export
+  - ML predictions and technical indicators
 
-Use the CLI for end-to-end analysis, multi-asset comparisons, and automation. Use the core script when you need lightweight chart output. Use generate_chart.py when you need publication-quality charts with pattern overlays.
+Use `cryptvault_cli.py` for all analysis needs - it now includes chart generation with the `--chart` flag.
 
 ## Repository Structure
 
