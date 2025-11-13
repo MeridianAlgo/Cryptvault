@@ -1,0 +1,164 @@
+# Optional Dependencies for CryptVault
+# These dependencies enable additional features but are not required for core functionality
+# Install with: pip install -r requirements/base.txt -r requirements/optional.txt
+
+# Include base dependencies
+-r base.txt
+
+# ============================================================================
+# Deep Learning (LSTM Neural Networks)
+# ============================================================================
+# Feature: Advanced ML predictions using LSTM models
+# Install: pip install cryptvault[ml]
+# Alternative: Use scikit-learn models (included in base)
+
+# PyTorch - Deep learning framework
+# Used for: LSTM neural network predictions
+# Version constraint: >=1.12.0 for stable API
+# Note: Large download (~800MB), requires significant compute resources
+torch>=1.12.0,<3.0.0
+
+# TensorFlow - Alternative deep learning framework
+# Used for: Alternative LSTM implementation
+# Version constraint: >=2.8.0 for Python 3.8+ support
+# Note: Very large download (~500MB), alternative to PyTorch
+# tensorflow>=2.8.0,<3.0.0
+
+# ============================================================================
+# Advanced Visualization
+# ============================================================================
+# Feature: Interactive web-based charts and dashboards
+# Install: pip install cryptvault[viz]
+# Alternative: Use matplotlib (included in base)
+
+# Plotly - Interactive plotting library
+# Used for: Web-based interactive charts, dashboards
+# Version constraint: >=5.0.0 for modern features
+# Note: Enables browser-based chart interaction
+plotly>=5.0.0,<6.0.0
+
+# Dash - Web application framework for analytics
+# Used for: Building interactive dashboards
+# Version constraint: >=2.0.0 for modern features
+# Note: Requires plotly, enables web dashboard creation
+dash>=2.0.0,<3.0.0
+
+# ============================================================================
+# Real-time Data Streaming
+# ============================================================================
+# Feature: Real-time cryptocurrency price updates
+# Install: pip install cryptvault[streaming]
+# Alternative: Use polling with yfinance/ccxt (included in base)
+
+# Websockets - WebSocket client and server
+# Used for: Real-time data streaming from exchanges
+# Version constraint: >=10.0 for async support
+# Note: Enables live price updates without polling
+websockets>=10.0,<13.0
+
+# ============================================================================
+# Fast Technical Analysis
+# ============================================================================
+# Feature: Accelerated technical indicator calculations
+# Install: pip install cryptvault[fast]
+# Alternative: Use numpy-based calculations (included in base)
+# Warning: May have compatibility issues with some systems
+
+# TA-Lib - Technical analysis library (C extension)
+# Used for: Fast technical indicator calculations
+# Version constraint: >=0.4.0 for Python 3.8+ support
+# Note: Requires TA-Lib C library to be installed separately
+# Installation: https://github.com/mrjbq7/ta-lib#dependencies
+# ta-lib>=0.4.0,<1.0.0
+
+# Numba - JIT compiler for Python
+# Used for: Accelerating NumPy operations
+# Version constraint: >=0.55.0 for Python 3.8+ support
+# Note: Provides significant speedup for numerical computations
+numba>=0.55.0,<1.0.0
+
+# ============================================================================
+# Database Support
+# ============================================================================
+# Feature: Persistent storage of analysis results and cache
+# Install: pip install cryptvault[db]
+# Alternative: Use in-memory cache (included in base)
+
+# SQLAlchemy - SQL toolkit and ORM
+# Used for: Database operations, data persistence
+# Version constraint: >=1.4.0 for modern features
+# Note: Enables storing analysis results in database
+sqlalchemy>=1.4.0,<3.0.0
+
+# Redis - Redis client for Python
+# Used for: High-performance caching
+# Version constraint: >=4.0.0 for modern features
+# Note: Requires Redis server to be running
+redis>=4.0.0,<6.0.0
+
+# ============================================================================
+# Export Formats
+# ============================================================================
+# Feature: Export analysis results to various formats
+# Install: pip install cryptvault[export]
+# Alternative: Use JSON output (built-in)
+
+# openpyxl - Excel file handling
+# Used for: Exporting results to Excel format
+# Version constraint: >=3.0.0 for modern Excel support
+# Note: Enables .xlsx export functionality
+openpyxl>=3.0.0,<4.0.0
+
+# Jinja2 - Template engine
+# Used for: Generating HTML reports
+# Version constraint: >=3.0.0 for modern features
+# Note: Enables custom report generation
+jinja2>=3.0.0,<4.0.0
+
+# ============================================================================
+# Notification Services
+# ============================================================================
+# Feature: Send alerts and notifications
+# Install: pip install cryptvault[notify]
+# Alternative: Use console output (built-in)
+
+# Requests - HTTP library
+# Used for: Sending webhook notifications
+# Version constraint: >=2.25.0 for modern features
+# Note: Enables Slack, Discord, Telegram notifications
+requests>=2.25.0,<3.0.0
+
+# ============================================================================
+# Advanced Pattern Recognition
+# ============================================================================
+# Feature: Enhanced pattern detection using computer vision
+# Install: pip install cryptvault[cv]
+# Alternative: Use rule-based pattern detection (included in base)
+
+# OpenCV - Computer vision library
+# Used for: Image-based pattern recognition
+# Version constraint: >=4.5.0 for modern features
+# Note: Large library, enables visual pattern matching
+# opencv-python>=4.5.0,<5.0.0
+
+# ============================================================================
+# Natural Language Processing
+# ============================================================================
+# Feature: Sentiment analysis from news and social media
+# Install: pip install cryptvault[nlp]
+# Alternative: Use technical analysis only (included in base)
+
+# Transformers - NLP models from Hugging Face
+# Used for: Sentiment analysis, news processing
+# Version constraint: >=4.0.0 for modern models
+# Note: Very large download, requires significant resources
+# transformers>=4.0.0,<5.0.0
+
+# ============================================================================
+# Full Installation
+# ============================================================================
+# To install all optional dependencies:
+# pip install cryptvault[full]
+# 
+# Or install specific feature sets:
+# pip install cryptvault[ml,viz,streaming]

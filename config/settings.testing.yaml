@@ -1,0 +1,35 @@
+# CryptVault Testing Configuration
+# Overrides for testing environment
+
+# Network Configuration - Fast timeouts for tests
+network:
+  timeout: 5                     # Short timeout for tests
+  max_retries: 1                 # Minimal retries for fast tests
+  connection_pool_size: 5        # Smaller pool for tests
+
+# Caching Configuration - Disabled for consistent tests
+cache:
+  enabled: false                 # Disable cache for predictable tests
+  ttl: 0
+  max_size_mb: 10
+
+# Logging Configuration - Minimal logging for tests
+logging:
+  level: WARNING                 # Only warnings and errors
+  file_enabled: false            # No file logging in tests
+  console_enabled: false         # No console output in tests
+
+# Analysis Configuration - Minimal data for fast tests
+analysis:
+  default_days: 10               # Minimal days for fast tests
+  min_data_points: 10            # Lower minimum for tests
+  ml_enabled: false              # Disable ML for faster tests
+  pattern_sensitivity: 0.5
+
+# Data Source Configuration - Mock data for tests
+data_sources:
+  primary: mock                  # Use mock data source
+  fallback: []
+  yfinance_enabled: false
+  ccxt_enabled: false
+  cryptocompare_enabled: false

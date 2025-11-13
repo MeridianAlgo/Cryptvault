@@ -1,0 +1,79 @@
+# Testing Dependencies for CryptVault
+# Install with: pip install -r requirements/base.txt -r requirements/test.txt
+
+# Include base dependencies
+-r base.txt
+
+# ============================================================================
+# Core Testing Framework
+# ============================================================================
+
+# Pytest - Testing framework
+# Used for: Unit tests, integration tests, test discovery
+# Version constraint: >=6.0.0 for modern features
+pytest>=6.0.0,<8.0.0
+
+# Pytest-cov - Coverage plugin for pytest
+# Used for: Code coverage measurement and reporting
+# Version constraint: >=2.0.0 for pytest 6.x compatibility
+pytest-cov>=2.0.0,<5.0.0
+
+# Pytest-mock - Mocking plugin for pytest
+# Used for: Mocking external dependencies in tests
+pytest-mock>=3.6.0,<4.0.0
+
+# Pytest-xdist - Parallel test execution plugin
+# Used for: Running tests in parallel for faster execution
+# Version constraint: >=2.0.0 for pytest 6.x compatibility
+pytest-xdist>=2.0.0,<4.0.0
+
+# Pytest-timeout - Test timeout plugin
+# Used for: Preventing tests from hanging indefinitely
+# Version constraint: >=2.0.0 for modern pytest support
+pytest-timeout>=2.0.0,<3.0.0
+
+# ============================================================================
+# Test Data and Fixtures
+# ============================================================================
+
+# Faker - Fake data generator
+# Used for: Generating test data for unit tests
+# Version constraint: >=8.0.0 for comprehensive data types
+faker>=8.0.0,<25.0.0
+
+# Freezegun - Time mocking library
+# Used for: Mocking datetime for time-dependent tests
+# Version constraint: >=1.0.0 for Python 3.8+ support
+freezegun>=1.0.0,<2.0.0
+
+# ============================================================================
+# HTTP Mocking
+# ============================================================================
+
+# Responses - HTTP request mocking library
+# Used for: Mocking API calls in tests
+# Version constraint: >=0.20.0 for modern features
+responses>=0.20.0,<1.0.0
+
+# Requests-mock - Alternative HTTP mocking library
+# Used for: Mocking requests library calls
+# Version constraint: >=1.9.0 for comprehensive mocking
+requests-mock>=1.9.0,<2.0.0
+
+# ============================================================================
+# Performance Testing
+# ============================================================================
+
+# Pytest-benchmark - Benchmarking plugin for pytest
+# Used for: Performance testing and regression detection
+# Version constraint: >=3.4.0 for modern pytest support
+pytest-benchmark>=3.4.0,<5.0.0
+
+# ============================================================================
+# Code Coverage
+# ============================================================================
+
+# Coverage - Code coverage measurement tool
+# Used for: Detailed coverage analysis and reporting
+# Version constraint: >=6.0.0 for modern Python support
+coverage[toml]>=6.0.0,<8.0.0

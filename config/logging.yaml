@@ -1,0 +1,76 @@
+# CryptVault Logging Configuration
+# YAML configuration for Python logging module
+
+version: 1
+disable_existing_loggers: false
+
+# Formatters define how log messages are formatted
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
+  
+  detailed:
+    format: '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
+  
+  json:
+    class: cryptvault.utils.logging.StructuredFormatter
+
+# Handlers define where log messages go
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+    stream: ext://sys.stdout
+  
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/cryptvault.log
+    maxBytes: 10485760  # 10 MB
+    backupCount: 5
+    encoding: utf8
+  
+  error_file:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: detailed
+    filename: logs/cryptvault.error.log
+    maxBytes: 10485760  # 10 MB
+    backupCount: 5
+    encoding: utf8
+
+# Loggers define logging behavior for specific modules
+loggers:
+  cryptvault:
+    level: INFO
+    handlers: [console, file, error_file]
+    propagate: false
+  
+  cryptvault.analyzer:
+    level: INFO
+    handlers: [console, file]
+    propagate: false
+  
+  cryptvault.data:
+    level: INFO
+    handlers: [console, file]
+    propagate: false
+  
+  cryptvault.patterns:
+    level: INFO
+    handlers: [console, file]
+    propagate: false
+  
+  cryptvault.ml:
+    level: INFO
+    handlers: [console, file]
+    propagate: false
+
+# Root logger configuration
+root:
+  level: WARNING
+  handlers: [console, file]

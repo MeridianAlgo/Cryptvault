@@ -163,7 +163,7 @@ def plot_with_cryptvault_patterns():
     """
     Example showing how to integrate with CryptVault pattern detection.
     """
-    from cryptvault.analyzer import PatternAnalyzer
+    from cryptvault.core.analyzer import PatternAnalyzer
     from cryptvault.data.package_fetcher import PackageDataFetcher
     
     # Fetch real data

@@ -1,0 +1,49 @@
+# CryptVault Configuration
+# Base configuration file for all environments
+
+# Network and API Configuration
+network:
+  timeout: 30                    # Request timeout in seconds
+  max_retries: 3                 # Maximum number of retry attempts
+  retry_backoff: 2.0             # Exponential backoff multiplier
+  connection_pool_size: 10       # HTTP connection pool size
+  rate_limit_calls: 100          # Maximum API calls per period
+  rate_limit_period: 60          # Rate limit period in seconds
+
+# Caching Configuration
+cache:
+  enabled: true                  # Enable/disable caching
+  ttl: 300                       # Cache time-to-live in seconds (5 minutes)
+  max_size_mb: 100               # Maximum cache size in megabytes
+  backend: memory                # Cache backend: 'memory' or 'disk'
+  disk_path: null                # Path for disk cache (if backend is 'disk')
+
+# Logging Configuration
+logging:
+  level: INFO                    # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file_enabled: true             # Enable file logging
+  file_path: logs/cryptvault.log # Log file path
+  file_max_bytes: 10485760       # Max log file size (10 MB)
+  file_backup_count: 5           # Number of backup log files
+  console_enabled: true          # Enable console logging
+
+# Analysis Configuration
+analysis:
+  default_days: 60               # Default number of days for analysis
+  default_interval: 1d           # Default data interval
+  min_data_points: 50            # Minimum data points required
+  pattern_sensitivity: 0.5       # Pattern detection sensitivity (0.0-1.0)
+  ml_enabled: true               # Enable machine learning predictions
+  ml_confidence_threshold: 0.6   # Minimum ML confidence threshold
+
+# Data Source Configuration
+data_sources:
+  primary: yfinance              # Primary data source
+  fallback:                      # Fallback data sources (in order)
+    - ccxt
+    - cryptocompare
+  yfinance_enabled: true         # Enable Yahoo Finance
+  ccxt_enabled: true             # Enable CCXT (cryptocurrency exchanges)
+  cryptocompare_enabled: true    # Enable CryptoCompare
+  cryptocompare_api_key: null    # CryptoCompare API key (optional)

@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import CryptVault components
-from cryptvault.analyzer import PatternAnalyzer
+from cryptvault.core.analyzer import PatternAnalyzer
 from cryptvault.data.package_fetcher import PackageDataFetcher
 from cryptvault.visualization.pattern_overlay import PatternOverlay
 

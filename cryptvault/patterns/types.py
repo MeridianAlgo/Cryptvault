@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 class PatternType(Enum):
     """Enumeration of all supported chart patterns."""
-    
+
     # Continuation Patterns - Bullish
     ASCENDING_TRIANGLE = "ascending_triangle"
     BULL_FLAG = "bull_flag"
@@ -17,7 +17,7 @@ class PatternType(Enum):
     RISING_CHANNEL = "rising_channel"
     RISING_WEDGE_CONTINUATION = "rising_wedge_continuation"
     RECTANGLE_BULLISH = "rectangle_bullish"
-    
+
     # Continuation Patterns - Bearish
     DESCENDING_TRIANGLE = "descending_triangle"
     BEAR_FLAG = "bear_flag"
@@ -26,7 +26,7 @@ class PatternType(Enum):
     FALLING_CHANNEL = "falling_channel"
     FALLING_WEDGE_CONTINUATION = "falling_wedge_continuation"
     RECTANGLE_BEARISH = "rectangle_bearish"
-    
+
     # Reversal Patterns - Bullish
     DOUBLE_BOTTOM = "double_bottom"
     TRIPLE_BOTTOM = "triple_bottom"
@@ -35,7 +35,7 @@ class PatternType(Enum):
     HAMMER = "hammer"
     MORNING_STAR = "morning_star"
     BULLISH_ENGULFING = "bullish_engulfing"
-    
+
     # Reversal Patterns - Bearish
     DOUBLE_TOP = "double_top"
     TRIPLE_TOP = "triple_top"
@@ -44,14 +44,14 @@ class PatternType(Enum):
     SHOOTING_STAR = "shooting_star"
     EVENING_STAR = "evening_star"
     BEARISH_ENGULFING = "bearish_engulfing"
-    
+
     # Bilateral Patterns
     SYMMETRICAL_TRIANGLE = "symmetrical_triangle"
     DIAMOND = "diamond"
     RECTANGLE_NEUTRAL = "rectangle_neutral"
     EXPANDING_TRIANGLE = "expanding_triangle"
     PENNANT_NEUTRAL = "pennant_neutral"
-    
+
     # Harmonic Patterns
     GARTLEY = "gartley"
     BUTTERFLY = "butterfly"
@@ -59,13 +59,13 @@ class PatternType(Enum):
     CRAB = "crab"
     ABCD = "abcd"
     CYPHER = "cypher"
-    
+
     # Candlestick Patterns - Single
     DOJI = "doji"
     SPINNING_TOP = "spinning_top"
     MARUBOZU = "marubozu"
     GRAVESTONE_DOJI = "gravestone_doji"
-    
+
     # Candlestick Patterns - Multi
     BULLISH_HARAMI = "bullish_harami"
     BEARISH_HARAMI = "bearish_harami"
@@ -77,7 +77,7 @@ class PatternType(Enum):
     TWEEZER_BOTTOMS = "tweezer_bottoms"
     RISING_THREE_METHODS = "rising_three_methods"
     FALLING_THREE_METHODS = "falling_three_methods"
-    
+
     # Divergence Patterns
     BULLISH_DIVERGENCE = "bullish_divergence"
     BEARISH_DIVERGENCE = "bearish_divergence"
@@ -120,25 +120,25 @@ class DetectedPattern:
     volume_profile: VolumeProfile
     description: str
     fibonacci_levels: Optional[Dict[str, float]] = None  # For harmonic patterns
-    
+
     def get_duration_days(self) -> float:
         """Get pattern duration in days."""
         return (self.end_time - self.start_time).total_seconds() / 86400
-    
+
     def is_bullish(self) -> bool:
         """Check if pattern is bullish."""
         return self.category in [
             PatternCategory.BULLISH_CONTINUATION,
             PatternCategory.BULLISH_REVERSAL
         ]
-    
+
     def is_bearish(self) -> bool:
         """Check if pattern is bearish."""
         return self.category in [
             PatternCategory.BEARISH_CONTINUATION,
             PatternCategory.BEARISH_REVERSAL
         ]
-    
+
     def is_reversal(self) -> bool:
         """Check if pattern is a reversal pattern."""
         return self.category in [
@@ -157,7 +157,7 @@ PATTERN_CATEGORIES = {
     PatternType.RISING_CHANNEL: PatternCategory.BULLISH_CONTINUATION,
     PatternType.RISING_WEDGE_CONTINUATION: PatternCategory.BULLISH_CONTINUATION,
     PatternType.RECTANGLE_BULLISH: PatternCategory.BULLISH_CONTINUATION,
-    
+
     # Bearish Continuation
     PatternType.DESCENDING_TRIANGLE: PatternCategory.BEARISH_CONTINUATION,
     PatternType.BEAR_FLAG: PatternCategory.BEARISH_CONTINUATION,
@@ -168,7 +168,7 @@ PATTERN_CATEGORIES = {
     PatternType.RECTANGLE_BEARISH: PatternCategory.BEARISH_CONTINUATION,
     PatternType.RISING_CHANNEL: PatternCategory.BULLISH_CONTINUATION,
     PatternType.FALLING_CHANNEL: PatternCategory.BEARISH_CONTINUATION,
-    
+
     # Bullish Reversal
     PatternType.DOUBLE_BOTTOM: PatternCategory.BULLISH_REVERSAL,
     PatternType.TRIPLE_BOTTOM: PatternCategory.BULLISH_REVERSAL,
@@ -177,7 +177,7 @@ PATTERN_CATEGORIES = {
     PatternType.HAMMER: PatternCategory.BULLISH_REVERSAL,
     PatternType.MORNING_STAR: PatternCategory.BULLISH_REVERSAL,
     PatternType.BULLISH_ENGULFING: PatternCategory.BULLISH_REVERSAL,
-    
+
     # Bearish Reversal
     PatternType.DOUBLE_TOP: PatternCategory.BEARISH_REVERSAL,
     PatternType.TRIPLE_TOP: PatternCategory.BEARISH_REVERSAL,
@@ -186,14 +186,14 @@ PATTERN_CATEGORIES = {
     PatternType.SHOOTING_STAR: PatternCategory.BEARISH_REVERSAL,
     PatternType.EVENING_STAR: PatternCategory.BEARISH_REVERSAL,
     PatternType.BEARISH_ENGULFING: PatternCategory.BEARISH_REVERSAL,
-    
+
     # Bilateral/Neutral
     PatternType.SYMMETRICAL_TRIANGLE: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.DIAMOND: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.RECTANGLE_NEUTRAL: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.EXPANDING_TRIANGLE: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.PENNANT_NEUTRAL: PatternCategory.BILATERAL_NEUTRAL,
-    
+
     # Harmonic Patterns
     PatternType.GARTLEY: PatternCategory.HARMONIC_PATTERN,
     PatternType.BUTTERFLY: PatternCategory.HARMONIC_PATTERN,
@@ -201,7 +201,7 @@ PATTERN_CATEGORIES = {
     PatternType.CRAB: PatternCategory.HARMONIC_PATTERN,
     PatternType.ABCD: PatternCategory.HARMONIC_PATTERN,
     PatternType.CYPHER: PatternCategory.HARMONIC_PATTERN,
-    
+
     # Candlestick Patterns
     PatternType.DOJI: PatternCategory.CANDLESTICK_PATTERN,
     PatternType.SPINNING_TOP: PatternCategory.CANDLESTICK_PATTERN,
@@ -223,7 +223,7 @@ PATTERN_CATEGORIES = {
     PatternType.TWEEZER_BOTTOMS: PatternCategory.CANDLESTICK_PATTERN,
     PatternType.RISING_THREE_METHODS: PatternCategory.CANDLESTICK_PATTERN,
     PatternType.FALLING_THREE_METHODS: PatternCategory.CANDLESTICK_PATTERN,
-    
+
     # Divergence Patterns
     PatternType.BULLISH_DIVERGENCE: PatternCategory.DIVERGENCE_PATTERN,
     PatternType.BEARISH_DIVERGENCE: PatternCategory.DIVERGENCE_PATTERN,

@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Documentation
+docs/
+*.md
+!README.md
+!LICENSE
+
+# Logs and data
+logs/
+*.log
+data/
+.cryptvault_predictions/
+
+# Development
+tests/
+examples/
+scripts/
+requirements/dev.txt
+requirements/test.txt
+requirements/optional.txt
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Other
+.pre-commit-config.yaml
+.pylintrc
+mypy.ini
+pytest.ini
+setup.py
+setup.cfg
+pyproject.toml
+MANIFEST.in

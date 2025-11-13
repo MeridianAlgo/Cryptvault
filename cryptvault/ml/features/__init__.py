@@ -6,6 +6,6 @@ from .time_features import TimeFeatureExtractor
 
 __all__ = [
     'TechnicalFeatureExtractor',
-    'PatternFeatureExtractor', 
+    'PatternFeatureExtractor',
     'TimeFeatureExtractor'
 ]

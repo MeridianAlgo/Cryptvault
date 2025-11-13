@@ -1,0 +1,26 @@
+# CryptVault Development Configuration
+# Overrides for development environment
+
+# Network Configuration - More lenient for development
+network:
+  timeout: 60                    # Longer timeout for debugging
+  max_retries: 5                 # More retries for unstable connections
+
+# Caching Configuration - Shorter TTL for development
+cache:
+  enabled: true
+  ttl: 60                        # 1 minute cache for faster iteration
+  max_size_mb: 50                # Smaller cache for development
+
+# Logging Configuration - More verbose for development
+logging:
+  level: DEBUG                   # Debug level for detailed logs
+  file_enabled: true
+  file_path: logs/cryptvault.dev.log
+  console_enabled: true
+
+# Analysis Configuration - Faster analysis for development
+analysis:
+  default_days: 30               # Fewer days for faster testing
+  min_data_points: 20            # Lower minimum for testing
+  ml_enabled: true               # Keep ML enabled for testing

@@ -1,0 +1,97 @@
+# Development Dependencies for CryptVault
+# Install with: pip install -r requirements/base.txt -r requirements/dev.txt
+
+# Include base dependencies
+-r base.txt
+
+# ============================================================================
+# Testing Framework
+# ============================================================================
+
+# Pytest - Testing framework
+# Used for: Unit tests, integration tests, test discovery
+# Version constraint: >=6.0.0 for modern features
+pytest>=6.0.0,<8.0.0
+
+# Pytest-cov - Coverage plugin for pytest
+# Used for: Code coverage measurement and reporting
+# Version constraint: >=2.0.0 for pytest 6.x compatibility
+pytest-cov>=2.0.0,<5.0.0
+
+# Pytest-mock - Mocking plugin for pytest
+# Used for: Mocking external dependencies in tests
+pytest-mock>=3.6.0,<4.0.0
+
+# ============================================================================
+# Code Quality and Formatting
+# ============================================================================
+
+# Black - Code formatter
+# Used for: Automatic code formatting to PEP 8 style
+# Version constraint: >=21.0.0 for stable formatting
+black>=21.0.0,<24.0.0
+
+# Flake8 - Linting tool
+# Used for: Style guide enforcement, error detection
+# Version constraint: >=3.8.0 for Python 3.8+ support
+flake8>=3.8.0,<7.0.0
+
+# isort - Import statement organizer
+# Used for: Sorting and organizing import statements
+# Version constraint: >=5.0.0 for Black compatibility
+isort>=5.0.0,<6.0.0
+
+# Pylint - Static code analyzer
+# Used for: Code quality checks, bug detection
+# Version constraint: >=2.12.0 for modern Python support
+pylint>=2.12.0,<4.0.0
+
+# ============================================================================
+# Type Checking
+# ============================================================================
+
+# MyPy - Static type checker
+# Used for: Type hint validation, type safety
+# Version constraint: >=0.800 for Python 3.8+ support
+mypy>=0.800,<1.10.0
+
+# ============================================================================
+# Security
+# ============================================================================
+
+# Bandit - Security linter
+# Used for: Security vulnerability detection
+# Version constraint: >=1.7.0 for comprehensive checks
+bandit>=1.7.0,<2.0.0
+
+# Safety - Dependency vulnerability scanner
+# Used for: Checking for known security vulnerabilities
+# Version constraint: >=2.0.0 for improved scanning
+safety>=2.0.0,<4.0.0
+
+# ============================================================================
+# Documentation
+# ============================================================================
+
+# Sphinx - Documentation generator
+# Used for: API documentation generation
+# Version constraint: >=4.0.0 for modern features
+sphinx>=4.0.0,<8.0.0
+
+# Sphinx-rtd-theme - Read the Docs theme for Sphinx
+# Used for: Professional documentation styling
+sphinx-rtd-theme>=1.0.0,<3.0.0
+
+# ============================================================================
+# Development Tools
+# ============================================================================
+
+# IPython - Enhanced interactive Python shell
+# Used for: Interactive development and debugging
+# Version constraint: >=7.0.0 for modern features
+ipython>=7.0.0,<9.0.0
+
+# Pre-commit - Git hook manager
+# Used for: Automated code quality checks before commits
+# Version constraint: >=2.15.0 for modern Git support
+pre-commit>=2.15.0,<4.0.0

@@ -1,0 +1,58 @@
+# CryptVault Core Dependencies
+# These are the minimum required dependencies for basic functionality
+
+# ============================================================================
+# Data Processing and Analysis
+# ============================================================================
+
+# NumPy - Numerical computing library for efficient array operations
+# Used for: Technical indicator calculations, vectorized operations
+# Version constraint: <2.0.0 to avoid breaking changes in NumPy 2.x
+numpy>=1.19.0,<2.0.0
+
+# Pandas - Data manipulation and analysis library
+# Used for: Time series data handling, data frame operations
+# Version constraint: <2.0.0 for API stability
+pandas>=1.3.0,<2.0.0
+
+# Scikit-learn - Machine learning library
+# Used for: Feature scaling, model training, ensemble methods
+# Version constraint: >=1.0.0 for stable API
+scikit-learn>=1.0.0,<1.5.0
+
+# ============================================================================
+# Data Sources (No API Keys Required)
+# ============================================================================
+
+# yfinance - Yahoo Finance data fetcher
+# Used for: Stock and cryptocurrency historical data
+# Version constraint: >=0.2.0 for improved reliability
+yfinance>=0.2.0,<0.3.0
+
+# CCXT - Cryptocurrency exchange trading library
+# Used for: Multi-exchange cryptocurrency data
+# Version constraint: >=4.0.0 for unified API
+ccxt>=4.0.0,<5.0.0
+
+# CryptoCompare - Cryptocurrency data API wrapper
+# Used for: Alternative cryptocurrency data source
+# Version constraint: >=0.7.0 for Python 3.8+ support
+cryptocompare>=0.7.0,<1.0.0
+
+# ============================================================================
+# Visualization
+# ============================================================================
+
+# Matplotlib - Plotting library for creating charts
+# Used for: Interactive charts, pattern visualization
+# Version constraint: >=3.5.0 for improved performance
+matplotlib>=3.5.0,<4.0.0
+
+# ============================================================================
+# User Interface
+# ============================================================================
+
+# Colorama - Cross-platform colored terminal text
+# Used for: CLI output formatting, colored messages
+# Version constraint: >=0.4.4 for Windows support
+colorama>=0.4.4,<1.0.0
