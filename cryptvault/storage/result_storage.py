@@ -448,4 +448,4 @@ class AnalysisResultStorage:
             return None
 
         with open(pickle_file, 'rb') as f:
-            return pickle.load(f)
+            return pickle.load(f)  # nosec B301 - Internal analysis data only

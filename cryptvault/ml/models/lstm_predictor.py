@@ -20,6 +20,11 @@ try:
     PYTORCH_AVAILABLE = True
 except ImportError:
     PYTORCH_AVAILABLE = False
+    # Create dummy nn module for when PyTorch is not available
+    class _DummyModule:
+        class Module:
+            pass
+    nn = _DummyModule()
 
 from ...data.models import PriceDataFrame
 

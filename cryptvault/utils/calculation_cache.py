@@ -160,11 +160,11 @@ def generate_cache_key(*args, **kwargs) -> str:
     for arg in args:
         if isinstance(arg, np.ndarray):
             # Hash array data
-            key_parts.append(hashlib.md5(arg.tobytes()).hexdigest()[:16])
+            key_parts.append(hashlib.md5(arg.tobytes(), usedforsecurity=False).hexdigest()[:16])  # nosec B324 - Used for cache key only
         elif isinstance(arg, (list, tuple)):
             # Convert to array and hash
             arr = np.array(arg)
-            key_parts.append(hashlib.md5(arr.tobytes()).hexdigest()[:16])
+            key_parts.append(hashlib.md5(arr.tobytes(), usedforsecurity=False).hexdigest()[:16])  # nosec B324 - Used for cache key only
         else:
             # Use string representation
             key_parts.append(str(arg))
@@ -172,10 +172,10 @@ def generate_cache_key(*args, **kwargs) -> str:
     # Process keyword arguments
     for k, v in sorted(kwargs.items()):
         if isinstance(v, np.ndarray):
-            key_parts.append(f"{k}={hashlib.md5(v.tobytes()).hexdigest()[:16]}")
+            key_parts.append(f"{k}={hashlib.md5(v.tobytes(), usedforsecurity=False).hexdigest()[:16]}")  # nosec B324 - Used for cache key only
         elif isinstance(v, (list, tuple)):
             arr = np.array(v)
-            key_parts.append(f"{k}={hashlib.md5(arr.tobytes()).hexdigest()[:16]}")
+            key_parts.append(f"{k}={hashlib.md5(arr.tobytes(), usedforsecurity=False).hexdigest()[:16]}")  # nosec B324 - Used for cache key only
         else:
             key_parts.append(f"{k}={v}")
 

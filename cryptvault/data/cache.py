@@ -155,7 +155,7 @@ class DiskCache:
         if self._index_file.exists():
             try:
                 with open(self._index_file, 'rb') as f:
-                    return pickle.load(f)
+                    return pickle.load(f)  # nosec B301 - Internal cache data only
             except:
                 return {}
         return {}
@@ -170,7 +170,7 @@ class DiskCache:
 
     def _get_cache_path(self, key: str) -> Path:
         """Get cache file path for key."""
-        key_hash = hashlib.md5(key.encode()).hexdigest()
+        key_hash = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()  # nosec B324 - Used for cache key only
         return self.cache_dir / f"{key_hash}.cache"
 
     def get(self, key: str) -> Optional[Any]:
@@ -191,7 +191,7 @@ class DiskCache:
 
         try:
             with open(cache_path, 'rb') as f:
-                value = pickle.load(f)
+                value = pickle.load(f)  # nosec B301 - Internal cache data only
 
             entry.hits += 1
             return value
