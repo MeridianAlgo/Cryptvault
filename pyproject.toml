@@ -203,6 +203,9 @@ markers = [
     "slow: Slow tests that make real API calls",
     "ml: Machine learning tests",
     "viz: Visualization tests",
+    "data: Data model tests",
+    "indicators: Technical indicator tests",
+    "patterns: Pattern detection tests",
 ]
 filterwarnings = [
     "error",

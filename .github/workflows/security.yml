@@ -111,7 +111,7 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     
     steps:
     - name: Checkout code
@@ -133,10 +133,32 @@ jobs:
       with:
         fetch-depth: 0
     
+    - name: Set base and head for scanning
+      id: set-refs
+      run: |
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          echo "base=${{ github.event.pull_request.base.sha }}" >> $GITHUB_OUTPUT
+          echo "head=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" == "push" ]; then
+          # For push events, use before and after commits
+          if [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            echo "base=${{ github.event.before }}" >> $GITHUB_OUTPUT
+            echo "head=${{ github.event.after }}" >> $GITHUB_OUTPUT
+          else
+            # Fallback: compare with default branch
+            echo "base=${{ github.event.repository.default_branch }}" >> $GITHUB_OUTPUT
+            echo "head=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+        else
+          # For other events (schedule, workflow_dispatch), scan entire repo
+          echo "base=" >> $GITHUB_OUTPUT
+          echo "head=" >> $GITHUB_OUTPUT
+        fi
+    
     - name: TruffleHog OSS
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
-        base: ${{ github.event.repository.default_branch }}
-        head: HEAD
+        base: ${{ steps.set-refs.outputs.base }}
+        head: ${{ steps.set-refs.outputs.head }}
         extra_args: --debug --only-verified
