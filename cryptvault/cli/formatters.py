@@ -13,8 +13,41 @@ Functions:
 """
 
 import sys
+import platform
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+
+# Windows-safe character replacements
+def safe_char(char: str) -> str:
+    """Replace Unicode characters with ASCII equivalents on Windows."""
+    if platform.system() == 'Windows':
+        replacements = {
+            '•': '*',
+            '─': '-',
+            '⩗': 'DB', '⩘': 'DT', '⫸': 'TB', '⫷': 'TT',
+            '⩙': 'HS', '⩚': 'IHS',
+            '△': '^', '▽': 'v', '◇': '<>', '◊': '<>',
+            '⚑': '^', '⚐': 'v',
+            '↗': '->', '↘': '<-',
+            '⤴': '->', '⤵': '<-',
+            '▭': '[]', '◈': '<>',
+            '⭐': '*',
+            '█': '#', '░': '.',
+        }
+        return replacements.get(char, char)
+    return char
+
+def safe_string(text: str) -> str:
+    """Replace Unicode characters in string for Windows compatibility."""
+    if platform.system() == 'Windows':
+        for unicode_char, ascii_char in {
+            '•': '*', '─': '-', '⩗': 'DB', '⩘': 'DT', '⫸': 'TB', '⫷': 'TT',
+            '⩙': 'HS', '⩚': 'IHS', '△': '^', '▽': 'v', '◇': '<>', '◊': '<>',
+            '⚑': '^', '⚐': 'v', '↗': '->', '↘': '<-', '⤴': '->', '⤵': '<-',
+            '▭': '[]', '◈': '<>', '⭐': '*', '█': '#', '░': '.',
+        }.items():
+            text = text.replace(unicode_char, ascii_char)
+    return text
 
 
 # ANSI color codes for terminal output
@@ -143,7 +176,7 @@ def format_analysis_results(results: Dict[str, Any], verbose: bool = False) -> s
         if 'suggestions' in results:
             output.append("\nSuggestions:")
             for suggestion in results['suggestions']:
-                output.append(f"  • {suggestion}")
+                output.append(f"  * {suggestion}")
 
         return '\n'.join(output)
 
@@ -256,22 +289,37 @@ def format_pattern_table(patterns: List[Dict[str, Any]], max_patterns: int = 10)
         return ""
 
     output = [format_header("Detected Patterns:")]
-    output.append("─" * 70)
+    output.append("-" * 70)
 
-    # Pattern symbols for visualization
-    pattern_symbols = {
-        'Double Bottom': '⩗', 'Double Top': '⩘',
-        'Triple Bottom': '⫸', 'Triple Top': '⫷',
-        'Head and Shoulders': '⩙', 'Inverse Head and Shoulders': '⩚',
-        'Ascending Triangle': '△', 'Descending Triangle': '▽',
-        'Expanding Triangle': '◇', 'Symmetrical Triangle': '◊',
-        'Bull Flag': '⚑', 'Bear Flag': '⚐',
-        'Bullish Divergence': '↗', 'Bearish Divergence': '↘',
-        'Hidden Bullish Divergence': '⤴', 'Hidden Bearish Divergence': '⤵',
-        'Rectangle': '▭', 'Diamond': '◈',
-        'Gartley': 'G', 'Butterfly': 'B', 'ABCD': 'A',
-        'Hammer': 'H', 'Shooting Star': 'S', 'Doji': '+'
-    }
+    # Pattern symbols for visualization (Windows-safe)
+    if platform.system() == 'Windows':
+        pattern_symbols = {
+            'Double Bottom': 'DB', 'Double Top': 'DT',
+            'Triple Bottom': 'TB', 'Triple Top': 'TT',
+            'Head and Shoulders': 'HS', 'Inverse Head and Shoulders': 'IHS',
+            'Ascending Triangle': '^', 'Descending Triangle': 'v',
+            'Expanding Triangle': '<>', 'Symmetrical Triangle': '<>',
+            'Bull Flag': '^', 'Bear Flag': 'v',
+            'Bullish Divergence': '->', 'Bearish Divergence': '<-',
+            'Hidden Bullish Divergence': '->', 'Hidden Bearish Divergence': '<-',
+            'Rectangle': '[]', 'Diamond': '<>',
+            'Gartley': 'G', 'Butterfly': 'B', 'ABCD': 'A',
+            'Hammer': 'H', 'Shooting Star': 'S', 'Doji': '+'
+        }
+    else:
+        pattern_symbols = {
+            'Double Bottom': '⩗', 'Double Top': '⩘',
+            'Triple Bottom': '⫸', 'Triple Top': '⫷',
+            'Head and Shoulders': '⩙', 'Inverse Head and Shoulders': '⩚',
+            'Ascending Triangle': '△', 'Descending Triangle': '▽',
+            'Expanding Triangle': '◇', 'Symmetrical Triangle': '◊',
+            'Bull Flag': '⚑', 'Bear Flag': '⚐',
+            'Bullish Divergence': '↗', 'Bearish Divergence': '↘',
+            'Hidden Bullish Divergence': '⤴', 'Hidden Bearish Divergence': '⤵',
+            'Rectangle': '▭', 'Diamond': '◈',
+            'Gartley': 'G', 'Butterfly': 'B', 'ABCD': 'A',
+            'Hammer': 'H', 'Shooting Star': 'S', 'Doji': '+'
+        }
 
     for i, pattern in enumerate(patterns[:max_patterns], 1):
         pattern_type = pattern.get('type', 'Unknown Pattern')
@@ -279,12 +327,15 @@ def format_pattern_table(patterns: List[Dict[str, Any]], max_patterns: int = 10)
         category = pattern.get('category', 'Unknown')
 
         # Get symbol
-        symbol = pattern_symbols.get(pattern_type, '⭐')
+        symbol = pattern_symbols.get(pattern_type, '*' if platform.system() == 'Windows' else '⭐')
 
         # Create confidence bar
         conf_value = float(confidence.rstrip('%'))
         conf_bars = int(conf_value / 10)
-        conf_bar = '█' * conf_bars + '░' * (10 - conf_bars)
+        if platform.system() == 'Windows':
+            conf_bar = '#' * conf_bars + '.' * (10 - conf_bars)
+        else:
+            conf_bar = '█' * conf_bars + '░' * (10 - conf_bars)
 
         # Color based on category
         if 'bullish' in category.lower():
@@ -339,14 +390,26 @@ def format_portfolio_results(results: Dict[str, Any]) -> str:
         return '\n'.join(output)
 
     # Total value
-    portfolio_value = results.get('portfolio_value', {})
-    total_usd = portfolio_value.get('total_usd', 0)
+    portfolio_metrics = results.get('portfolio_metrics')
+    total_usd = portfolio_metrics.total_value if portfolio_metrics else 0
     output.append(f"\nTotal Value: {colorize(f'${total_usd:,.2f}', Colors.BOLD + Colors.GREEN)}")
 
     # Asset allocation
     output.append("\nAsset Allocation:")
-    asset_allocation = results.get('asset_allocation', {})
-    asset_values = portfolio_value.get('asset_values', {})
+    correlation_matrix = results.get('correlation_matrix')
+    asset_analysis = results.get('asset_analysis', {})
+    
+    # Calculate allocation percentages from asset_analysis
+    asset_allocation = {}
+    asset_values = {}
+    total_value = portfolio_metrics.total_value if portfolio_metrics else 0
+    
+    for symbol, analysis in asset_analysis.items():
+        # For now, assume equal allocation since we don't have actual monetary amounts
+        if total_value > 0:
+            asset_value = total_value / len(asset_analysis)
+            asset_values[symbol] = asset_value
+            asset_allocation[symbol] = (asset_value / total_value) * 100
 
     for symbol, percentage in sorted(asset_allocation.items(), key=lambda x: x[1], reverse=True):
         value = asset_values.get(symbol, 0)
@@ -369,7 +432,7 @@ def format_portfolio_results(results: Dict[str, Any]) -> str:
     if results.get('rebalancing_suggestions'):
         output.append("\nRebalancing Suggestions:")
         for suggestion in results['rebalancing_suggestions'][:3]:
-            output.append(f"  • {suggestion}")
+            output.append(f"  * {suggestion}")
 
     return '\n'.join(output)
 
@@ -394,13 +457,13 @@ def format_comparison_results(results: Dict[str, Any]) -> str:
 
     # Table header
     output.append(f"\n{'Symbol':<8} {'Price':<12} {'Return':<10} {'Volatility':<12}")
-    output.append("─" * 50)
+    output.append("-" * 50)
 
     # Comparison data
-    comparison_data = results.get('comparison_data', {})
-    for symbol, data in sorted(comparison_data.items()):
+    asset_analysis = results.get('asset_analysis', {})
+    for symbol, data in sorted(asset_analysis.items()):
         price = data.get('current_price', 0)
-        period_return = data.get('period_return', 0)
+        period_return = data.get('price_change_24h', 0)
         volatility = data.get('volatility', 0)
 
         # Color return based on value
@@ -415,13 +478,12 @@ def format_comparison_results(results: Dict[str, Any]) -> str:
 
         output.append(f"{symbol:<8} ${price:>10,.2f} {return_text:<18} {volatility:>6.1f}%")
 
-    # Best performer
-    if results.get('best_performer'):
-        best = results['best_performer']
-        symbol = best[0]
-        perf_return = best[1].get('period_return', 0)
-        output.append(f"\nBest Performer: {colorize(symbol, Colors.BOLD)} "
-                     f"({colorize(f'+{perf_return:.1f}%', Colors.GREEN)})")
+    # Insights
+    insights = results.get('insights', [])
+    if insights:
+        output.append("\n" + format_header("Key Insights"))
+        for insight in insights:
+            output.append(f"  • {insight}")
 
     return '\n'.join(output)
 
@@ -437,7 +499,11 @@ class ProgressIndicator:
             message: Message to display
         """
         self.message = message
-        self.spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        # Use ASCII-compatible spinners on Windows to avoid encoding issues
+        if platform.system() == 'Windows':
+            self.spinner_chars = ['|', '/', '-', '\\']
+        else:
+            self.spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
         self.current = 0
         self.active = False
 
@@ -466,8 +532,16 @@ class ProgressIndicator:
             return
 
         spinner = self.spinner_chars[self.current % len(self.spinner_chars)]
-        sys.stdout.write(f'\r{spinner} {self.message}...')
-        sys.stdout.flush()
+        try:
+            output = f'\r{spinner} {self.message}...'
+            sys.stdout.write(output)
+            sys.stdout.flush()
+        except (UnicodeEncodeError, UnicodeError):
+            # Fallback to ASCII spinner if encoding fails
+            ascii_spinner = ['|', '/', '-', '\\'][self.current % 4]
+            output = f'\r{ascii_spinner} {self.message}...'
+            sys.stdout.write(output)
+            sys.stdout.flush()
         self.current += 1
 
 

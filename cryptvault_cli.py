@@ -30,6 +30,18 @@ import sys
 import argparse
 import logging
 import os
+import platform
+
+# Fix Windows console encoding for Unicode characters
+if platform.system() == 'Windows':
+    try:
+        # Try to set UTF-8 encoding for Windows console
+        if sys.stdout.encoding != 'utf-8':
+            sys.stdout.reconfigure(encoding='utf-8')
+    except (AttributeError, ValueError):
+        # If reconfigure doesn't work, use errors='replace' to avoid crashes
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 # Import CLI commands
 from cryptvault.cli.commands import (

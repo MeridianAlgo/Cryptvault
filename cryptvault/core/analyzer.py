@@ -1271,33 +1271,70 @@ class PatternAnalyzer:
     def _format_ml_predictions(self, ml_predictions: Any) -> Dict[str, Any]:
         """Format ML predictions for output."""
         try:
-            return {
-                'price_forecast': {
-                    'daily_prices': ml_predictions.price_forecast.daily_prices,
-                    'expected_return': f"{ml_predictions.price_forecast.expected_return:.2%}",
-                    'prediction_dates': [
-                        d.strftime("%Y-%m-%d") for d in ml_predictions.price_forecast.prediction_dates
-                    ],
-                    'confidence_intervals': ml_predictions.price_forecast.confidence_intervals,
-                    'probability_up': ml_predictions.price_forecast.probability_up
-                },
-                'trend_forecast': {
-                    'trend_7d': ml_predictions.trend_forecast.trend_7d,
-                    'trend_30d': ml_predictions.trend_forecast.trend_30d,
-                    'trend_strength': f"{ml_predictions.trend_forecast.trend_strength:.1%}",
-                    'reversal_probability': f"{ml_predictions.trend_forecast.reversal_probability:.1%}"
-                },
-                'market_regime': {
-                    'current_regime': ml_predictions.market_regime.current_regime,
-                    'regime_probability': {
-                        k: f"{v:.1%}" for k, v in ml_predictions.market_regime.regime_probability.items()
-                    },
-                    'regime_persistence': f"{ml_predictions.market_regime.regime_persistence:.1f} days"
-                },
-                'model_performance': ml_predictions.model_performance,
-                'feature_importance': ml_predictions.feature_importance,
-                'prediction_timestamp': ml_predictions.prediction_timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            }
+            # Handle both dict and object formats
+            if isinstance(ml_predictions, dict):
+                # Already in dict format, return as-is
+                return ml_predictions
+            
+            # Object format - convert to dict
+            result = {}
+            
+            # Price forecast
+            price_forecast = getattr(ml_predictions, 'price_forecast', None)
+            if price_forecast:
+                if isinstance(price_forecast, dict):
+                    result['price_forecast'] = price_forecast
+                else:
+                    result['price_forecast'] = {
+                        'daily_prices': getattr(price_forecast, 'daily_prices', []),
+                        'expected_return': f"{getattr(price_forecast, 'expected_return', 0):.2%}",
+                        'prediction_dates': [
+                            d.strftime("%Y-%m-%d") if hasattr(d, 'strftime') else str(d)
+                            for d in getattr(price_forecast, 'prediction_dates', [])
+                        ],
+                        'confidence_intervals': getattr(price_forecast, 'confidence_intervals', {}),
+                        'probability_up': getattr(price_forecast, 'probability_up', 0.5)
+                    }
+            
+            # Trend forecast
+            trend_forecast = getattr(ml_predictions, 'trend_forecast', None)
+            if trend_forecast:
+                if isinstance(trend_forecast, dict):
+                    result['trend_forecast'] = trend_forecast
+                else:
+                    result['trend_forecast'] = {
+                        'trend_7d': getattr(trend_forecast, 'trend_7d', 'Unknown'),
+                        'trend_30d': getattr(trend_forecast, 'trend_30d', 'Unknown'),
+                        'trend_strength': f"{getattr(trend_forecast, 'trend_strength', 0):.1%}",
+                        'reversal_probability': f"{getattr(trend_forecast, 'reversal_probability', 0):.1%}"
+                    }
+            
+            # Market regime
+            market_regime = getattr(ml_predictions, 'market_regime', None)
+            if market_regime:
+                if isinstance(market_regime, dict):
+                    result['market_regime'] = market_regime
+                else:
+                    regime_prob = getattr(market_regime, 'regime_probability', {})
+                    if not isinstance(regime_prob, dict):
+                        regime_prob = {}
+                    result['market_regime'] = {
+                        'current_regime': getattr(market_regime, 'current_regime', 'Unknown'),
+                        'regime_probability': {k: f"{v:.1%}" for k, v in regime_prob.items()},
+                        'regime_persistence': f"{getattr(market_regime, 'regime_persistence', 0):.1f} days"
+                    }
+            
+            result['model_performance'] = getattr(ml_predictions, 'model_performance', {})
+            result['feature_importance'] = getattr(ml_predictions, 'feature_importance', {})
+            
+            pred_timestamp = getattr(ml_predictions, 'prediction_timestamp', None)
+            if pred_timestamp:
+                if hasattr(pred_timestamp, 'strftime'):
+                    result['prediction_timestamp'] = pred_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    result['prediction_timestamp'] = str(pred_timestamp)
+            
+            return result
         except Exception as e:
             self.logger.error(f"Failed to format ML predictions: {e}")
             return {'error': 'Failed to format ML predictions'}

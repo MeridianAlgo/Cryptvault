@@ -401,6 +401,17 @@ class AdvancedEnsembleModel:
             'is_trained': self.is_trained
         }
 
+    def get_model_summary(self) -> Dict[str, Any]:
+        """Get summary of model performance (for backward compatibility)."""
+        return {
+            'trained_models': sum(1 for w in self.weights.values() if w > 0.01),
+            'total_models': len(self.models),
+            'model_scores': self.model_performance.copy() if hasattr(self, 'model_performance') else {},
+            'model_weights': self.get_model_contributions(),
+            'ensemble_score': getattr(self, 'ensemble_accuracy', 0.0),
+            'is_trained': self.is_trained
+        }
+
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default advanced ensemble configuration."""
         return {

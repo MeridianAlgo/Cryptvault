@@ -670,6 +670,9 @@ class CryptVaultDesktopCharts:
             # Convert timestamp to comparable format
             if hasattr(ts, 'timestamp'):
                 target_ts = ts.timestamp()
+                # If timezone-aware, convert to UTC and make naive
+                if hasattr(ts, 'tzinfo') and ts.tzinfo is not None:
+                    target_ts = ts.astimezone().timestamp()
             elif isinstance(ts, (int, float)):
                 target_ts = ts
             else:
@@ -679,7 +682,11 @@ class CryptVaultDesktopCharts:
             date_timestamps = []
             for d in dates:
                 if hasattr(d, 'timestamp'):
-                    date_timestamps.append(d.timestamp())
+                    ts_val = d.timestamp()
+                    # If timezone-aware, convert to UTC and make naive
+                    if hasattr(d, 'tzinfo') and d.tzinfo is not None:
+                        ts_val = d.astimezone().timestamp()
+                    date_timestamps.append(ts_val)
                 elif isinstance(d, (int, float)):
                     date_timestamps.append(d)
                 else:

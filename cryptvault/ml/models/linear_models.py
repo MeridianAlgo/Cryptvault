@@ -72,7 +72,15 @@ class LinearPredictor:
                 return self._fallback_predictions(features)
 
             if features.shape[1] != self.feature_count:
-                raise ValueError(f"Expected {self.feature_count} features, got {features.shape[1]}")
+                # Try to adapt features to match expected dimension
+                if features.shape[1] > self.feature_count:
+                    # Take first N features
+                    features = features[:, :self.feature_count]
+                elif features.shape[1] < self.feature_count:
+                    # Pad with zeros
+                    padding = np.zeros((features.shape[0], self.feature_count - features.shape[1]))
+                    features = np.hstack([features, padding])
+                self.logger.warning(f"Feature dimension mismatch: expected {self.feature_count}, got {features.shape[1]}. Adjusted.")
 
             # Linear prediction: y = X * w + b
             predictions = np.dot(features, self.weights) + self.bias

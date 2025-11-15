@@ -42,6 +42,20 @@ class PackageDataFetcher:
             logger.error("No data source available")
             return None
 
+    def fetch_historical_data(self, symbol: str, days: int = 30, interval: str = '1d') -> Optional[PriceDataFrame]:
+        """
+        Fetch historical data for symbol (alias for fetch_data).
+        
+        Args:
+            symbol: Ticker symbol
+            days: Number of days of data
+            interval: Data interval
+            
+        Returns:
+            PriceDataFrame with historical data or None
+        """
+        return self.fetch_data(symbol, days, interval)
+
     def _fetch_yfinance(self, symbol: str, days: int, interval: str) -> Optional[PriceDataFrame]:
         """Fetch data using yfinance."""
         try:

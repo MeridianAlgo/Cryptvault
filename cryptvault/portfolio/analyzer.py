@@ -82,10 +82,11 @@ class PortfolioAnalyzer:
             for asset in assets:
                 if asset.symbol in asset_data:
                     analysis = self.pattern_analyzer.analyze_dataframe(asset_data[asset.symbol])
+                    analysis_dict = analysis.to_dict() if hasattr(analysis, 'to_dict') else analysis
                     asset_analysis[asset.symbol] = {
-                        'patterns_found': analysis.get('patterns_found', 0),
-                        'top_pattern': analysis['patterns'][0] if analysis.get('patterns') else None,
-                        'ml_predictions': analysis.get('ml_predictions')
+                        'patterns_found': analysis_dict.get('patterns_found', 0),
+                        'top_pattern': analysis_dict['patterns'][0] if analysis_dict.get('patterns') else None,
+                        'ml_predictions': analysis_dict.get('ml_predictions')
                     }
 
             # Generate portfolio recommendations
@@ -93,12 +94,16 @@ class PortfolioAnalyzer:
                 assets, correlation_matrix, portfolio_metrics, asset_analysis
             )
 
+            # Calculate diversification score
+            diversification_score = self._calculate_diversification_score(correlation_matrix)
+
             return {
                 'success': True,
                 'portfolio_metrics': portfolio_metrics,
                 'correlation_matrix': correlation_matrix,
                 'asset_analysis': asset_analysis,
                 'recommendations': recommendations,
+                'diversification_score': diversification_score,
                 'analysis_timestamp': datetime.now()
             }
 
@@ -149,6 +154,15 @@ class PortfolioAnalyzer:
         portfolio_returns = []
         total_allocation = sum(asset.allocation for asset in assets)
 
+        # Calculate current portfolio value
+        portfolio_value = 0.0
+        for asset in assets:
+            if asset.symbol in asset_data and asset.current_price:
+                # Calculate monetary value based on allocation percentage
+                # Assuming the allocation represents percentage of total portfolio value
+                asset_value = (asset.allocation / total_allocation) * 10000  # Base portfolio value of $10,000
+                portfolio_value += asset_value
+
         # Get aligned price data
         min_length = min(len(asset_data[asset.symbol].data)
                         for asset in assets if asset.symbol in asset_data)
@@ -169,24 +183,33 @@ class PortfolioAnalyzer:
             portfolio_returns.append(daily_return)
 
         # Calculate metrics
-        if not portfolio_returns:
-            return PortfolioMetrics(0, 0, 0, 0, 0, 0, 0)
+        if portfolio_returns:
+            daily_return = portfolio_returns[-1] if portfolio_returns else 0.0
+        else:
+            daily_return = 0.0
 
+        return PortfolioMetrics(
+            total_value=portfolio_value,
+            daily_return=daily_return,
+            volatility=np.std(portfolio_returns) if portfolio_returns else 0.0,
+            sharpe_ratio=self._calculate_sharpe_ratio(portfolio_returns) if portfolio_returns else 0.0,
+            max_drawdown=self._calculate_max_drawdown(portfolio_returns) if portfolio_returns else 0.0,
+            correlation_score=0.5,  # Placeholder
+            diversification_ratio=0.7  # Placeholder
+        )
+
+    def _calculate_sharpe_ratio(self, portfolio_returns):
+        # Sharpe ratio (assuming 0% risk-free rate)
         daily_return = np.mean(portfolio_returns)
         volatility = np.std(portfolio_returns)
+        return daily_return / volatility if volatility > 0 else 0
 
-        # Sharpe ratio (assuming 0% risk-free rate)
-        sharpe_ratio = daily_return / volatility if volatility > 0 else 0
-
+    def _calculate_max_drawdown(self, portfolio_returns):
         # Max drawdown
         cumulative_returns = np.cumprod([1 + r for r in portfolio_returns])
         running_max = np.maximum.accumulate(cumulative_returns)
         drawdowns = (cumulative_returns - running_max) / running_max
-        max_drawdown = np.min(drawdowns)
-
-        # Portfolio value (assuming $10,000 base)
-        total_value = 10000 * cumulative_returns[-1]
-
+        return np.min(drawdowns)
         # Correlation score (average correlation)
         correlation_score = 0.5  # Placeholder
         diversification_ratio = 0.7  # Placeholder
@@ -200,6 +223,47 @@ class PortfolioAnalyzer:
             correlation_score=correlation_score,
             diversification_ratio=diversification_ratio
         )
+
+    def _calculate_diversification_score(self, correlation_matrix: CorrelationMatrix) -> float:
+        """Calculate diversification score based on asset correlations.
+        
+        Args:
+            correlation_matrix: Matrix of correlations between assets
+            
+        Returns:
+            Diversification score (0-100)
+        """
+        if not correlation_matrix or len(correlation_matrix.symbols) < 2:
+            return 0.0
+        
+        # Get correlation matrix
+        matrix = correlation_matrix.matrix
+        
+        # Calculate average off-diagonal correlation (excluding self-correlations)
+        n = len(matrix)
+        if n <= 1:
+            return 0.0
+            
+        sum_correlations = 0.0
+        count = 0
+        
+        for i in range(n):
+            for j in range(n):
+                if i != j:  # Skip diagonal elements (self-correlations)
+                    sum_correlations += abs(matrix[i][j])
+                    count += 1
+        
+        if count == 0:
+            return 0.0
+            
+        avg_correlation = sum_correlations / count
+        
+        # Convert correlation to diversification score
+        # Lower correlation = higher diversification
+        # Score: 100 when avg correlation is 0, 0 when avg correlation is 1
+        diversification_score = (1 - avg_correlation) * 100
+        
+        return max(0.0, min(100.0, diversification_score))
 
     def _generate_portfolio_recommendations(self, assets: List[PortfolioAsset],
                                           correlation_matrix: CorrelationMatrix,
@@ -288,3 +352,125 @@ class PortfolioAnalyzer:
         z_score = 1.96 if confidence == 0.95 else 2.33  # 95% or 99%
 
         return portfolio_volatility * z_score
+
+    def compare_assets(self, symbols: List[str], days: int = 30) -> Dict[str, Any]:
+        """Compare multiple assets side by side.
+        
+        Args:
+            symbols: List of asset symbols to compare
+            days: Number of days of data to analyze
+            
+        Returns:
+            Comparison results with metrics for each asset
+        """
+        try:
+            self.logger.info(f"Comparing {len(symbols)} assets")
+            
+            # Fetch data for all symbols
+            asset_data = {}
+            for symbol in symbols:
+                data = self.data_fetcher.fetch_historical_data(symbol, days, '1d')
+                if data:
+                    asset_data[symbol] = data
+            
+            if len(asset_data) < 2:
+                return {'success': False, 'error': 'Need at least 2 assets with data'}
+            
+            # Analyze each asset
+            asset_analysis = {}
+            for symbol, data in asset_data.items():
+                analysis = self.pattern_analyzer.analyze_dataframe(data)
+                analysis_dict = analysis.to_dict() if hasattr(analysis, 'to_dict') else analysis
+                
+                # Calculate basic metrics
+                prices = [point.close for point in data.data]
+                if len(prices) >= 2:
+                    current_price = prices[-1]
+                    price_change = (prices[-1] - prices[-2]) / prices[-2] if len(prices) >= 2 else 0
+                    volatility = np.std([(prices[i] - prices[i-1]) / prices[i-1] for i in range(1, len(prices))]) if len(prices) > 1 else 0
+                else:
+                    current_price = 0
+                    price_change = 0
+                    volatility = 0
+                
+                asset_analysis[symbol] = {
+                    'current_price': current_price,
+                    'price_change_24h': price_change * 100,  # Convert to percentage
+                    'volatility': volatility * 100,  # Convert to percentage
+                    'patterns_found': analysis_dict.get('patterns_found', 0),
+                    'top_pattern': analysis_dict['patterns'][0] if analysis_dict.get('patterns') else None,
+                    'technical_indicators': analysis_dict.get('technical_indicators', {}),
+                    'recommendations': analysis_dict.get('recommendations', [])
+                }
+            
+            # Calculate correlations between assets
+            correlation_matrix = self._calculate_correlations(asset_data)
+            
+            # Generate comparison insights
+            insights = self._generate_comparison_insights(asset_analysis, correlation_matrix)
+            
+            return {
+                'success': True,
+                'asset_analysis': asset_analysis,
+                'correlation_matrix': correlation_matrix,
+                'insights': insights,
+                'analysis_timestamp': datetime.now()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Asset comparison failed: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def _generate_comparison_insights(self, asset_analysis: Dict, correlation_matrix: CorrelationMatrix) -> List[str]:
+        """Generate insights from asset comparison."""
+        insights = []
+        
+        # Find best performer
+        best_performer = None
+        best_change = -float('inf')
+        for symbol, analysis in asset_analysis.items():
+            change = analysis.get('price_change_24h', 0)
+            if change > best_change:
+                best_change = change
+                best_performer = symbol
+        
+        if best_performer:
+            insights.append(f"Best 24h performer: {best_performer} ({best_change:.2f}%)")
+        
+        # Find most volatile
+        most_volatile = None
+        highest_volatility = -1
+        for symbol, analysis in asset_analysis.items():
+            vol = analysis.get('volatility', 0)
+            if vol > highest_volatility:
+                highest_volatility = vol
+                most_volatile = symbol
+        
+        if most_volatile:
+            insights.append(f"Most volatile: {most_volatile} ({highest_volatility:.2f}%)")
+        
+        # Correlation insights
+        if len(correlation_matrix.symbols) >= 2:
+            matrix = correlation_matrix.matrix
+            n = len(matrix)
+            max_corr = 0
+            min_corr = 1
+            max_pair = None
+            min_pair = None
+            
+            for i in range(n):
+                for j in range(i+1, n):
+                    corr = abs(matrix[i][j])
+                    if corr > max_corr:
+                        max_corr = corr
+                        max_pair = (correlation_matrix.symbols[i], correlation_matrix.symbols[j])
+                    if corr < min_corr:
+                        min_corr = corr
+                        min_pair = (correlation_matrix.symbols[i], correlation_matrix.symbols[j])
+            
+            if max_pair:
+                insights.append(f"Highest correlation: {max_pair[0]}-{max_pair[1]} ({max_corr:.2f})")
+            if min_pair:
+                insights.append(f"Lowest correlation: {min_pair[0]}-{min_pair[1]} ({min_corr:.2f})")
+        
+        return insights

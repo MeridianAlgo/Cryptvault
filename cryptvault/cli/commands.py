@@ -97,11 +97,32 @@ def analyze_ticker(
         finally:
             progress.stop()
 
+        # Convert AnalysisResult to dict if needed
+        if hasattr(results, 'to_dict'):
+            results_dict = results.to_dict()
+        elif isinstance(results, dict):
+            results_dict = results
+        else:
+            # Fallback: create dict from object attributes
+            results_dict = {
+                'success': getattr(results, 'success', False),
+                'symbol': getattr(results, 'symbol', 'Unknown'),
+                'patterns_found': len(getattr(results, 'patterns', [])),
+                'patterns': getattr(results, 'patterns', []),
+                'pattern_summary': getattr(results, 'pattern_summary', {}),
+                'technical_indicators': getattr(results, 'technical_indicators', {}),
+                'ml_predictions': getattr(results, 'ml_predictions', None),
+                'ticker_info': getattr(results, 'ticker_info', {}),
+                'analysis_time_seconds': getattr(results, 'analysis_time', 0),
+                'errors': getattr(results, 'errors', []),
+                'warnings': getattr(results, 'warnings', [])
+            }
+
         # Format and display results
-        output = format_analysis_results(results, verbose=verbose)
+        output = format_analysis_results(results_dict, verbose=verbose)
         print(output)
 
-        if not results['success']:
+        if not results_dict.get('success', False):
             return False
 
         # Generate chart if requested
@@ -145,10 +166,19 @@ def analyze_portfolio(holdings_str: List[str], verbose: bool = False) -> bool:
 
         # Import portfolio analyzer
         try:
-            from cryptvault.portfolio.analyzer import PortfolioAnalyzer
+            from cryptvault.portfolio.analyzer import PortfolioAnalyzer, PortfolioAsset
         except ImportError:
             print(format_error("Portfolio analysis requires pandas: pip install pandas"))
             return False
+
+        # Convert holdings dict to PortfolioAsset objects
+        portfolio_assets = []
+        total_value = sum(holdings.values())
+        
+        for symbol, amount in holdings.items():
+            # Convert monetary amount to allocation percentage
+            allocation = amount / total_value if total_value > 0 else 0
+            portfolio_assets.append(PortfolioAsset(symbol=symbol, allocation=allocation))
 
         # Show progress
         progress = create_progress_indicator("Analyzing portfolio")
@@ -156,7 +186,7 @@ def analyze_portfolio(holdings_str: List[str], verbose: bool = False) -> bool:
 
         try:
             portfolio_analyzer = PortfolioAnalyzer()
-            results = portfolio_analyzer.analyze_portfolio(holdings)
+            results = portfolio_analyzer.analyze_portfolio(portfolio_assets)
         finally:
             progress.stop()
 
@@ -522,20 +552,475 @@ def _generate_chart(
         verbose: Enable verbose output
     """
     try:
-        from generate_chart import generate_chart as gen_chart
+        from cryptvault.visualization.desktop_charts import CryptVaultDesktopCharts
+        from cryptvault.core.analyzer import PatternAnalyzer
+        from cryptvault.config.manager import ConfigManager
 
         if save_path:
             print(format_info(f"Generating chart and saving to {save_path}..."))
+            # For saving to file, use candlestick chart generator
+            from cryptvault.visualization.candlestick_charts import CandlestickChartGenerator
+            config = ConfigManager()
+            analyzer = PatternAnalyzer(config)
+            result = analyzer.analyze_ticker(ticker, days=days, interval=interval)
+            
+            if result.success:
+                from cryptvault.data.fetchers import DataFetcher
+                fetcher = DataFetcher()
+                data = fetcher.fetch(ticker, days=days, interval=interval)
+                
+                if data and len(data) > 0:
+                    chart_gen = CandlestickChartGenerator()
+                    patterns_dict = []
+                    for pattern in result.patterns:
+                        if isinstance(pattern, dict):
+                            patterns_dict.append(pattern)
+                        else:
+                            patterns_dict.append({
+                                'type': getattr(pattern, 'pattern_type', 'Unknown'),
+                                'confidence': f"{getattr(pattern, 'confidence', 0):.1%}",
+                                'category': str(getattr(pattern, 'category', 'Unknown'))
+                            })
+                    
+                    chart_output = chart_gen.generate_candlestick_chart(
+                        data, ticker, patterns=patterns_dict
+                    )
+                    
+                    with open(save_path, 'w', encoding='utf-8') as f:
+                        f.write(chart_output)
+                    print(format_success(f"Chart saved to: {save_path}"))
+                else:
+                    print(format_warning("Could not generate chart: no data available"))
+            else:
+                print(format_warning("Could not generate chart: analysis failed"))
         else:
+            # For interactive display, use matplotlib directly
             print(format_info("Generating interactive chart with pattern overlays..."))
             print(format_info("Chart window will open - use toolbar to zoom/pan"))
-
-        gen_chart(ticker, days=days, interval=interval, save_path=save_path)
-
-        if save_path:
-            print(format_success(f"Chart saved to: {save_path}"))
-        else:
-            print(format_success("Chart window closed"))
+            
+            try:
+                import matplotlib.pyplot as plt
+                import matplotlib.dates as mdates
+                from datetime import datetime
+                import numpy as np
+                
+                # Set dark mode style
+                plt.style.use('dark_background')
+                fig = plt.figure(figsize=(12, 8), facecolor='#1e1e1e')
+                
+                # Get data for chart
+                from cryptvault.data.fetchers import DataFetcher
+                fetcher = DataFetcher()
+                data = fetcher.fetch(ticker, days=days, interval=interval)
+                
+                if data and len(data) > 0:
+                    # Extract data
+                    dates = [point.timestamp for point in data]
+                    opens = [point.open for point in data]
+                    highs = [point.high for point in data]
+                    lows = [point.low for point in data]
+                    closes = [point.close for point in data]
+                    
+                    print(format_info(f"Chart data: {len(data)} points from {dates[0].strftime('%Y-%m-%d')} to {dates[-1].strftime('%Y-%m-%d')}"))
+                    
+                    # Create subplots
+                    ax1 = plt.subplot2grid((4, 1), (0, 0), rowspan=3)
+                    ax2 = plt.subplot2grid((4, 1), (3, 0))
+                    
+                    # Plot candlesticks properly
+                    for i in range(len(dates)):
+                        color = '#00ff88' if closes[i] >= opens[i] else '#ff4444'
+                        # High-low line
+                        ax1.plot([i, i], [lows[i], highs[i]], color='white', linewidth=1, alpha=0.8)
+                        # Open-close bar
+                        ax1.bar(i, abs(closes[i] - opens[i]), 
+                               bottom=min(opens[i], closes[i]), 
+                               color=color, alpha=0.8, width=0.6)
+                    
+                    # Calculate and plot moving averages using pandas for reliability
+                    try:
+                        import pandas as pd
+                        closes_series = pd.Series(closes)
+                        
+                        # MA20
+                        if len(closes) >= 20:
+                            ma20 = closes_series.rolling(window=20, min_periods=1).mean()
+                            ax1.plot(range(len(ma20)), ma20, color='#ffa500', linewidth=2, alpha=0.7, label='MA20')
+                            print(format_info("MA20 plotted successfully"))
+                        
+                        # MA50 - Always plot if we have any data, even if less than 50 points
+                        if len(closes) >= 1:
+                            if len(closes) >= 50:
+                                ma50 = closes_series.rolling(window=50, min_periods=1).mean()
+                            else:
+                                # For less than 50 points, use available data
+                                ma50 = closes_series.rolling(window=len(closes), min_periods=1).mean()
+                            ax1.plot(range(len(ma50)), ma50, color='#00bfff', linewidth=2, alpha=0.7, label='MA50')
+                            print(format_info(f"MA50 plotted successfully ({len(closes)} points)"))
+                            
+                    except ImportError:
+                        # Fallback to manual calculation
+                        print(format_warning("Pandas not available, using manual MA calculation"))
+                        
+                        # MA20
+                        if len(closes) >= 20:
+                            ma20 = []
+                            for i in range(len(closes)):
+                                if i >= 19:
+                                    ma20.append(np.mean(closes[i-19:i+1]))
+                                else:
+                                    ma20.append(np.mean(closes[:i+1]) if i >= 0 else closes[0])
+                            ax1.plot(range(len(ma20)), ma20, color='#ffa500', linewidth=2, alpha=0.7, label='MA20')
+                        
+                        # MA50
+                        if len(closes) >= 1:
+                            ma50 = []
+                            window = min(50, len(closes))
+                            for i in range(len(closes)):
+                                if i >= window - 1:
+                                    ma50.append(np.mean(closes[i-window+1:i+1]))
+                                else:
+                                    ma50.append(np.mean(closes[:i+1]) if i >= 0 else closes[0])
+                            ax1.plot(range(len(ma50)), ma50, color='#00bfff', linewidth=2, alpha=0.7, label='MA50')
+                    
+                    # Plot volume
+                    volumes = [point.volume for point in data]
+                    max_volume = max(volumes) if volumes else 1
+                    colors = ['#00ff88' if c >= o else '#ff4444' for c, o in zip(closes, opens)]
+                    ax2.bar(range(len(volumes)), volumes, color=colors, alpha=0.6)
+                    
+                    # Formatting
+                    ax1.set_title(f'{ticker} Chart - {interval}', fontsize=16, fontweight='bold', color='white')
+                    ax1.set_ylabel('Price ($)', fontsize=12, color='white')
+                    ax1.grid(True, alpha=0.2, color='gray')
+                    ax1.set_facecolor('#2a2a2a')
+                    
+                    ax2.set_ylabel('Volume', fontsize=12, color='white')
+                    ax2.set_xlabel('Time', fontsize=12, color='white')
+                    ax2.grid(True, alpha=0.2, color='gray')
+                    ax2.set_facecolor('#2a2a2a')
+                    
+                    # Format x-axis
+                    ax1.set_xlim(-1, len(dates))
+                    ax2.set_xlim(-1, len(dates))
+                    
+                    # Set x-axis labels
+                    step = max(1, len(dates) // 10)
+                    x_ticks = list(range(0, len(dates), step))
+                    x_labels = [dates[i].strftime('%m-%d') for i in x_ticks]
+                    ax1.set_xticks(x_ticks)
+                    ax1.set_xticklabels(x_labels, rotation=45)
+                    ax2.set_xticks(x_ticks)
+                    ax2.set_xticklabels(x_labels, rotation=45)
+                    
+                    # Add pattern annotations if available
+                    config = ConfigManager()
+                    analyzer = PatternAnalyzer(config)
+                    result = analyzer.analyze_ticker(ticker, days=days, interval=interval)
+                    
+                    if result.success and result.patterns:
+                        print(format_info(f"Plotting {len(result.patterns)} detected patterns..."))
+                        for idx, pattern in enumerate(result.patterns):
+                            # Debug: print pattern attributes
+                            print(format_info(f"Pattern {idx+1} type: {type(pattern)}"))
+                            if hasattr(pattern, '__dict__'):
+                                print(format_info(f"  Attributes: {list(pattern.__dict__.keys())}"))
+                                for key, value in pattern.__dict__.items():
+                                    print(format_info(f"    {key}: {value}"))
+                            
+                            # Try different attribute names
+                            pattern_type = None
+                            confidence = 0
+                            start_time = None
+                            end_time = None
+                            
+                            # Try various attribute names
+                            for attr in ['pattern_type', 'type', 'name', 'pattern_name']:
+                                if hasattr(pattern, attr):
+                                    pattern_type = getattr(pattern, attr)
+                                    break
+                            
+                            for attr in ['confidence', 'confidence_score', 'score']:
+                                if hasattr(pattern, attr):
+                                    confidence = getattr(pattern, attr)
+                                    break
+                            
+                            for attr in ['start_time', 'start', 'begin_time', 'begin']:
+                                if hasattr(pattern, attr):
+                                    start_time = getattr(pattern, attr)
+                                    break
+                            
+                            for attr in ['end_time', 'end', 'finish_time', 'finish']:
+                                if hasattr(pattern, attr):
+                                    end_time = getattr(pattern, attr)
+                                    break
+                            
+                            # If pattern is a dict, try dict keys
+                            if isinstance(pattern, dict):
+                                pattern_type = pattern.get('pattern_type', pattern.get('type', 'Unknown'))
+                                confidence = pattern.get('confidence', pattern.get('confidence_score', 0))
+                                start_time = pattern.get('start_time', pattern.get('start', None))
+                                end_time = pattern.get('end_time', pattern.get('end', None))
+                            
+                            print(format_info(f"Pattern {idx+1}: {pattern_type} - Confidence: {confidence}"))
+                            print(format_info(f"  Start: {start_time}, End: {end_time}"))
+                            
+                            # Find the closest indices for pattern start and end
+                            start_idx = None
+                            end_idx = None
+                            
+                            if start_time and end_time:
+                                # Convert to datetime if they are strings and normalize timezone
+                                if isinstance(start_time, str):
+                                    try:
+                                        from datetime import datetime
+                                        start_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                                    except:
+                                        pass
+                                
+                                if isinstance(end_time, str):
+                                    try:
+                                        from datetime import datetime
+                                        end_time = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+                                    except:
+                                        pass
+                                
+                                # Make pattern datetimes timezone-naive to match chart datetimes
+                                if hasattr(start_time, 'tzinfo') and start_time.tzinfo is not None:
+                                    start_time = start_time.replace(tzinfo=None)
+                                if hasattr(end_time, 'tzinfo') and end_time.tzinfo is not None:
+                                    end_time = end_time.replace(tzinfo=None)
+                                
+                                # Also make chart datetimes timezone-naive
+                                normalized_dates = []
+                                for date in dates:
+                                    if hasattr(date, 'tzinfo') and date.tzinfo is not None:
+                                        normalized_dates.append(date.replace(tzinfo=None))
+                                    else:
+                                        normalized_dates.append(date)
+                                
+                                # Find start index
+                                min_start_diff = float('inf')
+                                for i, date in enumerate(normalized_dates):
+                                    diff = abs((date - start_time).total_seconds())
+                                    if diff < min_start_diff:
+                                        min_start_diff = diff
+                                        start_idx = i
+                                
+                                # Find end index
+                                min_end_diff = float('inf')
+                                for i, date in enumerate(normalized_dates):
+                                    diff = abs((date - end_time).total_seconds())
+                                    if diff < min_end_diff:
+                                        min_end_diff = diff
+                                        end_idx = i
+                                
+                                print(format_info(f"  Found indices: start={start_idx}, end={end_idx} (total points: {len(dates)})"))
+                                
+                                # Plot pattern if we found valid indices
+                                if start_idx is not None and end_idx is not None and start_idx < len(dates) and end_idx < len(dates):
+                                    # Ensure end_idx >= start_idx
+                                    if end_idx < start_idx:
+                                        start_idx, end_idx = end_idx, start_idx
+                                    
+                                    # Add colored background for pattern region
+                                    pattern_color = '#ffff00' if 'Bullish' in str(pattern_type) else '#00ffff' if 'Bearish' in str(pattern_type) else '#ff00ff'
+                                    confidence_str = f"{confidence:.1f}%" if isinstance(confidence, (int, float)) else f"{confidence}%"
+                                    ax1.axvspan(start_idx, end_idx, 
+                                              alpha=0.2, color=pattern_color, 
+                                              label=f"{pattern_type} ({confidence_str})")
+                                    
+                                    # Draw pattern-specific shapes
+                                    if 'Wedge' in str(pattern_type):
+                                        # Draw wedge pattern lines
+                                        pattern_highs = [highs[i] for i in range(start_idx, min(end_idx+1, len(highs)))]
+                                        pattern_lows = [lows[i] for i in range(start_idx, min(end_idx+1, len(lows)))]
+                                        pattern_x = list(range(start_idx, min(end_idx+1, len(highs))))
+                                        
+                                        if len(pattern_highs) >= 3 and len(pattern_lows) >= 3:
+                                            # Falling wedge - upper line slopes down, lower line slopes down more steeply
+                                            if 'Falling' in str(pattern_type):
+                                                # Upper trendline (resistance)
+                                                z_high = np.polyfit(pattern_x[:len(pattern_x)//2], pattern_highs[:len(pattern_highs)//2], 1)
+                                                p_high = np.poly1d(z_high)
+                                                ax1.plot(pattern_x[:len(pattern_x)//2], p_high(pattern_x[:len(pattern_x)//2]), 
+                                                       color=pattern_color, linewidth=2, linestyle='--', alpha=0.8)
+                                                
+                                                # Lower trendline (support)
+                                                z_low = np.polyfit(pattern_x[len(pattern_x)//2:], pattern_lows[len(pattern_lows)//2:], 1)
+                                                p_low = np.poly1d(z_low)
+                                                ax1.plot(pattern_x[len(pattern_x)//2:], p_low(pattern_x[len(pattern_x)//2:]), 
+                                                       color=pattern_color, linewidth=2, linestyle='--', alpha=0.8)
+                                            
+                                            # Rising wedge - lower line slopes up, upper line slopes up more steeply
+                                            elif 'Rising' in str(pattern_type):
+                                                # Lower trendline (support)
+                                                z_low = np.polyfit(pattern_x[:len(pattern_x)//2], pattern_lows[:len(pattern_lows)//2], 1)
+                                                p_low = np.poly1d(z_low)
+                                                ax1.plot(pattern_x[:len(pattern_x)//2], p_low(pattern_x[:len(pattern_x)//2]), 
+                                                       color=pattern_color, linewidth=2, linestyle='--', alpha=0.8)
+                                                
+                                                # Upper trendline (resistance)
+                                                z_high = np.polyfit(pattern_x[len(pattern_x)//2:], pattern_highs[len(pattern_highs)//2:], 1)
+                                                p_high = np.poly1d(z_high)
+                                                ax1.plot(pattern_x[len(pattern_x)//2:], p_high(pattern_x[len(pattern_x)//2:]), 
+                                                       color=pattern_color, linewidth=2, linestyle='--', alpha=0.8)
+                                    
+                                    elif 'Triangle' in str(pattern_type):
+                                        # Draw triangle pattern
+                                        pattern_highs = [highs[i] for i in range(start_idx, min(end_idx+1, len(highs)))]
+                                        pattern_lows = [lows[i] for i in range(start_idx, min(end_idx+1, len(lows)))]
+                                        pattern_x = list(range(start_idx, min(end_idx+1, len(highs))))
+                                        
+                                        if len(pattern_highs) >= 3:
+                                            # Ascending triangle - horizontal top, rising bottom
+                                            if 'Ascending' in str(pattern_type):
+                                                # Horizontal resistance line
+                                                max_high = max(pattern_highs[:len(pattern_highs)//2])
+                                                ax1.plot([pattern_x[0], pattern_x[len(pattern_x)//2]], [max_high, max_high], 
+                                                       color=pattern_color, linewidth=2, linestyle='--', alpha=0.8)
+                                                
+                                                # Rising support line
+                                                z_low = np.polyfit(pattern_x[:len(pattern_x)//2], pattern_lows[:len(pattern_lows)//2], 1)
+                                                p_low = np.poly1d(z_low)
+                                                ax1.plot(pattern_x[:len(pattern_x)//2], p_low(pattern_x[:len(pattern_x)//2]), 
+                                                       color=pattern_color, linewidth=2, linestyle='--', alpha=0.8)
+                                    
+                                    elif 'Head' in str(pattern_type) and 'Shoulders' in str(pattern_type):
+                                        # Draw head and shoulders pattern
+                                        pattern_highs = [highs[i] for i in range(start_idx, min(end_idx+1, len(highs)))]
+                                        pattern_lows = [lows[i] for i in range(start_idx, min(end_idx+1, len(lows)))]
+                                        pattern_x = list(range(start_idx, min(end_idx+1, len(highs))))
+                                        
+                                        if len(pattern_highs) >= 5:
+                                            # Find peaks (head and shoulders)
+                                            from scipy.signal import find_peaks
+                                            peaks, _ = find_peaks(pattern_highs, distance=2)
+                                            
+                                            if len(peaks) >= 3:
+                                                # Mark the head and shoulders
+                                                for i, peak_idx in enumerate(peaks[:3]):
+                                                    actual_idx = start_idx + peak_idx
+                                                    ax1.plot(actual_idx, pattern_highs[peak_idx], 'o', 
+                                                           color=pattern_color, markersize=8, alpha=0.8)
+                                                    
+                                                    # Label: L-S-H-S-R (Left Shoulder, Head, Right Shoulder)
+                                                    labels = ['LS', 'H', 'RS']
+                                                    if i < len(labels):
+                                                        ax1.text(actual_idx, pattern_highs[peak_idx] * 1.02, labels[i], 
+                                                               color=pattern_color, fontsize=8, ha='center', fontweight='bold')
+                                    
+                                    # Add pattern label at the bottom of the chart
+                                    mid_idx = (start_idx + end_idx) // 2
+                                    price_at_pattern = np.mean([lows[mid_idx], highs[mid_idx]])
+                                    confidence_str = f"{confidence:.1f}%" if isinstance(confidence, (int, float)) else f"{confidence}%"
+                                    ax1.text(mid_idx, price_at_pattern * 0.95, 
+                                           f"{pattern_type}\n{confidence_str}", 
+                                           color='white', fontsize=8, ha='center',
+                                           bbox=dict(boxstyle='round,pad=0.3', facecolor=pattern_color, alpha=0.7))
+                                    
+                                    print(format_info(f"  ✓ Plotted {pattern_type} from {dates[start_idx].strftime('%Y-%m-%d')} to {dates[end_idx].strftime('%Y-%m-%d')}"))
+                                else:
+                                    print(format_warning(f"  ✗ Could not plot {pattern_type} - invalid indices"))
+                            else:
+                                print(format_warning(f"  ✗ Pattern {pattern_type} missing start/end time"))
+                    else:
+                        print(format_warning("No patterns detected or pattern analysis failed"))
+                        
+                        # Try to plot a simple pattern manually for testing
+                        if len(dates) >= 10:
+                            # Create a fake pattern region for testing
+                            start_idx = len(dates) // 3
+                            end_idx = 2 * len(dates) // 3
+                            ax1.axvspan(start_idx, end_idx, 
+                                      alpha=0.2, color='yellow', 
+                                      label='Test Pattern Region')
+                            ax1.text((start_idx + end_idx) // 2, np.mean(lows[start_idx:end_idx]), 
+                                   'Test Pattern', 
+                                   color='white', fontsize=8, ha='center',
+                                   bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
+                            print(format_info("Added test pattern region for visualization"))
+                    
+                    # Update legend
+                    if result.success and result.patterns:
+                        handles, labels = ax1.get_legend_handles_labels()
+                        if handles:
+                            ax1.legend(handles[:5], labels[:5], loc='upper left', facecolor='#2a2a2a', edgecolor='gray', fontsize=9)
+                    
+                    plt.tight_layout()
+                    plt.show()
+                    
+                else:
+                    print(format_warning("Could not generate chart: no data available"))
+                    
+            except ImportError:
+                print(format_warning("Matplotlib not available for interactive charts"))
+                # Fallback to terminal chart
+                from cryptvault.visualization.candlestick_charts import CandlestickChartGenerator
+                config = ConfigManager()
+                analyzer = PatternAnalyzer(config)
+                result = analyzer.analyze_ticker(ticker, days=days, interval=interval)
+                
+                if result.success:
+                    from cryptvault.data.fetchers import DataFetcher
+                    fetcher = DataFetcher()
+                    data = fetcher.fetch(ticker, days=days, interval=interval)
+                    
+                    if data and len(data) > 0:
+                        chart_gen = CandlestickChartGenerator()
+                        patterns_dict = []
+                        for pattern in result.patterns:
+                            if isinstance(pattern, dict):
+                                patterns_dict.append(pattern)
+                            else:
+                                patterns_dict.append({
+                                    'type': getattr(pattern, 'pattern_type', 'Unknown'),
+                                    'confidence': f"{getattr(pattern, 'confidence', 0):.1%}",
+                                    'category': str(getattr(pattern, 'category', 'Unknown'))
+                                })
+                        
+                        chart_output = chart_gen.generate_candlestick_chart(
+                            data, ticker, patterns=patterns_dict
+                        )
+                        print(chart_output)
+                    else:
+                        print(format_warning("Could not generate chart: no data available"))
+                else:
+                    print(format_warning("Could not generate chart: analysis failed"))
+            except Exception as e:
+                print(format_warning(f"Could not generate interactive chart: {e}"))
+                # Fallback to terminal chart
+                from cryptvault.visualization.candlestick_charts import CandlestickChartGenerator
+                config = ConfigManager()
+                analyzer = PatternAnalyzer(config)
+                result = analyzer.analyze_ticker(ticker, days=days, interval=interval)
+                
+                if result.success:
+                    from cryptvault.data.fetchers import DataFetcher
+                    fetcher = DataFetcher()
+                    data = fetcher.fetch(ticker, days=days, interval=interval)
+                    
+                    if data and len(data) > 0:
+                        chart_gen = CandlestickChartGenerator()
+                        patterns_dict = []
+                        for pattern in result.patterns:
+                            if isinstance(pattern, dict):
+                                patterns_dict.append(pattern)
+                            else:
+                                patterns_dict.append({
+                                    'type': getattr(pattern, 'pattern_type', 'Unknown'),
+                                    'confidence': f"{getattr(pattern, 'confidence', 0):.1%}",
+                                    'category': str(getattr(pattern, 'category', 'Unknown'))
+                                })
+                        
+                        chart_output = chart_gen.generate_candlestick_chart(
+                            data, ticker, patterns=patterns_dict
+                        )
+                        print(chart_output)
+                    else:
+                        print(format_warning("Could not generate chart: no data available"))
+                else:
+                    print(format_warning("Could not generate chart: analysis failed"))
 
     except Exception as e:
         logger.exception("Error generating chart")

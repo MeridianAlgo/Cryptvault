@@ -502,9 +502,14 @@ class PatternOverlay:
             if hasattr(compare_date, 'tzinfo') and compare_date.tzinfo is not None:
                 compare_date = compare_date.replace(tzinfo=None)
 
-            diff = abs((compare_date - target_time).total_seconds())
-            if diff < min_diff:
-                min_diff = diff
-                closest_idx = i
+            # Calculate difference safely
+            try:
+                diff = abs((compare_date - target_time).total_seconds())
+                if diff < min_diff:
+                    min_diff = diff
+                    closest_idx = i
+            except (TypeError, ValueError) as e:
+                # Skip this date if there's a timezone mismatch
+                continue
 
         return closest_idx

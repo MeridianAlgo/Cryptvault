@@ -145,7 +145,13 @@ class CandlestickChartGenerator:
     def _format_modern_date(self, date: datetime) -> str:
         """Format date in modern, readable format"""
         now = datetime.now()
-        diff = now - date
+        
+        # Make both datetimes timezone-naive for comparison
+        compare_date = date
+        if hasattr(compare_date, 'tzinfo') and compare_date.tzinfo is not None:
+            compare_date = compare_date.replace(tzinfo=None)
+        
+        diff = now - compare_date
 
         if diff.days == 0:
             return date.strftime('%H:%M')

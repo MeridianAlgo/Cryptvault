@@ -11,17 +11,26 @@ Example:
 """
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 import time
 
-from .models import PricePoint, PriceDataFrame, TickerInfo, MarketData
+from . import models
+from .models import PricePoint
+from .models import PriceDataFrame as PriceDataFrameMain
+try:
+    from ..models import TickerInfo, MarketData
+except ImportError:
+    # TickerInfo and MarketData may not be available
+    TickerInfo = None
+    MarketData = None
 from ..exceptions import (
     DataFetchError, APIError, NetworkError, RateLimitError,
     InvalidTickerError, InsufficientDataError
 )
-from ..config import get_config
+from ..config.manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +45,7 @@ class BaseDataFetcher(ABC):
 
     def __init__(self) -> None:
         """Initialize base fetcher."""
-        self.config = get_config()
+        self.config = ConfigManager()
         self.last_request_time = 0
         self.request_count = 0
 
@@ -47,7 +56,7 @@ class BaseDataFetcher(ABC):
         start_date: datetime,
         end_date: datetime,
         interval: str = '1d'
-    ) -> PriceDataFrame:
+    ) -> PriceDataFrameMain:
         """
         Fetch price data for symbol.
 
@@ -58,7 +67,7 @@ class BaseDataFetcher(ABC):
             interval: Data interval
 
         Returns:
-            PriceDataFrame with fetched data
+            PriceDataFrameMain with fetched data
 
         Raises:
             DataFetchError: If fetch fails
@@ -130,7 +139,7 @@ class YFinanceFetcher(BaseDataFetcher):
         start_date: datetime,
         end_date: datetime,
         interval: str = '1d'
-    ) -> PriceDataFrame:
+    ) -> PriceDataFrameMain:
         """Fetch data from Yahoo Finance."""
         self._rate_limit()
 
@@ -164,7 +173,7 @@ class YFinanceFetcher(BaseDataFetcher):
                 )
                 price_points.append(point)
 
-            return PriceDataFrame(price_points, symbol=symbol, interval=interval)
+            return PriceDataFrameMain(price_points, symbol=symbol, timeframe=interval)
 
         except Exception as e:
             logger.error(f"YFinance fetch failed: {e}", exc_info=True)
@@ -240,7 +249,7 @@ class CCXTFetcher(BaseDataFetcher):
         start_date: datetime,
         end_date: datetime,
         interval: str = '1d'
-    ) -> PriceDataFrame:
+    ) -> PriceDataFrameMain:
         """Fetch data from cryptocurrency exchange."""
         self._rate_limit()
 
@@ -282,7 +291,7 @@ class CCXTFetcher(BaseDataFetcher):
                 )
                 price_points.append(point)
 
-            return PriceDataFrame(price_points, symbol=symbol.split('/')[0], interval=interval)
+            return PriceDataFrameMain(price_points, symbol=symbol.split('/')[0], timeframe=interval)
 
         except Exception as e:
             logger.error(f"CCXT fetch failed: {e}", exc_info=True)
@@ -318,14 +327,18 @@ class DataFetcher:
 
     def __init__(self) -> None:
         """Initialize unified data fetcher."""
-        self.config = get_config()
+        self.config = ConfigManager()
         self.fetchers: Dict[str, BaseDataFetcher] = {}
         self._initialize_fetchers()
 
     def _initialize_fetchers(self) -> None:
         """Initialize available fetchers."""
+        # Check if config has data_sources attribute, otherwise use defaults
+        has_data_sources = hasattr(self.config, 'data_sources')
+        
         # YFinance
-        if self.config.data_sources.yfinance_enabled:
+        yfinance_enabled = getattr(self.config.data_sources, 'yfinance_enabled', True) if has_data_sources else True
+        if yfinance_enabled:
             try:
                 self.fetchers['yfinance'] = YFinanceFetcher()
                 if self.fetchers['yfinance'].is_available():
@@ -334,7 +347,8 @@ class DataFetcher:
                 logger.warning(f"Failed to initialize YFinance: {e}")
 
         # CCXT
-        if self.config.data_sources.ccxt_enabled:
+        ccxt_enabled = getattr(self.config.data_sources, 'ccxt_enabled', True) if has_data_sources else True
+        if ccxt_enabled:
             try:
                 self.fetchers['ccxt'] = CCXTFetcher()
                 if self.fetchers['ccxt'].is_available():
@@ -348,7 +362,7 @@ class DataFetcher:
         days: int = 60,
         interval: str = '1d',
         source: Optional[str] = None
-    ) -> PriceDataFrame:
+    ) -> PriceDataFrameMain:
         """
         Fetch price data with automatic fallback.
 
@@ -359,7 +373,7 @@ class DataFetcher:
             source: Specific source to use (optional)
 
         Returns:
-            PriceDataFrame with fetched data
+            PriceDataFrameMain with fetched data
 
         Raises:
             DataFetchError: If all sources fail
@@ -375,7 +389,17 @@ class DataFetcher:
         if source:
             sources = [source]
         else:
-            sources = [self.config.data_sources.primary] + self.config.data_sources.fallback
+            # Check if CCXT is enabled via environment variable
+            if os.getenv('CRYPTVAULT_ENABLE_CCXT'):
+                # Get sources from config or use defaults
+                if hasattr(self.config, 'data_sources') and hasattr(self.config.data_sources, 'primary'):
+                    sources = [self.config.data_sources.primary] + getattr(self.config.data_sources, 'fallback', ['yfinance'])
+                else:
+                    # Default: try yfinance first, then ccxt
+                    sources = ['yfinance', 'ccxt']
+            else:
+                # Only use YFinance
+                sources = ['yfinance']
 
         last_error = None
         for source_name in sources:
@@ -427,7 +451,12 @@ class DataFetcher:
 
         # Get ticker info from primary source
         ticker_info = None
-        for source_name in [self.config.data_sources.primary] + self.config.data_sources.fallback:
+        if hasattr(self.config, 'data_sources') and hasattr(self.config.data_sources, 'primary'):
+            sources_to_try = [self.config.data_sources.primary] + getattr(self.config.data_sources, 'fallback', ['yfinance'])
+        else:
+            sources_to_try = ['yfinance', 'ccxt']
+        
+        for source_name in sources_to_try:
             if source_name in self.fetchers:
                 try:
                     ticker_info = self.fetchers[source_name].get_ticker_info(symbol)
@@ -448,7 +477,7 @@ class DataFetcher:
             price_data=price_data,
             ticker_info=ticker_info,
             fetch_time=datetime.now(),
-            source=self.config.data_sources.primary
+            source=getattr(self.config.data_sources, 'primary', 'yfinance') if hasattr(self.config, 'data_sources') else 'yfinance'
         )
 
     def get_available_sources(self) -> Dict[str, bool]:

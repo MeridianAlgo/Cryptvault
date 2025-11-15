@@ -36,9 +36,12 @@ class DivergenceAnalyzer:
         patterns = []
 
         try:
-            # Calculate technical indicators
-            rsi_values = self.technical_indicators.calculate_rsi(data)
-            macd_data = self.technical_indicators.calculate_macd(data)
+            # Extract closes for indicator calculations
+            closes = data.get_closes()
+            
+            # Calculate technical indicators (they expect List[float], not PriceDataFrame)
+            rsi_values = self.technical_indicators.calculate_rsi(closes)
+            macd_data = self.technical_indicators.calculate_macd(closes)
 
             # Detect RSI divergences
             rsi_divergences = self._detect_rsi_divergences(data, rsi_values, sensitivity)
@@ -62,9 +65,29 @@ class DivergenceAnalyzer:
         highs = data.get_highs()
         lows = data.get_lows()
 
+        # Filter out None values from RSI before finding peaks/troughs
+        rsi_values_clean = [v for v in rsi_values if v is not None]
+        rsi_indices = [i for i, v in enumerate(rsi_values) if v is not None]
+        
         # Find peaks and troughs in price and RSI
-        price_peaks = self.technical_indicators.find_peaks_and_troughs(closes, min_distance=5)
-        rsi_peaks = self.technical_indicators.find_peaks_and_troughs(rsi_values, min_distance=5)
+        price_peaks_raw = self.trend_analysis.find_peaks_and_troughs(closes, min_distance=5)
+        rsi_peaks_raw = self.trend_analysis.find_peaks_and_troughs(rsi_values_clean, min_distance=5) if rsi_values_clean else []
+        
+        # Map RSI indices back to original indices
+        if rsi_peaks_raw and rsi_indices:
+            for pt in rsi_peaks_raw:
+                if pt.index < len(rsi_indices):
+                    pt.index = rsi_indices[pt.index]
+        
+        # Convert to dict format
+        price_peaks = {
+            'peaks': [pt.index for pt in price_peaks_raw if pt.type == 'peak'],
+            'troughs': [pt.index for pt in price_peaks_raw if pt.type == 'trough']
+        }
+        rsi_peaks = {
+            'peaks': [pt.index for pt in rsi_peaks_raw if pt.type == 'peak'],
+            'troughs': [pt.index for pt in rsi_peaks_raw if pt.type == 'trough']
+        }
 
         # Detect bullish divergences (price makes lower lows, RSI makes higher lows)
         bullish_divergences = self._find_bullish_divergences(
@@ -96,9 +119,29 @@ class DivergenceAnalyzer:
         lows = data.get_lows()
         macd_line = macd_data['macd']
 
+        # Filter out None values from MACD before finding peaks/troughs
+        macd_line_clean = [v for v in macd_line if v is not None]
+        macd_indices = [i for i, v in enumerate(macd_line) if v is not None]
+        
         # Find peaks and troughs in price and MACD
-        price_peaks = self.technical_indicators.find_peaks_and_troughs(closes, min_distance=5)
-        macd_peaks = self.technical_indicators.find_peaks_and_troughs(macd_line, min_distance=5)
+        price_peaks_raw = self.trend_analysis.find_peaks_and_troughs(closes, min_distance=5)
+        macd_peaks_raw = self.trend_analysis.find_peaks_and_troughs(macd_line_clean, min_distance=5) if macd_line_clean else []
+        
+        # Map MACD indices back to original indices
+        if macd_peaks_raw and macd_indices:
+            for pt in macd_peaks_raw:
+                if pt.index < len(macd_indices):
+                    pt.index = macd_indices[pt.index]
+        
+        # Convert to dict format
+        price_peaks = {
+            'peaks': [pt.index for pt in price_peaks_raw if pt.type == 'peak'],
+            'troughs': [pt.index for pt in price_peaks_raw if pt.type == 'trough']
+        }
+        macd_peaks = {
+            'peaks': [pt.index for pt in macd_peaks_raw if pt.type == 'peak'],
+            'troughs': [pt.index for pt in macd_peaks_raw if pt.type == 'trough']
+        }
 
         # Detect bullish divergences
         bullish_divergences = self._find_bullish_divergences(
