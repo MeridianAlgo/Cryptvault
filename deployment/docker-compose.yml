@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  cryptvault:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cryptvault:latest
+    container_name: cryptvault
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount logs directory for persistence
+      - ./logs:/app/logs
+      # Mount predictions cache
+      - ./cryptvault_predictions:/app/.cryptvault_predictions
+    # Override default command for interactive use
+    # Example: docker-compose run cryptvault BTC 60 1d
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # Optional: Add Redis for caching (uncomment to enable)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: cryptvault-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   restart: unless-stopped
+
+# volumes:
+#   redis-data:

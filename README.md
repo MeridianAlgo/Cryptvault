@@ -146,7 +146,34 @@ python cryptvault_cli.py --interactive
 
 ## Quick Start
 
-### Installation
+### 🚀 30-Second Deployment (Choose One)
+
+**Option 1: Docker (Recommended - Zero Setup!)**
+```bash
+docker build -t cryptvault . && docker run --rm cryptvault BTC 60 1d
+```
+
+**Option 2: Automated Script**
+```bash
+# Windows
+.\deploy.ps1 local
+
+# Linux/Mac
+chmod +x deploy.sh && ./deploy.sh local
+```
+
+**Option 3: Make Commands**
+```bash
+make install && make run ARGS="BTC 60 1d"
+```
+
+**📖 For detailed deployment options, see:**
+- [QUICKSTART.md](QUICKSTART.md) - 30-second quick start guide
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Full deployment documentation
+
+---
+
+### Traditional Installation
 
 ```bash
 # Clone repository

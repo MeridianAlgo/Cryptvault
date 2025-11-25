@@ -430,3 +430,25 @@ class MLPredictor:
             },
             'warning': 'Fallback prediction due to error'
         }
+
+    def get_prediction_accuracy_report(self, days: int = 30) -> Dict[str, Any]:
+        """
+        Generate prediction accuracy report.
+
+        Args:
+            days: Number of days to include
+
+        Returns:
+            Dictionary with accuracy stats
+        """
+        # This is a placeholder implementation since we don't have historical prediction storage yet
+        # In a real implementation, this would query a database of past predictions
+        
+        return {
+            'overall_accuracy': 0.0,
+            'total_predictions': 0,
+            'accurate_predictions': 0,
+            'average_error': 0.0,
+            'accuracy_by_symbol': {},
+            'recent_predictions': []
+        }

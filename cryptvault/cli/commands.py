@@ -445,7 +445,7 @@ def show_prediction_accuracy(days: int = 30, verbose: bool = False) -> None:
                      f"(Score: {accuracy:.1%})")
 
         # Cache statistics
-        cache_stats = predictor.prediction_cache.get_cache_stats()
+        cache_stats = predictor.cache.get_cache_stats()
         print("\nCache Statistics:")
         print(f"  Total Predictions: {cache_stats['total_predictions']}")
         print(f"  Verified: {cache_stats['verified_predictions']}")
@@ -558,42 +558,88 @@ def _generate_chart(
 
         if save_path:
             print(format_info(f"Generating chart and saving to {save_path}..."))
-            # For saving to file, use candlestick chart generator
-            from cryptvault.visualization.candlestick_charts import CandlestickChartGenerator
-            config = ConfigManager()
-            analyzer = PatternAnalyzer(config)
-            result = analyzer.analyze_ticker(ticker, days=days, interval=interval)
-            
-            if result.success:
+            try:
+                import matplotlib
+                matplotlib.use('Agg')
+                import matplotlib.pyplot as plt
+                import matplotlib.dates as mdates
+                import numpy as np
+                import pandas as pd
+                
+                # Setup plot
+                plt.style.use('dark_background')
+                fig = plt.figure(figsize=(12, 8), facecolor='#1e1e1e')
+                
+                # Fetch data
                 from cryptvault.data.fetchers import DataFetcher
                 fetcher = DataFetcher()
                 data = fetcher.fetch(ticker, days=days, interval=interval)
                 
-                if data and len(data) > 0:
-                    chart_gen = CandlestickChartGenerator()
-                    patterns_dict = []
-                    for pattern in result.patterns:
-                        if isinstance(pattern, dict):
-                            patterns_dict.append(pattern)
-                        else:
-                            patterns_dict.append({
-                                'type': getattr(pattern, 'pattern_type', 'Unknown'),
-                                'confidence': f"{getattr(pattern, 'confidence', 0):.1%}",
-                                'category': str(getattr(pattern, 'category', 'Unknown'))
-                            })
-                    
-                    chart_output = chart_gen.generate_candlestick_chart(
-                        data, ticker, patterns=patterns_dict
-                    )
-                    
-                    with open(save_path, 'w', encoding='utf-8') as f:
-                        f.write(chart_output)
-                    print(format_success(f"Chart saved to: {save_path}"))
-                else:
+                if not data or len(data) == 0:
                     print(format_warning("Could not generate chart: no data available"))
-            else:
-                print(format_warning("Could not generate chart: analysis failed"))
-        else:
+                    return
+
+                # Extract data
+                dates = [point.timestamp for point in data]
+                opens = [point.open for point in data]
+                highs = [point.high for point in data]
+                lows = [point.low for point in data]
+                closes = [point.close for point in data]
+                
+                # Create subplots
+                ax1 = plt.subplot2grid((4, 1), (0, 0), rowspan=3)
+                ax2 = plt.subplot2grid((4, 1), (3, 0))
+                
+                # Plot candlesticks
+                for i in range(len(dates)):
+                    color = '#00ff88' if closes[i] >= opens[i] else '#ff4444'
+                    ax1.plot([i, i], [lows[i], highs[i]], color='white', linewidth=1, alpha=0.8)
+                    ax1.bar(i, abs(closes[i] - opens[i]), bottom=min(opens[i], closes[i]), color=color, alpha=0.8, width=0.6)
+                
+                # Plot MAs
+                closes_series = pd.Series(closes)
+                if len(closes) >= 20:
+                    ma20 = closes_series.rolling(window=20, min_periods=1).mean()
+                    ax1.plot(range(len(ma20)), ma20, color='#ffa500', linewidth=2, alpha=0.7, label='MA20')
+                if len(closes) >= 50:
+                    ma50 = closes_series.rolling(window=50, min_periods=1).mean()
+                    ax1.plot(range(len(ma50)), ma50, color='#00bfff', linewidth=2, alpha=0.7, label='MA50')
+
+                # Plot volume
+                volumes = [point.volume for point in data]
+                colors = ['#00ff88' if c >= o else '#ff4444' for c, o in zip(closes, opens)]
+                ax2.bar(range(len(volumes)), volumes, color=colors, alpha=0.6)
+                
+                # Formatting
+                ax1.set_title(f'{ticker} Chart - {interval}', fontsize=16, fontweight='bold', color='white')
+                ax1.set_ylabel('Price ($)', fontsize=12, color='white')
+                ax1.grid(True, alpha=0.2, color='gray')
+                ax1.set_facecolor('#2a2a2a')
+                ax2.set_ylabel('Volume', fontsize=12, color='white')
+                ax2.set_xlabel('Time', fontsize=12, color='white')
+                ax2.grid(True, alpha=0.2, color='gray')
+                ax2.set_facecolor('#2a2a2a')
+                
+                # X-axis labels
+                ax1.set_xlim(-1, len(dates))
+                ax2.set_xlim(-1, len(dates))
+                step = max(1, len(dates) // 10)
+                x_ticks = list(range(0, len(dates), step))
+                x_labels = [dates[i].strftime('%m-%d') for i in x_ticks]
+                ax1.set_xticks(x_ticks)
+                ax1.set_xticklabels(x_labels, rotation=45)
+                ax2.set_xticks(x_ticks)
+                ax2.set_xticklabels(x_labels, rotation=45)
+                
+                plt.savefig(save_path, dpi=100, bbox_inches='tight')
+                plt.close(fig)
+                print(format_success(f"Chart saved to: {save_path}"))
+                
+            except Exception as e:
+                logger.exception("Error saving chart")
+                print(format_error(f"Failed to save chart: {e}"))
+                
+            return
             # For interactive display, use matplotlib directly
             print(format_info("Generating interactive chart with pattern overlays..."))
             print(format_info("Chart window will open - use toolbar to zoom/pan"))
