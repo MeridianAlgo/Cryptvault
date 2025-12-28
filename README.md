@@ -5,7 +5,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-4.5.0-brightgreen.svg)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Hourly Training](https://img.shields.io/badge/training-hourly-orange.svg)](https://github.com/MeridianAlgo/Cryptvault/actions)
+
 
 > **IMPORTANT DISCLAIMER**
 
