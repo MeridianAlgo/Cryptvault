@@ -14,10 +14,10 @@ matplotlib>=3.5.0
 # tkinter is built-in with Python
 
 # Optional ML Dependencies
-# torch>=1.12.0  # Uncomment for LSTM neural networks
+# torch>=1.12.0 # Uncomment for LSTM neural networks
 
 # Optional Fast Analysis
-# fastquant>=0.1.8.0  # Optional - may have compatibility issues
+# fastquant>=0.1.8.0 # Optional - may have compatibility issues
 
 # Development Dependencies (optional)
 # pytest>=6.0

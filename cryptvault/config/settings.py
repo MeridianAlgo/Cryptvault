@@ -228,9 +228,9 @@ class PatternSettings:
     })
 
     # Pattern filtering settings
-    max_patterns_per_type: int = 10
-    max_total_patterns: int = 50
-    filter_overlapping: bool = True
+    max_patterns_per_type: int = 20  # Increased from 10
+    max_total_patterns: int = 100     # Increased from 50
+    filter_overlapping: bool = False  # Changed from True - show more patterns
     overlap_threshold: float = 0.5  # Percentage overlap to consider as overlapping
 
     # Pattern validation settings

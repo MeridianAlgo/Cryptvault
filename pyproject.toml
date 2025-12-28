@@ -10,151 +10,151 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "MeridianAlgo Algorithmic Research Team (Quantum Meridian)", email = "support@meridianalgo.com"}
+{name = "MeridianAlgo Algorithmic Research Team (Quantum Meridian)", email = "support@meridianalgo.com"}
 ]
 maintainers = [
-    {name = "MeridianAlgo Algorithmic Research Team", email = "support@meridianalgo.com"}
+{name = "MeridianAlgo Algorithmic Research Team", email = "support@meridianalgo.com"}
 ]
 keywords = [
-    "cryptocurrency",
-    "bitcoin",
-    "ethereum",
-    "trading",
-    "analysis",
-    "machine-learning",
-    "AI",
-    "technical-analysis",
-    "chart-patterns",
-    "LSTM",
-    "ensemble-models",
-    "fintech",
-    "tradingview",
-    "patterns",
-    "forecasting",
-    "stocks",
-    "finance",
+"cryptocurrency",
+"bitcoin",
+"ethereum",
+"trading",
+"analysis",
+"machine-learning",
+"AI",
+"technical-analysis",
+"chart-patterns",
+"LSTM",
+"ensemble-models",
+"fintech",
+"tradingview",
+"patterns",
+"forecasting",
+"stocks",
+"finance",
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Financial and Insurance Industry",
-    "Intended Audience :: Developers",
-    "Intended Audience :: End Users/Desktop",
-    "Intended Audience :: Science/Research",
-    "Topic :: Office/Business :: Financial :: Investment",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Scientific/Engineering :: Information Analysis",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Operating System :: OS Independent",
-    "Operating System :: POSIX :: Linux",
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: Microsoft :: Windows",
-    "Environment :: Console",
-    "Natural Language :: English",
-    "Typing :: Typed",
+"Development Status :: 5 - Production/Stable",
+"Intended Audience :: Financial and Insurance Industry",
+"Intended Audience :: Developers",
+"Intended Audience :: End Users/Desktop",
+"Intended Audience :: Science/Research",
+"Topic :: Office/Business :: Financial :: Investment",
+"Topic :: Scientific/Engineering :: Artificial Intelligence",
+"Topic :: Scientific/Engineering :: Information Analysis",
+"Topic :: Software Development :: Libraries :: Python Modules",
+"License :: OSI Approved :: MIT License",
+"Programming Language :: Python :: 3",
+"Programming Language :: Python :: 3.8",
+"Programming Language :: Python :: 3.9",
+"Programming Language :: Python :: 3.10",
+"Programming Language :: Python :: 3.11",
+"Programming Language :: Python :: 3.12",
+"Operating System :: OS Independent",
+"Operating System :: POSIX :: Linux",
+"Operating System :: MacOS :: MacOS X",
+"Operating System :: Microsoft :: Windows",
+"Environment :: Console",
+"Natural Language :: English",
+"Typing :: Typed",
 ]
 
 dependencies = [
-    "numpy>=1.19.0,<2.0.0",
-    "pandas>=1.3.0,<2.0.0",
-    "scikit-learn>=1.0.0,<1.5.0",
-    "yfinance>=0.2.0,<0.3.0",
-    "ccxt>=4.0.0,<5.0.0",
-    "cryptocompare>=0.7.0,<1.0.0",
-    "matplotlib>=3.5.0,<4.0.0",
-    "colorama>=0.4.4,<1.0.0",
+"numpy>=1.19.0,<2.0.0",
+"pandas>=1.3.0,<2.0.0",
+"scikit-learn>=1.0.0,<1.5.0",
+"yfinance>=0.2.0,<0.3.0",
+"ccxt>=4.0.0,<5.0.0",
+"cryptocompare>=0.7.0,<1.0.0",
+"matplotlib>=3.5.0,<4.0.0",
+"colorama>=0.4.4,<1.0.0",
 ]
 
 [project.optional-dependencies]
 # Machine learning features (LSTM neural networks)
 ml = [
-    "torch>=1.12.0,<3.0.0",
+"torch>=1.12.0,<3.0.0",
 ]
 
 # Advanced visualization (interactive charts)
 viz = [
-    "plotly>=5.0.0,<6.0.0",
-    "dash>=2.0.0,<3.0.0",
+"plotly>=5.0.0,<6.0.0",
+"dash>=2.0.0,<3.0.0",
 ]
 
 # Real-time data streaming
 streaming = [
-    "websockets>=10.0,<13.0",
+"websockets>=10.0,<13.0",
 ]
 
 # Performance optimizations
 fast = [
-    "numba>=0.55.0,<1.0.0",
+"numba>=0.55.0,<1.0.0",
 ]
 
 # Database support
 db = [
-    "sqlalchemy>=1.4.0,<3.0.0",
-    "redis>=4.0.0,<6.0.0",
+"sqlalchemy>=1.4.0,<3.0.0",
+"redis>=4.0.0,<6.0.0",
 ]
 
 # Export formats
 export = [
-    "openpyxl>=3.0.0,<4.0.0",
-    "jinja2>=3.0.0,<4.0.0",
+"openpyxl>=3.0.0,<4.0.0",
+"jinja2>=3.0.0,<4.0.0",
 ]
 
 # Notification services
 notify = [
-    "requests>=2.25.0,<3.0.0",
+"requests>=2.25.0,<3.0.0",
 ]
 
 # Development dependencies
 dev = [
-    "pytest>=6.0.0,<8.0.0",
-    "pytest-cov>=2.0.0,<5.0.0",
-    "pytest-mock>=3.6.0,<4.0.0",
-    "black>=21.0.0,<24.0.0",
-    "flake8>=3.8.0,<7.0.0",
-    "isort>=5.0.0,<6.0.0",
-    "pylint>=2.12.0,<4.0.0",
-    "mypy>=0.800,<1.10.0",
-    "bandit>=1.7.0,<2.0.0",
-    "safety>=2.0.0,<4.0.0",
-    "sphinx>=4.0.0,<8.0.0",
-    "sphinx-rtd-theme>=1.0.0,<3.0.0",
-    "ipython>=7.0.0,<9.0.0",
-    "pre-commit>=2.15.0,<4.0.0",
+"pytest>=6.0.0,<8.0.0",
+"pytest-cov>=2.0.0,<5.0.0",
+"pytest-mock>=3.6.0,<4.0.0",
+"black>=21.0.0,<24.0.0",
+"flake8>=3.8.0,<7.0.0",
+"isort>=5.0.0,<6.0.0",
+"pylint>=2.12.0,<4.0.0",
+"mypy>=0.800,<1.10.0",
+"bandit>=1.7.0,<2.0.0",
+"safety>=2.0.0,<4.0.0",
+"sphinx>=4.0.0,<8.0.0",
+"sphinx-rtd-theme>=1.0.0,<3.0.0",
+"ipython>=7.0.0,<9.0.0",
+"pre-commit>=2.15.0,<4.0.0",
 ]
 
 # Testing dependencies
 test = [
-    "pytest>=6.0.0,<8.0.0",
-    "pytest-cov>=2.0.0,<5.0.0",
-    "pytest-mock>=3.6.0,<4.0.0",
-    "pytest-xdist>=2.0.0,<4.0.0",
-    "pytest-timeout>=2.0.0,<3.0.0",
-    "faker>=8.0.0,<25.0.0",
-    "freezegun>=1.0.0,<2.0.0",
-    "responses>=0.20.0,<1.0.0",
-    "requests-mock>=1.9.0,<2.0.0",
-    "pytest-benchmark>=3.4.0,<5.0.0",
-    "coverage[toml]>=6.0.0,<8.0.0",
+"pytest>=6.0.0,<8.0.0",
+"pytest-cov>=2.0.0,<5.0.0",
+"pytest-mock>=3.6.0,<4.0.0",
+"pytest-xdist>=2.0.0,<4.0.0",
+"pytest-timeout>=2.0.0,<3.0.0",
+"faker>=8.0.0,<25.0.0",
+"freezegun>=1.0.0,<2.0.0",
+"responses>=0.20.0,<1.0.0",
+"requests-mock>=1.9.0,<2.0.0",
+"pytest-benchmark>=3.4.0,<5.0.0",
+"coverage[toml]>=6.0.0,<8.0.0",
 ]
 
 # All optional features
 full = [
-    "torch>=1.12.0,<3.0.0",
-    "plotly>=5.0.0,<6.0.0",
-    "dash>=2.0.0,<3.0.0",
-    "websockets>=10.0,<13.0",
-    "numba>=0.55.0,<1.0.0",
-    "sqlalchemy>=1.4.0,<3.0.0",
-    "redis>=4.0.0,<6.0.0",
-    "openpyxl>=3.0.0,<4.0.0",
-    "jinja2>=3.0.0,<4.0.0",
-    "requests>=2.25.0,<3.0.0",
+"torch>=1.12.0,<3.0.0",
+"plotly>=5.0.0,<6.0.0",
+"dash>=2.0.0,<3.0.0",
+"websockets>=10.0,<13.0",
+"numba>=0.55.0,<1.0.0",
+"sqlalchemy>=1.4.0,<3.0.0",
+"redis>=4.0.0,<6.0.0",
+"openpyxl>=3.0.0,<4.0.0",
+"jinja2>=3.0.0,<4.0.0",
+"requests>=2.25.0,<3.0.0",
 ]
 
 [project.urls]
@@ -191,35 +191,35 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "-ra",
-    "--strict-markers",
-    "--strict-config",
-    "--showlocals",
-    "--tb=short",
+"-ra",
+"--strict-markers",
+"--strict-config",
+"--showlocals",
+"--tb=short",
 ]
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "slow: Slow tests that make real API calls",
-    "ml: Machine learning tests",
-    "viz: Visualization tests",
-    "data: Data model tests",
-    "indicators: Technical indicator tests",
-    "patterns: Pattern detection tests",
+"unit: Unit tests",
+"integration: Integration tests",
+"slow: Slow tests that make real API calls",
+"ml: Machine learning tests",
+"viz: Visualization tests",
+"data: Data model tests",
+"indicators: Technical indicator tests",
+"patterns: Pattern detection tests",
 ]
 filterwarnings = [
-    "error",
-    "ignore::UserWarning",
-    "ignore::DeprecationWarning",
+"error",
+"ignore::UserWarning",
+"ignore::DeprecationWarning",
 ]
 
 [tool.coverage.run]
 source = ["cryptvault"]
 omit = [
-    "*/tests/*",
-    "*/test_*.py",
-    "*/__pycache__/*",
-    "*/site-packages/*",
+"*/tests/*",
+"*/test_*.py",
+"*/__pycache__/*",
+"*/site-packages/*",
 ]
 branch = true
 
@@ -228,14 +228,14 @@ precision = 2
 show_missing = true
 skip_covered = false
 exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "@abstractmethod",
-    "@abc.abstractmethod",
+"pragma: no cover",
+"def __repr__",
+"raise AssertionError",
+"raise NotImplementedError",
+"if __name__ == .__main__.:",
+"if TYPE_CHECKING:",
+"@abstractmethod",
+"@abc.abstractmethod",
 ]
 
 [tool.coverage.html]
@@ -251,15 +251,15 @@ target-version = ["py38", "py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
+# directories
+\.eggs
+| \.git
+| \.hg
+| \.mypy_cache
+| \.tox
+| \.venv
+| build
+| dist
 )/
 '''
 
@@ -295,13 +295,13 @@ show_error_context = true
 
 [[tool.mypy.overrides]]
 module = [
-    "yfinance.*",
-    "ccxt.*",
-    "cryptocompare.*",
-    "matplotlib.*",
-    "sklearn.*",
-    "torch.*",
-    "plotly.*",
+"yfinance.*",
+"ccxt.*",
+"cryptocompare.*",
+"matplotlib.*",
+"sklearn.*",
+"torch.*",
+"plotly.*",
 ]
 ignore_missing_imports = true
 
@@ -315,18 +315,18 @@ unsafe-load-any-extension = false
 
 [tool.pylint.messages_control]
 disable = [
-    "C0103",  # Invalid name
-    "C0114",  # Missing module docstring
-    "C0115",  # Missing class docstring
-    "C0116",  # Missing function docstring
-    "R0903",  # Too few public methods
-    "R0913",  # Too many arguments
-    "W0212",  # Access to protected member
+"C0103", # Invalid name
+"C0114", # Missing module docstring
+"C0115", # Missing class docstring
+"C0116", # Missing function docstring
+"R0903", # Too few public methods
+"R0913", # Too many arguments
+"W0212", # Access to protected member
 ]
 
 [tool.pylint.format]
 max-line-length = 100
-indent-string = "    "
+indent-string = " "
 
 [tool.pylint.design]
 max-args = 10

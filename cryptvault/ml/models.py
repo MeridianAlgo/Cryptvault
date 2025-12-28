@@ -403,23 +403,29 @@ class EnsembleModel:
         """Initialize ensemble model."""
         self.logger = logging.getLogger(__name__)
 
-        # Initialize component models
+        # Initialize component models - LSTM now enabled with proper dimensions
         self.models = {
             'linear': LinearPredictor(),
             'lstm': LSTMPredictor(sequence_length=60, hidden_units=128)
         }
 
-        # Initial weights (will be adjusted during training)
+        # Initial weights (will be adjusted dynamically based on performance)
         self.weights = {
             'linear': 0.4,
             'lstm': 0.6
+        }
+
+        # Performance tracking for adaptive weighting
+        self.model_performance = {
+            'linear': {'correct': 0, 'total': 0, 'accuracy': 0.5},
+            'lstm': {'correct': 0, 'total': 0, 'accuracy': 0.5}
         }
 
         self.is_trained = False
 
     def train(self, features: np.ndarray, targets: np.ndarray) -> bool:
         """
-        Train all models in the ensemble.
+        Train all models in the ensemble with adaptive weighting.
 
         Args:
             features: Feature matrix (n_samples, n_features)
@@ -429,7 +435,7 @@ class EnsembleModel:
             True if at least one model trained successfully
         """
         try:
-            self.logger.info("Training ensemble model")
+            self.logger.info(f"Training ensemble model with {features.shape[0]} samples, {features.shape[1]} features")
 
             training_results = {}
 
@@ -443,8 +449,11 @@ class EnsembleModel:
             lstm_success = self.models['lstm'].train(features, targets)
             training_results['lstm'] = lstm_success
 
-            # Adjust weights based on training success
-            if not lstm_success:
+            # Dynamically adjust weights based on training success and validation
+            if linear_success and lstm_success:
+                # Both models trained - use validation to adjust weights
+                self._adjust_weights_by_validation(features, targets)
+            elif not lstm_success:
                 self.weights['linear'] = 1.0
                 self.weights['lstm'] = 0.0
                 self.logger.info("LSTM training failed, using linear model only")
@@ -458,7 +467,7 @@ class EnsembleModel:
 
             if self.is_trained:
                 self.logger.info(f"Ensemble training completed. Active models: {sum(training_results.values())}")
-                self.logger.info(f"Model weights: {self.weights}")
+                self.logger.info(f"Adaptive weights: Linear={self.weights['linear']:.2f}, LSTM={self.weights['lstm']:.2f}")
             else:
                 self.logger.error("All models failed to train")
 
@@ -467,6 +476,92 @@ class EnsembleModel:
         except Exception as e:
             self.logger.error(f"Ensemble training failed: {e}")
             return False
+
+    def _adjust_weights_by_validation(self, features: np.ndarray, targets: np.ndarray) -> None:
+        """
+        Adjust model weights based on validation performance.
+        
+        Args:
+            features: Feature matrix
+            targets: Target values
+        """
+        try:
+            # Use last 20% of data for validation
+            split_idx = int(len(features) * 0.8)
+            if split_idx < len(features) - 5:
+                val_features = features[split_idx:]
+                val_targets = targets[split_idx:]
+
+                # Get predictions from each model
+                linear_preds = self.models['linear'].predict(val_features)
+                lstm_preds = self.models['lstm'].predict(val_features)
+
+                # Calculate directional accuracy (more important than MSE for trading)
+                linear_correct = np.sum((linear_preds > 0) == (val_targets > 0))
+                lstm_correct = np.sum((lstm_preds > 0) == (val_targets > 0))
+
+                linear_accuracy = linear_correct / len(val_targets)
+                lstm_accuracy = lstm_correct / len(val_targets)
+
+                # Update performance tracking
+                self.model_performance['linear']['accuracy'] = linear_accuracy
+                self.model_performance['lstm']['accuracy'] = lstm_accuracy
+
+                # Adjust weights based on relative performance
+                total_accuracy = linear_accuracy + lstm_accuracy
+                if total_accuracy > 0:
+                    self.weights['linear'] = linear_accuracy / total_accuracy
+                    self.weights['lstm'] = lstm_accuracy / total_accuracy
+
+                    self.logger.info(f"Validation accuracy - Linear: {linear_accuracy:.2%}, LSTM: {lstm_accuracy:.2%}")
+                else:
+                    # Fallback to default weights
+                    self.weights['linear'] = 0.4
+                    self.weights['lstm'] = 0.6
+
+        except Exception as e:
+            self.logger.warning(f"Weight adjustment failed, using default weights: {e}")
+            self.weights['linear'] = 0.4
+            self.weights['lstm'] = 0.6
+
+    def update_performance(self, model_name: str, prediction_correct: bool) -> None:
+        """
+        Update model performance tracking for online learning.
+        
+        Args:
+            model_name: Name of the model ('linear' or 'lstm')
+            prediction_correct: Whether the prediction was correct
+        """
+        if model_name in self.model_performance:
+            perf = self.model_performance[model_name]
+            perf['total'] += 1
+            if prediction_correct:
+                perf['correct'] += 1
+            
+            # Update accuracy with exponential moving average
+            alpha = 0.1  # Learning rate
+            new_accuracy = perf['correct'] / perf['total']
+            perf['accuracy'] = alpha * new_accuracy + (1 - alpha) * perf['accuracy']
+
+            # Rebalance weights every 10 predictions
+            if perf['total'] % 10 == 0:
+                self._rebalance_weights()
+
+    def _rebalance_weights(self) -> None:
+        """Rebalance ensemble weights based on recent performance."""
+        try:
+            linear_acc = self.model_performance['linear']['accuracy']
+            lstm_acc = self.model_performance['lstm']['accuracy']
+
+            total_acc = linear_acc + lstm_acc
+            if total_acc > 0:
+                self.weights['linear'] = linear_acc / total_acc
+                self.weights['lstm'] = lstm_acc / total_acc
+
+                self.logger.debug(f"Rebalanced weights - Linear: {self.weights['linear']:.2f}, LSTM: {self.weights['lstm']:.2f}")
+
+        except Exception as e:
+            self.logger.warning(f"Weight rebalancing failed: {e}")
 
     def predict(self, features: np.ndarray) -> np.ndarray:
         """

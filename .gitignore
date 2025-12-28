@@ -159,7 +159,12 @@ config.ini
 results/
 output/
 charts/
+training_report.md
+*.png
+*.jpg
+*.jpeg
 
 # Temporary files
 tmp/
 temp/
+logs/

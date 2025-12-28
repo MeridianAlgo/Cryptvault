@@ -39,7 +39,10 @@ try:
 except ImportError:
     LIGHTGBM_AVAILABLE = False
 
-from .lstm_predictor import LSTMPredictor
+# LSTM removed - using SimplePredictor for reliable predictions
+from .linear_models import LinearPredictor
+from .ensemble_predictor import EnhancedEnsemblePredictor
+from .prediction_cache import PredictionCache
 
 
 class EnhancedEnsemblePredictor:
@@ -108,9 +111,10 @@ class EnhancedEnsemblePredictor:
                     random_state=42, verbosity=-1
                 )
 
-            # LSTM for time series (if enabled)
-            if self.enable_deep_learning:
-                self.models['lstm'] = LSTMPredictor(sequence_length=30)
+            # LSTM for time series - DISABLED due to dimension mismatch issues
+            # if self.enable_deep_learning:
+            #     self.models['lstm'] = LSTMPredictor(sequence_length=30)
+            # Using SimplePredictor approach instead for reliable predictions
 
             # Initialize scalers
             for model_name in self.models.keys():

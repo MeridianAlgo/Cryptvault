@@ -1,38 +1,107 @@
-# CryptVault - AI-Powered Cryptocurrency & Stock Analysis Platform v4.1.0
+# CryptVault - AI-Powered Cryptocurrency Analysis Platform v4.5.0
 
-**Advanced AI-powered financial analysis platform with 50+ chart patterns & ML ensemble predictions**
+**Advanced pattern detection with 15+ chart patterns & smart ensemble predictions**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-
-[![Version](https://img.shields.io/badge/version-4.1.0-brightgreen.svg)](https://github.com/MeridianAlgo/Cryptvault/releases)
-
+[![Version](https://img.shields.io/badge/version-4.5.0-brightgreen.svg)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Hourly Training](https://img.shields.io/badge/training-hourly-orange.svg)](https://github.com/MeridianAlgo/Cryptvault/actions)
 
-[![CI](https://github.com/MeridianAlgo/Cryptvault/workflows/CI/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/ci.yml)
+> **IMPORTANT DISCLAIMER**
 
-[![codecov](https://codecov.io/gh/MeridianAlgo/Cryptvault/branch/main/graph/badge.svg)](https://codecov.io/gh/MeridianAlgo/Cryptvault)
-
-> **IMPORTANT DISCLAIMER**  
-
-> This software is for **educational and research purposes only**. It is **NOT financial advice** and should **NOT be used for actual trading or investment decisions**. MeridianAlgo is a nonprofit research organization, not a licensed financial advisor. Past performance does not guarantee future results. **You are solely responsible for your investment decisions and any financial losses.**
+> This software is for **educational and research purposes only**. It is **NOT financial advice** and should **NOT be used for actual trading or investment decisions**. Past performance does not guarantee future results. **You are solely responsible for your investment decisions and any financial losses.**
 
 ---
 
 ## Overview
 
-CryptVault is a comprehensive cryptocurrency and stock analysis platform with **advanced pattern detection and ML-powered predictions**:
+CryptVault is a cryptocurrency analysis platform with **advanced pattern detection and smart predictions**:
 
-1. **Pattern Detection Mode** - Identify 50+ chart patterns (reversal, continuation, harmonic, candlestick)
+- **15+ Chart Patterns** - Head & Shoulders, Double Top/Bottom, Triangles, Wedges, Flags, Cup & Handle, Gaps, and more
+- **Smart Ensemble Predictions** - Combines multiple ML models (Random Forest, Gradient Boost, SVM, Linear, ARIMA)
+- **Technical Indicators** - RSI, MACD, Moving Averages, Volume analysis
+- **Clean Charts** - Professional candlestick charts with pattern overlays
+- **Hourly Training** - Models automatically retrain every hour with fresh data
 
-2. **ML Prediction Mode** - Ensemble models combining 8+ algorithms for price forecasting
+**🔥 NEW in v4.5.0:**
+- ⚡ **Hourly automated training** - Models retrain every hour
+- 🎨 **Clean chart generation** - Candlesticks with simple pattern overlays
+- 📊 **15+ pattern types** - More patterns detected
+- 🚀 **No LSTM errors** - Removed buggy LSTM, using reliable ensemble
+- 📈 **Better accuracy** - Smarter ensemble with 6+ models
 
-3. **Technical Analysis Mode** - 40+ technical indicators with real-time calculations
+**Developed by MeridianAlgo** - Algorithmic trading research.
 
-4. **Portfolio Analysis Mode** - Multi-asset comparison and optimization tools
+---
 
-All modes use professional-grade algorithms with confidence scoring, pattern overlays, and interactive visualizations.
+## Quick Start
 
-**Developed by MeridianAlgo** - Specialists in algorithmic trading and machine learning solutions for financial markets.
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/MeridianAlgo/Cryptvault.git
+cd Cryptvault
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Basic Usage
+
+```bash
+# Analyze Bitcoin with chart
+python cryptvault_cli.py BTC 60 1d
+
+# Save chart to file
+python cryptvault_cli.py ETH 120 1d --save-chart eth_chart.png
+
+# Text-only analysis (no chart)
+python cryptvault_cli.py SOL 90 1d --no-chart
+```
+
+---
+
+## Features
+
+### Pattern Detection (15+ Patterns)
+
+**Reversal Patterns:**
+- Head and Shoulders / Inverse Head and Shoulders
+- Double Top / Double Bottom
+- Triple Top / Triple Bottom
+- Rounding Top / Rounding Bottom
+
+**Continuation Patterns:**
+- Ascending Triangle / Descending Triangle / Symmetrical Triangle
+- Rising Wedge / Falling Wedge
+- Bull Flag / Bear Flag
+- Pennants
+- Channels (Up/Down)
+
+**Special Patterns:**
+- Cup and Handle
+- Gaps (Up/Down)
+- Support/Resistance Levels
+
+### Smart Ensemble Predictions
+
+Combines 6+ ML models:
+- **Random Forest** - Tree-based ensemble
+- **Gradient Boosting** - Sequential learning
+- **SVM** - Support vector regression
+- **Linear Models** - Ridge, Lasso, ElasticNet
+- **ARIMA** - Time series forecasting
+- **XGBoost/LightGBM** - Advanced boosting (if installed)
+
+Each model votes on direction and confidence, weighted by historical accuracy.
+
+### Technical Indicators
+
+- **Trend**: Moving Averages (MA20, MA50), MACD
+- **Momentum**: RSI, Stochastic
+- **Volume**: Volume bars with trend colors
+- **Volatility**: Bollinger Bands (coming soon)
 
 ---
 
@@ -42,57 +111,29 @@ All modes use professional-grade algorithms with confidence scoring, pattern ove
 
 **Perfect for:** Quick analysis, pattern detection, immediate insights
 
-**How it works:**
-
-- Run analysis command with ticker symbol
-
-- System automatically fetches recent data
-
-- Detects patterns and calculates indicators in real-time
-
-- Generates interactive charts with pattern overlays
-
-- No model training needed
-
 **Usage:**
 
 ```bash
-# Cryptocurrency analysis - works immediately
+# Cryptocurrency analysis
 python cryptvault_cli.py BTC 60 1d
+python cryptvault_cli.py ETH 90 1d --save-chart eth.png
 
-python cryptvault_cli.py ETH 90 1d --save-chart eth_analysis.png
-
-# Stock analysis - works immediately  
+# Stock analysis
 python cryptvault_cli.py AAPL 60 1d
-
 python cryptvault_cli.py TSLA 90 1d --no-chart
 ```
 
 **Pros:**
-
 - Zero setup required
-
 - Works immediately
-
 - Real-time pattern detection
-
-- Interactive charts
-
-- Good for quick analysis
-
-**Cons:**
-
-- Uses recent data only (60-90 days default)
-
-- ML predictions use pre-trained models
-
-- Limited historical context
+- Clean charts with candlesticks
 
 ---
 
-### Mode 2: Advanced ML Predictions (Recommended)
+### Mode 2: Advanced ML Training (Automated)
 
-**Perfect for:** Serious analysis, maximum accuracy, production use
+**Perfect for:** Maximum accuracy, production use
 
 **How it works:**
 
@@ -146,7 +187,7 @@ python cryptvault_cli.py --interactive
 
 ## Quick Start
 
-### 🚀 30-Second Deployment (Choose One)
+### 30-Second Deployment (Choose One)
 
 **Option 1: Docker (Recommended - Zero Setup!)**
 ```bash
@@ -167,7 +208,7 @@ chmod +x deploy.sh && ./deploy.sh local
 make install && make run ARGS="BTC 60 1d"
 ```
 
-**📖 For detailed deployment options, see:**
+** For detailed deployment options, see:**
 - [QUICKSTART.md](QUICKSTART.md) - 30-second quick start guide
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Full deployment documentation
 
@@ -281,18 +322,18 @@ Your analysis results include patterns, indicators, and ML predictions!
 python cryptvault_cli.py SYMBOL [DAYS] [INTERVAL] [OPTIONS]
 
 Options:
-  --no-chart          Text-only output (no chart window)
-  --save-chart FILE   Save chart to file instead of displaying
-  --verbose           Detailed output with all indicators
-  --demo              Run interactive demo
-  --version           Show version information
-  --help              Show help message
+--no-chart Text-only output (no chart window)
+--save-chart FILE Save chart to file instead of displaying
+--verbose Detailed output with all indicators
+--demo Run interactive demo
+--version Show version information
+--help Show help message
 
 Examples:
-  python cryptvault_cli.py BTC 60 1d
-  python cryptvault_cli.py ETH 90 1d --save-chart eth.png
-  python cryptvault_cli.py SOL 60 1d --no-chart
-  python cryptvault_cli.py --demo
+python cryptvault_cli.py BTC 60 1d
+python cryptvault_cli.py ETH 90 1d --save-chart eth.png
+python cryptvault_cli.py SOL 60 1d --no-chart
+python cryptvault_cli.py --demo
 ```
 
 **Stock Analysis:**
@@ -301,9 +342,9 @@ Examples:
 python cryptvault_cli.py SYMBOL [DAYS] [INTERVAL] [OPTIONS]
 
 Examples:
-  python cryptvault_cli.py AAPL 60 1d
-  python cryptvault_cli.py TSLA 90 1d --save-chart tesla.png
-  python cryptvault_cli.py GOOGL 60 1d --verbose
+python cryptvault_cli.py AAPL 60 1d
+python cryptvault_cli.py TSLA 90 1d --save-chart tesla.png
+python cryptvault_cli.py GOOGL 60 1d --verbose
 ```
 
 ### Advanced Features
@@ -314,8 +355,8 @@ Examples:
 python cryptvault_cli.py --portfolio ASSET1:AMOUNT1 ASSET2:AMOUNT2 ...
 
 Examples:
-  python cryptvault_cli.py --portfolio BTC:0.5 ETH:10
-  python cryptvault_cli.py --portfolio BTC:1 ETH:20 ADA:1000 SOL:50
+python cryptvault_cli.py --portfolio BTC:0.5 ETH:10
+python cryptvault_cli.py --portfolio BTC:1 ETH:20 ADA:1000 SOL:50
 ```
 
 **Multi-Asset Comparison:**
@@ -324,8 +365,8 @@ Examples:
 python cryptvault_cli.py --compare SYMBOL1 SYMBOL2 SYMBOL3 ...
 
 Examples:
-  python cryptvault_cli.py --compare BTC ETH SOL
-  python cryptvault_cli.py --compare AAPL MSFT GOOGL
+python cryptvault_cli.py --compare BTC ETH SOL
+python cryptvault_cli.py --compare AAPL MSFT GOOGL
 ```
 
 **Interactive Mode:**
@@ -337,8 +378,8 @@ python cryptvault_cli.py --interactive
 **Status & Accuracy:**
 
 ```bash
-python cryptvault_cli.py --status          # Check API status
-python cryptvault_cli.py --accuracy        # Show prediction accuracy
+python cryptvault_cli.py --status # Check API status
+python cryptvault_cli.py --accuracy # Show prediction accuracy
 ```
 
 ---
@@ -355,23 +396,23 @@ Data Period: 60 days (1d interval)
 Current Price: $43,250.00
 
 Detected Patterns:
-  ✓ Head and Shoulders (Reversal) - Confidence: 87.5%
-  ✓ Ascending Triangle (Continuation) - Confidence: 72.3%
-  ✓ Bull Flag (Continuation) - Confidence: 68.9%
-  ✓ Hammer (Candlestick) - Confidence: 65.2%
+Head and Shoulders (Reversal) - Confidence: 87.5%
+Ascending Triangle (Continuation) - Confidence: 72.3%
+Bull Flag (Continuation) - Confidence: 68.9%
+Hammer (Candlestick) - Confidence: 65.2%
 
 Technical Indicators:
-  RSI(14): 58.3 (Neutral)
-  MACD: Bullish crossover detected
-  Bollinger Bands: Price near upper band
-  ATR: 1,250.00 (Moderate volatility)
+RSI(14): 58.3 (Neutral)
+MACD: Bullish crossover detected
+Bollinger Bands: Price near upper band
+ATR: 1,250.00 (Moderate volatility)
 
 ML Predictions:
-  Day 1: $43,580.00 (+0.76%) - Confidence: 82.5%
-  Day 2: $43,920.00 (+1.55%) - Confidence: 75.3%
-  Day 3: $44,150.00 (+2.08%) - Confidence: 68.7%
-  Day 4: $44,420.00 (+2.71%) - Confidence: 62.4%
-  Day 5: $44,680.00 (+3.31%) - Confidence: 56.8%
+Day 1: $43,580.00 (+0.76%) - Confidence: 82.5%
+Day 2: $43,920.00 (+1.55%) - Confidence: 75.3%
+Day 3: $44,150.00 (+2.08%) - Confidence: 68.7%
+Day 4: $44,420.00 (+2.71%) - Confidence: 62.4%
+Day 5: $44,680.00 (+3.31%) - Confidence: 56.8%
 
 Risk Assessment: Moderate
 Trend: Bullish
@@ -385,13 +426,13 @@ CryptVault v4.1.0 - Portfolio Analysis
 =====================================
 
 Portfolio Composition:
-  BTC: 0.5 units ($21,625.00)
-  ETH: 10.0 units ($25,400.00)
-  Total Value: $47,025.00
+BTC: 0.5 units ($21,625.00)
+ETH: 10.0 units ($25,400.00)
+Total Value: $47,025.00
 
 Asset Analysis:
-  BTC: +5.2% (7d) | Patterns: 3 | Trend: Bullish
-  ETH: +3.8% (7d) | Patterns: 2 | Trend: Bullish
+BTC: +5.2% (7d) | Patterns: 3 | Trend: Bullish
+ETH: +3.8% (7d) | Patterns: 2 | Trend: Bullish
 
 Portfolio Health: Good
 Diversification Score: 75/100
@@ -508,59 +549,59 @@ Risk Level: Moderate
 
 ```
 CryptVault/
-├── cryptvault_cli.py            # Main CLI application
+├── cryptvault_cli.py # Main CLI application
 │
-├── cryptvault/                 # Core package
-│   ├── core/                   # Core analysis engine
-│   │   └── analyzer.py         # Main analyzer orchestrator
-│   ├── patterns/               # Pattern detection
-│   │   ├── reversal.py         # Reversal patterns
-│   │   ├── continuation.py     # Continuation patterns
-│   │   ├── harmonic.py         # Harmonic patterns
-│   │   ├── candlestick.py      # Candlestick patterns
-│   │   └── geometric.py        # Geometric patterns
-│   ├── indicators/             # Technical indicators
-│   │   ├── trend.py            # Trend indicators
-│   │   ├── momentum.py         # Momentum indicators
-│   │   ├── volatility.py       # Volatility indicators
-│   │   └── volume.py           # Volume indicators
-│   ├── ml/                     # Machine learning
-│   │   ├── predictor.py        # ML prediction interface
-│   │   ├── models.py           # ML model implementations
-│   │   └── features.py         # Feature engineering
-│   ├── data/                   # Data management
-│   │   ├── fetchers.py         # Data fetching
-│   │   ├── models.py           # Data models
-│   │   └── cache.py            # Data caching
-│   ├── visualization/          # Charting
-│   │   ├── desktop_charts.py   # Interactive charts
-│   │   ├── pattern_overlay.py  # Pattern annotations
-│   │   └── candlestick_charts.py # Chart generation
-│   ├── portfolio/              # Portfolio analysis
-│   │   └── analyzer.py         # Portfolio analyzer
-│   └── cli/                    # CLI interface
-│       ├── commands.py         # CLI commands
-│       └── formatters.py       # Output formatting
+├── cryptvault/ # Core package
+│ ├── core/ # Core analysis engine
+│ │ └── analyzer.py # Main analyzer orchestrator
+│ ├── patterns/ # Pattern detection
+│ │ ├── reversal.py # Reversal patterns
+│ │ ├── continuation.py # Continuation patterns
+│ │ ├── harmonic.py # Harmonic patterns
+│ │ ├── candlestick.py # Candlestick patterns
+│ │ └── geometric.py # Geometric patterns
+│ ├── indicators/ # Technical indicators
+│ │ ├── trend.py # Trend indicators
+│ │ ├── momentum.py # Momentum indicators
+│ │ ├── volatility.py # Volatility indicators
+│ │ └── volume.py # Volume indicators
+│ ├── ml/ # Machine learning
+│ │ ├── predictor.py # ML prediction interface
+│ │ ├── models.py # ML model implementations
+│ │ └── features.py # Feature engineering
+│ ├── data/ # Data management
+│ │ ├── fetchers.py # Data fetching
+│ │ ├── models.py # Data models
+│ │ └── cache.py # Data caching
+│ ├── visualization/ # Charting
+│ │ ├── desktop_charts.py # Interactive charts
+│ │ ├── pattern_overlay.py # Pattern annotations
+│ │ └── candlestick_charts.py # Chart generation
+│ ├── portfolio/ # Portfolio analysis
+│ │ └── analyzer.py # Portfolio analyzer
+│ └── cli/ # CLI interface
+│ ├── commands.py # CLI commands
+│ └── formatters.py # Output formatting
 │
-├── tests/                      # Test suite
-│   ├── unit/                   # Unit tests
-│   └── integration/            # Integration tests
+├── tests/ # Test suite
+│ ├── unit/ # Unit tests
+│ └── integration/ # Integration tests
 │
-├── docs/                       # Documentation
-│   ├── QUICK_GUIDE.md          # Quick start guide
-│   ├── API_REFERENCE.md        # API documentation
-│   └── ARCHITECTURE.md         # Architecture docs
+├── docs/ # Documentation
+│ ├── QUICK_GUIDE.md # Quick start guide
+│ ├── API_REFERENCE.md # API documentation
+│ └── ARCHITECTURE.md # Architecture docs
 │
-├── examples/                   # Example scripts
-│   └── pattern_overlay_example.py
+├── examples/ # Example scripts
+│ └── pattern_overlay_example.py
 │
-├── config/                     # Configuration files
-│   ├── settings.yaml           # Main configuration
-│   └── logging.yaml            # Logging configuration
+├── config/ # Configuration files
+│ ├── settings.yaml # Main configuration
+│ └── logging.yaml # Logging configuration
 │
-├── README.md                   # This file
-├── LICENSE                     # MIT License
-└── requirements.txt            # Python dependencies
+├── README.md # This file
+├── LICENSE # MIT License
+└── requirements.txt # Python dependencies
 ```
 
 ---
@@ -632,11 +673,11 @@ result = analyzer.analyze_ticker('BTC', days=60, interval='1d')
 # Access results
 print(f"Found {len(result.patterns)} patterns")
 for pattern in result.patterns:
-    print(f"  {pattern.pattern_type}: {pattern.confidence:.2%} confidence")
+print(f" {pattern.pattern_type}: {pattern.confidence:.2%} confidence")
 
 # ML predictions
 if result.ml_predictions:
-    print(f"7-day prediction: ${result.ml_predictions['price_7d']:.2f}")
+print(f"7-day prediction: ${result.ml_predictions['price_7d']:.2f}")
 ```
 
 ### Batch Analysis
@@ -674,11 +715,11 @@ pytest tests/ -v
 pytest tests/ -v --cov=cryptvault --cov-report=html
 
 # Specific test categories
-pytest tests/unit/ -v              # Unit tests only
-pytest tests/integration/ -v       # Integration tests only
+pytest tests/unit/ -v # Unit tests only
+pytest tests/integration/ -v # Integration tests only
 
 # Run with markers
-pytest tests/ -m "not slow" -v    # Skip slow tests
+pytest tests/ -m "not slow" -v # Skip slow tests
 ```
 
 ---
@@ -841,50 +882,50 @@ Please use the [issue tracker](https://github.com/MeridianAlgo/Cryptvault/issues
 
 ## FAQ
 
-**Q: Which mode should I use?**  
+**Q: Which mode should I use?**
 
 A: Quick Analysis for immediate insights, Advanced ML for serious analysis with predictions.
 
-**Q: How accurate are the pattern detections?**  
+**Q: How accurate are the pattern detections?**
 
 A: Patterns are detected with confidence scores. Higher confidence (80%+) indicates stronger signals.
 
-**Q: Do I need API keys?**  
+**Q: Do I need API keys?**
 
 A: No, CryptVault uses free data sources by default. API keys are optional for enhanced features.
 
-**Q: Can I use my own data?**  
+**Q: Can I use my own data?**
 
 A: Yes! The Python API supports custom data sources and formats.
 
-**Q: How accurate are the ML predictions?**  
+**Q: How accurate are the ML predictions?**
 
 A: Ensemble models achieve 85%+ accuracy. Individual predictions include confidence scores.
 
-**Q: Does it work offline?**  
+**Q: Does it work offline?**
 
 A: Data fetching requires internet, but analysis and charting work with cached data.
 
-**Q: What patterns are detected?**  
+**Q: What patterns are detected?**
 
 A: 50+ patterns including reversal, continuation, harmonic, and candlestick patterns.
 
-**Q: Can I analyze stocks and crypto together?**  
+**Q: Can I analyze stocks and crypto together?**
 
 A: Yes! CryptVault supports both cryptocurrencies and stocks in the same analysis.
 
-**Q: How do I save charts?**  
+**Q: How do I save charts?**
 
 A: Use `--save-chart filename.png` to save charts to file instead of displaying.
 
-**Q: Is there a web interface?**  
+**Q: Is there a web interface?**
 
 A: Currently CLI and Python API only. Web interface is planned for future releases.
 
 ---
 
-**Version**: 4.1.0  
+**Version**: 4.1.0
 
-**Last Updated**: December 2024  
+**Last Updated**: December 2024
 
 **Maintained by**: MeridianAlgo

@@ -1,634 +1,277 @@
 # Contributing to CryptVault
 
-Thank you for your interest in contributing to CryptVault! This project is an educational tool for cryptocurrency and stock analysis using AI/ML, pattern recognition, and technical analysis. We welcome contributions that improve functionality, documentation, testing, and code quality.
-
-## Table of Contents
-
-1. [Code of Conduct](#code-of-conduct)
-2. [Getting Started](#getting-started)
-3. [Development Setup](#development-setup)
-4. [Code Style Guidelines](#code-style-guidelines)
-5. [Testing Requirements](#testing-requirements)
-6. [Pull Request Process](#pull-request-process)
-7. [Issue Reporting](#issue-reporting)
-8. [Documentation](#documentation)
-9. [Recognition](#recognition)
+Thank you for your interest in contributing to CryptVault! This document provides guidelines and instructions for contributing.
 
 ## Code of Conduct
 
-### Our Standards
-
-- Be respectful and inclusive to all contributors
-- Provide constructive feedback
-- Focus on what is best for the community
-- Show empathy towards other community members
-- Follow the MIT License terms
-
-### Educational Purpose
-
-CryptVault is designed for educational and research purposes only. Contributions should:
-- Avoid promoting financial advice or trading recommendations
-- Focus on technical analysis and pattern recognition
-- Maintain educational value
-- Include proper disclaimers where appropriate
+- Be respectful and inclusive
+- Focus on constructive feedback
+- Help others learn and grow
+- Follow project standards
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- Git
-- Basic understanding of cryptocurrency/stock analysis
-- Familiarity with Python development
-
-### Quick Start
-
-1. **Fork the Repository**
-   ```bash
-   # Fork via GitHub UI, then clone your fork
-   git clone https://github.com/YOUR_USERNAME/cryptvault.git
-   cd cryptvault
-   ```
-
-2. **Set Up Development Environment**
-   ```bash
-   # Create virtual environment
-   python -m venv venv
-   
-   # Activate virtual environment
-   # On Windows:
-   venv\Scripts\activate
-   # On macOS/Linux:
-   source venv/bin/activate
-   
-   # Install dependencies
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt
-   ```
-
-3. **Configure Environment**
-   ```bash
-   # Copy example configuration
-   cp config/.env.example .env
-   
-   # Edit .env with your settings (optional for development)
-   ```
-
-4. **Verify Setup**
-   ```bash
-   # Run tests
-   python -m pytest tests/
-   
-   # Run basic analysis
-   python cryptvault_cli.py analyze BTC --days 30
-   ```
-
-## Development Setup
-
-### Project Structure
-
-```
-cryptvault/
-├── cryptvault/          # Main package
-│   ├── cli/            # Command-line interface
-│   ├── core/           # Core analysis logic
-│   ├── data/           # Data fetching and models
-│   ├── indicators/     # Technical indicators
-│   ├── patterns/       # Pattern detection
-│   ├── ml/             # Machine learning
-│   ├── visualization/  # Charting
-│   └── utils/          # Utilities
-├── tests/              # Test suite
-├── docs/               # Documentation
-├── config/             # Configuration files
-└── scripts/            # Utility scripts
-```
-
-### Development Tools
-
-Install development tools:
 ```bash
-pip install pylint mypy flake8 black pytest pytest-cov
+# Python 3.8+
+python --version
+
+# Install dependencies
+pip install -r requirements.txt
+pip install -r requirements/dev.txt  # Development dependencies
 ```
 
-### IDE Setup
+### Development Setup
 
-**VS Code** (recommended):
-- Install Python extension
-- Configure linting (pylint, flake8)
-- Enable type checking (mypy)
-- Set up auto-formatting (black)
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/cryptvault.git
+cd cryptvault
 
-**PyCharm**:
-- Configure Python interpreter
-- Enable code inspections
-- Set up pytest as test runner
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-## Code Style Guidelines
+# Install in development mode
+pip install -e .
 
-### Python Style (PEP 8)
-
-We follow PEP 8 with some specific guidelines:
-
-**Formatting**:
-- Line length: 100 characters maximum
-- Indentation: 4 spaces (no tabs)
-- Blank lines: 2 between top-level definitions, 1 between methods
-- Imports: Grouped (standard library, third-party, local)
-
-**Naming Conventions**:
-- Classes: `PascalCase` (e.g., `PatternAnalyzer`)
-- Functions/Methods: `snake_case` (e.g., `analyze_ticker`)
-- Constants: `UPPER_SNAKE_CASE` (e.g., `MAX_DATA_POINTS`)
-- Private members: Leading underscore (e.g., `_internal_method`)
-
-**Example**:
-```python
-from typing import List, Optional
-import numpy as np
-
-from ..data.models import PriceDataFrame
-from ..exceptions import AnalysisError
-
-
-class PatternDetector:
-    """Detect chart patterns in price data."""
-    
-    MAX_PATTERN_LENGTH = 100
-    
-    def __init__(self, sensitivity: float = 0.5):
-        """Initialize pattern detector."""
-        self.sensitivity = sensitivity
-        self._cache = {}
-    
-    def detect_patterns(
-        self,
-        data: PriceDataFrame,
-        min_confidence: float = 0.6
-    ) -> List[DetectedPattern]:
-        """
-        Detect patterns in price data.
-        
-        Args:
-            data: Price data to analyze
-            min_confidence: Minimum confidence threshold
-            
-        Returns:
-            List of detected patterns
-            
-        Raises:
-            AnalysisError: If detection fails
-        """
-        if len(data) < 10:
-            raise AnalysisError("Insufficient data")
-        
-        patterns = self._find_patterns(data)
-        return [p for p in patterns if p.confidence >= min_confidence]
-    
-    def _find_patterns(self, data: PriceDataFrame) -> List:
-        """Internal pattern finding logic."""
-        # Implementation
-        pass
+# Run tests
+pytest tests/
 ```
 
-### Documentation Standards
+## How to Contribute
 
-**Docstrings** (Google Style):
+### Reporting Bugs
+
+1. Check if the bug already exists in [Issues](https://github.com/yourusername/cryptvault/issues)
+2. Create a new issue with:
+   - Clear title and description
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - System information (OS, Python version)
+   - Error messages and logs
+
+### Suggesting Features
+
+1. Check existing feature requests
+2. Create an issue with:
+   - Clear use case
+   - Proposed solution
+   - Alternative approaches considered
+   - Impact on existing functionality
+
+### Pull Requests
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Make your changes**
+   - Follow code style guidelines
+   - Add tests for new functionality
+   - Update documentation
+
+4. **Test your changes**
+   ```bash
+   pytest tests/
+   python -m pylint cryptvault/
+   ```
+
+5. **Commit with clear messages**
+   ```bash
+   git commit -m "feat: add new pattern detection algorithm"
+   ```
+
+6. **Push and create PR**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+## Code Style
+
+### Python Style Guide
+
+- Follow [PEP 8](https://pep8.org/)
+- Use type hints where appropriate
+- Maximum line length: 100 characters
+- Use docstrings for all public functions/classes
+
+### Example
+
 ```python
-def analyze_ticker(
-    ticker: str,
-    days: int = 60,
-    interval: str = '1d'
-) -> AnalysisResult:
+def calculate_rsi(prices: np.ndarray, period: int = 14) -> np.ndarray:
     """
-    Analyze cryptocurrency by ticker symbol.
-    
-    This function fetches historical data and performs comprehensive
-    analysis including pattern detection and technical indicators.
+    Calculate Relative Strength Index.
     
     Args:
-        ticker: Ticker symbol (e.g., 'BTC', 'ETH', 'AAPL')
-        days: Number of days of historical data (default: 60)
-        interval: Data interval - '1m', '1h', '1d', '1wk' (default: '1d')
-        
+        prices: Array of closing prices
+        period: RSI period (default: 14)
+    
     Returns:
-        AnalysisResult containing patterns, indicators, and predictions
-        
+        Array of RSI values (0-100)
+    
     Raises:
-        InvalidTickerError: If ticker symbol is invalid
-        DataFetchError: If data cannot be fetched
-        
-    Example:
-        >>> analyzer = PatternAnalyzer()
-        >>> result = analyzer.analyze_ticker('BTC', days=60)
-        >>> print(f"Found {len(result.patterns)} patterns")
-        Found 5 patterns
+        ValueError: If period < 1 or prices array is empty
     """
-```
-
-**Type Hints**:
-- Use type hints for all function signatures
-- Import from `typing` module
-- Use `Optional` for nullable types
-- Use `List`, `Dict`, `Tuple` for collections
-
-**Comments**:
-- Explain "why", not "what"
-- Document complex algorithms
-- Reference sources for formulas
-- Note performance considerations
-
-### Code Quality Standards
-
-**Complexity**:
-- Maximum cyclomatic complexity: 10 per function
-- Break down complex functions into smaller ones
-- Use helper functions for repeated logic
-
-**Error Handling**:
-- Use custom exceptions from `cryptvault.exceptions`
-- Provide meaningful error messages
-- Include context in exception details
-- Log errors appropriately
-
-**Performance**:
-- Use NumPy for array operations
-- Avoid unnecessary loops
-- Cache expensive computations
-- Document time complexity
-
-## Testing Requirements
-
-### Test Coverage
-
-- Minimum 85% code coverage required
-- All new features must include tests
-- Bug fixes must include regression tests
-
-### Test Structure
-
-```
-tests/
-├── unit/              # Unit tests
-│   ├── test_indicators.py
-│   ├── test_patterns.py
-│   └── test_ml.py
-├── integration/       # Integration tests
-│   └── test_analyzer.py
-└── fixtures/          # Test data
-    └── sample_data.py
-```
-
-### Writing Tests
-
-**Unit Test Example**:
-```python
-import pytest
-from cryptvault.indicators.momentum import calculate_rsi
-
-
-class TestRSI:
-    """Test RSI calculation."""
+    if period < 1:
+        raise ValueError("Period must be >= 1")
     
-    def test_rsi_calculation(self):
-        """Test RSI with known values."""
-        prices = [44, 44.34, 44.09, 43.61, 44.33, 44.83, 45.10]
-        rsi = calculate_rsi(prices, period=6)
-        
-        # RSI should be between 0 and 100
-        assert 0 <= rsi[-1] <= 100
-        
-        # Test specific value (with tolerance)
-        assert rsi[-1] == pytest.approx(66.67, rel=0.01)
-    
-    def test_rsi_edge_cases(self):
-        """Test RSI edge cases."""
-        # Insufficient data
-        with pytest.raises(ValueError):
-            calculate_rsi([1, 2, 3], period=14)
-        
-        # All same values (should return 50)
-        prices = [100] * 20
-        rsi = calculate_rsi(prices, period=14)
-        assert rsi[-1] == pytest.approx(50.0, rel=0.01)
+    # Implementation...
+    return rsi_values
 ```
 
-**Integration Test Example**:
-```python
-from cryptvault.core.analyzer import PatternAnalyzer
+### Commit Message Format
 
-
-class TestAnalyzerIntegration:
-    """Integration tests for analyzer."""
-    
-    def test_complete_analysis_workflow(self):
-        """Test complete analysis from ticker to results."""
-        analyzer = PatternAnalyzer()
-        result = analyzer.analyze_ticker('BTC', days=30)
-        
-        assert result.success
-        assert result.symbol == 'BTC'
-        assert len(result.patterns) >= 0
-        assert result.analysis_time > 0
 ```
-
-### Running Tests
-
-```bash
-# Run all tests
-python -m pytest tests/
-
-# Run with coverage
-python -m pytest tests/ --cov=cryptvault --cov-report=html
-
-# Run specific test file
-python -m pytest tests/unit/test_indicators.py
-
-# Run specific test
-python -m pytest tests/unit/test_indicators.py::TestRSI::test_rsi_calculation
-
-# Run with verbose output
-python -m pytest tests/ -v
-
-# Run only fast tests (skip slow integration tests)
-python -m pytest tests/ -m "not slow"
-```
-
-### Test Markers
-
-Use pytest markers to categorize tests:
-```python
-@pytest.mark.slow
-def test_with_real_api():
-    """Test that makes real API calls."""
-    pass
-
-@pytest.mark.unit
-def test_calculation():
-    """Fast unit test."""
-    pass
-```
-
-## Pull Request Process
-
-### Before Submitting
-
-1. **Update Your Branch**
-   ```bash
-   git checkout main
-   git pull upstream main
-   git checkout your-feature-branch
-   git rebase main
-   ```
-
-2. **Run Quality Checks**
-   ```bash
-   # Format code
-   black cryptvault/
-   
-   # Run linters
-   pylint cryptvault/
-   flake8 cryptvault/
-   mypy cryptvault/
-   
-   # Run tests
-   python -m pytest tests/ --cov=cryptvault
-   ```
-
-3. **Update Documentation**
-   - Update docstrings
-   - Update README if needed
-   - Update CHANGELOG.md
-   - Add examples if applicable
-
-### Commit Guidelines
-
-**Commit Message Format**:
-```
-<type>(<scope>): <subject>
+<type>: <subject>
 
 <body>
 
 <footer>
 ```
 
-**Types**:
+**Types:**
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
 - `style`: Code style changes (formatting)
 - `refactor`: Code refactoring
-- `test`: Adding or updating tests
+- `test`: Adding/updating tests
 - `chore`: Maintenance tasks
 
-**Examples**:
+**Example:**
 ```
-feat(patterns): Add harmonic pattern detection
+feat: add LSTM model to ensemble predictor
 
-Implement Gartley, Butterfly, Bat, and Crab patterns using
-Fibonacci ratios. Includes comprehensive tests and documentation.
+- Implemented 2-layer LSTM with dropout
+- Added adaptive weight adjustment
+- Improved accuracy from 65% to 75%
 
 Closes #123
 ```
-
-```
-fix(indicators): Correct RSI calculation for edge cases
-
-Fix RSI calculation when all prices are identical. Now correctly
-returns 50.0 instead of NaN.
-
-Fixes #456
-```
-
-### Pull Request Template
-
-When creating a PR, include:
-
-**Title**: Clear, descriptive title
-
-**Description**:
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
 
 ## Testing
-- [ ] Unit tests added/updated
-- [ ] Integration tests added/updated
-- [ ] All tests passing
-- [ ] Code coverage maintained/improved
 
-## Checklist
-- [ ] Code follows style guidelines
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No new warnings
-- [ ] Tests added for new functionality
+### Running Tests
 
-## Related Issues
-Closes #123
+```bash
+# All tests
+pytest
+
+# Specific test file
+pytest tests/test_indicators.py
+
+# With coverage
+pytest --cov=cryptvault tests/
 ```
 
-### Review Process
+### Writing Tests
 
-1. **Automated Checks**: CI/CD runs tests and linters
-2. **Code Review**: Maintainers review code quality
-3. **Testing**: Reviewers test functionality
-4. **Approval**: At least one maintainer approval required
-5. **Merge**: Squash and merge to main branch
+```python
+import pytest
+from cryptvault.indicators import calculate_rsi
 
-### Review Criteria
+def test_rsi_calculation():
+    """Test RSI calculation with known values."""
+    prices = np.array([44, 44.34, 44.09, 43.61, 44.33])
+    rsi = calculate_rsi(prices, period=14)
+    
+    assert len(rsi) == len(prices)
+    assert 0 <= rsi[-1] <= 100
 
-- Code quality and style
-- Test coverage
-- Documentation completeness
-- Performance impact
-- Security considerations
-- Backward compatibility
-
-## Issue Reporting
-
-### Bug Reports
-
-Use the bug report template:
-
-```markdown
-**Describe the Bug**
-Clear description of the bug
-
-**To Reproduce**
-Steps to reproduce:
-1. Run command '...'
-2. With parameters '...'
-3. See error
-
-**Expected Behavior**
-What you expected to happen
-
-**Actual Behavior**
-What actually happened
-
-**Environment**
-- OS: [e.g., Windows 10, macOS 12, Ubuntu 20.04]
-- Python Version: [e.g., 3.9.7]
-- CryptVault Version: [e.g., 4.0.0]
-
-**Logs**
+def test_rsi_invalid_period():
+    """Test RSI raises error for invalid period."""
+    prices = np.array([44, 44.34, 44.09])
+    
+    with pytest.raises(ValueError):
+        calculate_rsi(prices, period=0)
 ```
-Paste relevant logs from logs/cryptvault.log
-```
-
-**Additional Context**
-Any other relevant information
-```
-
-### Feature Requests
-
-Use the feature request template:
-
-```markdown
-**Feature Description**
-Clear description of the proposed feature
-
-**Use Case**
-Why is this feature needed?
-
-**Proposed Solution**
-How should this feature work?
-
-**Alternatives Considered**
-Other approaches you've considered
-
-**Additional Context**
-Any other relevant information
-```
-
-### Questions
-
-For questions:
-- Check existing documentation
-- Search closed issues
-- Use GitHub Discussions
-- Tag with `question` label
 
 ## Documentation
 
-### Documentation Types
+### Updating Documentation
 
-1. **Code Documentation**: Docstrings in code
-2. **API Reference**: `docs/API_REFERENCE.md`
-3. **Architecture**: `docs/ARCHITECTURE.md`
-4. **User Guide**: `README.md`
-5. **Examples**: `examples/` directory
+- Update relevant `.md` files in `docs/`
+- Add docstrings to new functions/classes
+- Update `README.md` if adding major features
+- Include code examples where helpful
 
-### Documentation Standards
+### Documentation Structure
 
-- Clear and concise
-- Include examples
-- Keep up-to-date with code
-- Use proper markdown formatting
-- Add diagrams where helpful
-
-### Building Documentation
-
-```bash
-# Generate API documentation
-python scripts/generate_docs.py
-
-# View documentation locally
-cd docs
-python -m http.server 8000
-# Open http://localhost:8000
+```
+docs/
+├── API_REFERENCE.md      # API documentation
+├── ARCHITECTURE.md       # System architecture
+├── CHANGELOG.md          # Version history
+├── CONTRIBUTING.md       # This file
+├── DEPLOYMENT.md         # Deployment guide
+├── PERFORMANCE.md        # Performance optimization
+├── SECURITY.md           # Security guidelines
+└── TROUBLESHOOTING.md    # Common issues
 ```
 
-## Recognition
+## Project Structure
 
-### Contributors
+```
+cryptvault/
+├── cli/              # Command-line interface
+├── core/             # Core analysis engine
+├── data/             # Data models and fetching
+├── indicators/       # Technical indicators
+├── ml/               # Machine learning models
+├── patterns/         # Pattern detection
+├── security/         # Security features
+├── storage/          # Data persistence
+├── utils/            # Utility functions
+└── visualization/    # Chart generation
+```
 
-All contributors are recognized in:
-- `CHANGELOG.md` for each release
-- GitHub contributors page
-- Release notes
+## Review Process
 
-### Significant Contributions
+1. **Automated Checks**
+   - Tests must pass
+   - Code coverage > 80%
+   - Linting passes
+   - No security vulnerabilities
 
-Major contributions may be highlighted in:
-- Project README
-- Documentation credits
-- Blog posts or announcements
+2. **Code Review**
+   - At least one maintainer approval
+   - Address all review comments
+   - Ensure documentation is updated
+
+3. **Merge**
+   - Squash commits if needed
+   - Update CHANGELOG.md
+   - Tag release if applicable
+
+## Release Process
+
+1. Update version in `__version__.py`
+2. Update `CHANGELOG.md`
+3. Create release branch
+4. Run full test suite
+5. Create GitHub release
+6. Publish to PyPI (maintainers only)
 
 ## Getting Help
 
-### Resources
-
-- **Documentation**: `docs/` directory
-- **Examples**: `examples/` directory
-- **API Reference**: `docs/API_REFERENCE.md`
-- **Architecture**: `docs/ARCHITECTURE.md`
-
-### Communication
-
-- **GitHub Issues**: Bug reports and feature requests
-- **GitHub Discussions**: Questions and general discussion
-- **Pull Requests**: Code contributions
-
-### Maintainers
-
-Current maintainers:
-- Review pull requests
-- Triage issues
-- Maintain documentation
-- Release new versions
+- **Documentation**: Check `docs/` folder
+- **Issues**: Search existing issues
+- **Discussions**: Use GitHub Discussions
+- **Email**: contact@cryptvault.dev
 
 ## License
 
-By contributing to CryptVault, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the MIT License.
 
----
+## Recognition
 
-Thank you for contributing to CryptVault! Your efforts help make this project better for everyone.
+Contributors are recognized in:
+- `CHANGELOG.md` for each release
+- GitHub contributors page
+- Project README
+
+Thank you for contributing to CryptVault! 🚀

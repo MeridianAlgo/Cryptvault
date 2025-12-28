@@ -14,7 +14,7 @@ from ..features.technical_features import TechnicalFeatureExtractor
 from ..features.pattern_features import PatternFeatureExtractor
 from ..features.time_features import TimeFeatureExtractor
 from ..models.linear_models import LinearPredictor
-from ..models.lstm_predictor import LSTMPredictor
+# LSTM removed - using SimplePredictor instead
 from ..models.ensemble_predictor import EnhancedEnsemblePredictor
 from ..models.prediction_cache import PredictionCache
 
@@ -79,9 +79,9 @@ class MLPredictor:
         # Initialize models based on configuration
         self.primary_model = self.config.get('primary_model', 'ensemble')
 
-        # Use enhanced ensemble predictor
+        # Use enhanced ensemble predictor - LSTM disabled for stability
         self.model = EnhancedEnsemblePredictor(
-            enable_deep_learning=self.config.get('enable_deep_learning', True)
+            enable_deep_learning=False  # Disabled LSTM due to dimension issues
         )
 
         # Model performance tracking

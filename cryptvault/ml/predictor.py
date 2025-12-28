@@ -236,43 +236,53 @@ class MLPredictor:
 
     def _train_model_on_data(self, data: PriceDataFrame, features: np.ndarray) -> None:
         """
-        Train the model on historical data.
+        Train the model on historical data using consistent feature extraction.
 
         Args:
             data: Historical price data
-            features: Extracted features
+            features: Extracted features (for reference)
         """
         try:
             if len(data) < 30:
                 self.logger.warning("Insufficient data for training (< 30 samples)")
                 return
 
-            # Prepare training data
-            prices = [point.close for point in data.data]
-
-            # Create feature matrix and targets
+            # Create feature matrix and targets using SAME extraction as prediction
             feature_matrix = []
             targets = []
 
-            window_size = min(20, len(prices) // 3)
+            # We need at least 30 points to extract meaningful features
+            for i in range(30, len(data)):
+                # Create a slice of data up to point i
+                data_slice = PriceDataFrame(
+                    symbol=data.symbol,
+                    data=data.data[:i]
+                )
 
-            for i in range(window_size, len(prices)):
-                # Simple features for each window
-                price_window = prices[i-window_size:i]
+                # Extract features using the SAME method as prediction
+                try:
+                    slice_features = self._extract_all_features(data_slice, None)
+                    feature_matrix.append(slice_features[0])  # Extract from (1, n_features) shape
 
-                window_features = [
-                    np.mean(price_window),
-                    np.std(price_window),
-                    (price_window[-1] - price_window[0]) / price_window[0],
-                    price_window[-1] / np.mean(price_window),
-                    sum(1 for j in range(1, len(price_window)) if price_window[j] > price_window[j-1]) / max(1, len(price_window)-1)
-                ]
+                    # Target is the next day's return
+                    if i < len(data):
+                        current_price = data.data[i-1].close
+                        next_price = data.data[i].close
+                        target_return = (next_price - current_price) / current_price
+                        targets.append(target_return)
 
-                feature_matrix.append(window_features)
-                targets.append((prices[i] - prices[i-1]) / prices[i-1])
+                except Exception as e:
+                    self.logger.debug(f"Feature extraction failed for slice {i}: {e}")
+                    continue
+
+            if len(feature_matrix) < 10:
+                self.logger.warning(f"Insufficient training samples: {len(feature_matrix)}")
+                return
 
             feature_matrix = np.array(feature_matrix)
             targets = np.array(targets)
+
+            self.logger.info(f"Training with {feature_matrix.shape[0]} samples, {feature_matrix.shape[1]} features")
 
             # Train the model
             success = self.model.train(feature_matrix, targets)
@@ -280,7 +290,7 @@ class MLPredictor:
             if success:
                 self.is_trained = True
                 self.training_data_size = len(feature_matrix)
-                self.logger.info(f"Model trained on {len(feature_matrix)} samples")
+                self.logger.info(f"Model trained successfully on {len(feature_matrix)} samples with {feature_matrix.shape[1]} features")
             else:
                 self.logger.warning("Model training failed")
 
