@@ -21,7 +21,6 @@ CryptVault is a cryptocurrency analysis platform with **advanced pattern detecti
 - **Smart Ensemble Predictions** - Combines multiple ML models (Random Forest, Gradient Boost, SVM, Linear, ARIMA)
 - **Technical Indicators** - RSI, MACD, Moving Averages, Volume analysis
 - **Clean Charts** - Professional candlestick charts with pattern overlays
-- **Hourly Training** - Models automatically retrain every hour with fresh data
 
 **🔥 NEW in v4.5.0:**
 - ⚡ **Hourly automated training** - Models retrain every hour
