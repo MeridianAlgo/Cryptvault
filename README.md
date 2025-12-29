@@ -23,7 +23,6 @@ CryptVault is a cryptocurrency analysis platform with **advanced pattern detecti
 - **Clean Charts** - Professional candlestick charts with pattern overlays
 
 **🔥 NEW in v4.5.0:**
-- ⚡ **Hourly automated training** - Models retrain every hour
 - 🎨 **Clean chart generation** - Candlesticks with simple pattern overlays
 - 📊 **15+ pattern types** - More patterns detected
 - 🚀 **No LSTM errors** - Removed buggy LSTM, using reliable ensemble
