@@ -1,9 +1,10 @@
 """Time-based feature extraction for ML models."""
 
-import numpy as np
-from typing import List
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import List
+
+import numpy as np
 
 from ...data.models import PriceDataFrame
 
@@ -80,15 +81,27 @@ class TimeFeatureExtractor:
         """Get names of all extracted features."""
         return [
             # Day of week (one-hot encoded)
-            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
             # Hour of day
-            'hour_normalized',
+            "hour_normalized",
             # Month seasonality
-            'month_sin', 'month_cos',
+            "month_sin",
+            "month_cos",
             # Quarter (one-hot encoded)
-            'q1', 'q2', 'q3', 'q4',
+            "q1",
+            "q2",
+            "q3",
+            "q4",
             # Weekend flag
-            'is_weekend',
+            "is_weekend",
             # Market sessions
-            'asian_session', 'european_session', 'us_session'
+            "asian_session",
+            "european_session",
+            "us_session",
         ]

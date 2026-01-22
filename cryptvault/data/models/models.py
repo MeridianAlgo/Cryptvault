@@ -8,6 +8,7 @@ from typing import List, Optional
 @dataclass
 class PricePoint:
     """Single price data point."""
+
     timestamp: datetime
     open: float
     high: float

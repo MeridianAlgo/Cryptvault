@@ -1,15 +1,15 @@
 """Analysis result storage and persistence."""
 
 import json
+import logging
 import os
 import pickle
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, asdict
-import logging
+from typing import Any, Dict, List, Optional, Union
 
-from ..patterns.types import DetectedPattern, PatternType, PatternCategory
+from ..patterns.types import DetectedPattern, PatternCategory, PatternType
 
 
 @dataclass
@@ -49,33 +49,33 @@ class AnalysisResult:
         data = asdict(self)
 
         # Convert datetime objects to strings
-        data['timestamp'] = self.timestamp.isoformat()
-        data['data_start'] = self.data_start.isoformat()
-        data['data_end'] = self.data_end.isoformat()
+        data["timestamp"] = self.timestamp.isoformat()
+        data["data_start"] = self.data_start.isoformat()
+        data["data_end"] = self.data_end.isoformat()
 
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AnalysisResult':
+    def from_dict(cls, data: Dict[str, Any]) -> "AnalysisResult":
         """Create from dictionary."""
         # Convert string timestamps back to datetime
-        data['timestamp'] = datetime.fromisoformat(data['timestamp'])
-        data['data_start'] = datetime.fromisoformat(data['data_start'])
-        data['data_end'] = datetime.fromisoformat(data['data_end'])
+        data["timestamp"] = datetime.fromisoformat(data["timestamp"])
+        data["data_start"] = datetime.fromisoformat(data["data_start"])
+        data["data_end"] = datetime.fromisoformat(data["data_end"])
 
         return cls(**data)
 
     def get_summary(self) -> Dict[str, Any]:
         """Get a summary of the analysis result."""
         return {
-            'analysis_id': self.analysis_id,
-            'timestamp': self.timestamp,
-            'symbol': self.symbol,
-            'timeframe': self.timeframe,
-            'patterns_found': self.patterns_found,
-            'analysis_time': f"{self.analysis_time_seconds:.2f}s",
-            'data_period': f"{self.data_start.strftime('%Y-%m-%d')} to {self.data_end.strftime('%Y-%m-%d')}",
-            'top_pattern': self.patterns[0]['type'] if self.patterns else 'None'
+            "analysis_id": self.analysis_id,
+            "timestamp": self.timestamp,
+            "symbol": self.symbol,
+            "timeframe": self.timeframe,
+            "patterns_found": self.patterns_found,
+            "analysis_time": f"{self.analysis_time_seconds:.2f}s",
+            "data_period": f"{self.data_start.strftime('%Y-%m-%d')} to {self.data_end.strftime('%Y-%m-%d')}",
+            "top_pattern": self.patterns[0]["type"] if self.patterns else "None",
         }
 
 
@@ -98,9 +98,9 @@ class AnalysisResultStorage:
         (self.storage_dir / "pickle").mkdir(exist_ok=True)
         (self.storage_dir / "csv").mkdir(exist_ok=True)
 
-    def save_analysis_result(self, analysis_data: Dict[str, Any],
-                           symbol: str = "UNKNOWN",
-                           timeframe: str = "UNKNOWN") -> str:
+    def save_analysis_result(
+        self, analysis_data: Dict[str, Any], symbol: str = "UNKNOWN", timeframe: str = "UNKNOWN"
+    ) -> str:
         """
         Save analysis result with timestamped filename.
 
@@ -118,26 +118,32 @@ class AnalysisResultStorage:
             analysis_id = f"{symbol}_{timeframe}_{timestamp.strftime('%Y%m%d_%H%M%S')}"
 
             # Extract data information
-            data_summary = analysis_data.get('data_summary', {})
+            data_summary = analysis_data.get("data_summary", {})
 
             # Create AnalysisResult object
             result = AnalysisResult(
                 analysis_id=analysis_id,
                 timestamp=timestamp,
-                analysis_time_seconds=analysis_data.get('analysis_time_seconds', 0.0),
+                analysis_time_seconds=analysis_data.get("analysis_time_seconds", 0.0),
                 symbol=symbol,
                 timeframe=timeframe,
-                data_points=data_summary.get('total_points', 0),
-                data_start=data_summary.get('start_time', timestamp),
-                data_end=data_summary.get('end_time', timestamp),
-                sensitivity_level=analysis_data.get('configuration_used', {}).get('sensitivity_level', 'unknown'),
-                patterns_enabled=analysis_data.get('configuration_used', {}).get('patterns_enabled', 0),
-                colors_enabled=analysis_data.get('configuration_used', {}).get('colors_enabled', False),
-                patterns_found=analysis_data.get('patterns_found', 0),
-                patterns=analysis_data.get('patterns', []),
-                pattern_summary=analysis_data.get('pattern_summary', {}),
-                technical_indicators=analysis_data.get('technical_indicators', {}),
-                recommendations=analysis_data.get('recommendations', [])
+                data_points=data_summary.get("total_points", 0),
+                data_start=data_summary.get("start_time", timestamp),
+                data_end=data_summary.get("end_time", timestamp),
+                sensitivity_level=analysis_data.get("configuration_used", {}).get(
+                    "sensitivity_level", "unknown"
+                ),
+                patterns_enabled=analysis_data.get("configuration_used", {}).get(
+                    "patterns_enabled", 0
+                ),
+                colors_enabled=analysis_data.get("configuration_used", {}).get(
+                    "colors_enabled", False
+                ),
+                patterns_found=analysis_data.get("patterns_found", 0),
+                patterns=analysis_data.get("patterns", []),
+                pattern_summary=analysis_data.get("pattern_summary", {}),
+                technical_indicators=analysis_data.get("technical_indicators", {}),
+                recommendations=analysis_data.get("recommendations", []),
             )
 
             # Save in multiple formats
@@ -152,7 +158,9 @@ class AnalysisResultStorage:
             self.logger.error(f"Failed to save analysis result: {e}")
             raise
 
-    def load_analysis_result(self, analysis_id: str, format: str = "json") -> Optional[AnalysisResult]:
+    def load_analysis_result(
+        self, analysis_id: str, format: str = "json"
+    ) -> Optional[AnalysisResult]:
         """
         Load analysis result by ID.
 
@@ -203,8 +211,8 @@ class AnalysisResultStorage:
                     result = self._load_json(analysis_id)
                     if result:
                         summary = result.get_summary()
-                        summary['file_size'] = json_file.stat().st_size
-                        summary['file_path'] = str(json_file)
+                        summary["file_size"] = json_file.stat().st_size
+                        summary["file_path"] = str(json_file)
                         results.append(summary)
                 except Exception as e:
                     self.logger.warning(f"Failed to load summary for {json_file}: {e}")
@@ -274,7 +282,7 @@ class AnalysisResultStorage:
             if not result:
                 return False
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(result.to_dict(), f, indent=2, default=str)
 
             self.logger.info(f"Analysis result exported to: {output_path}")
@@ -295,14 +303,16 @@ class AnalysisResultStorage:
             Analysis ID if successful, None otherwise
         """
         try:
-            with open(input_path, 'r') as f:
+            with open(input_path, "r") as f:
                 data = json.load(f)
 
             result = AnalysisResult.from_dict(data)
 
             # Generate new analysis ID to avoid conflicts
             timestamp = datetime.now()
-            new_analysis_id = f"{result.symbol}_{result.timeframe}_{timestamp.strftime('%Y%m%d_%H%M%S')}_imported"
+            new_analysis_id = (
+                f"{result.symbol}_{result.timeframe}_{timestamp.strftime('%Y%m%d_%H%M%S')}_imported"
+            )
             result.analysis_id = new_analysis_id
 
             # Save imported result
@@ -350,10 +360,10 @@ class AnalysisResultStorage:
         """Get storage statistics."""
         try:
             stats = {
-                'storage_dir': str(self.storage_dir),
-                'total_results': 0,
-                'total_size_mb': 0.0,
-                'formats': {}
+                "storage_dir": str(self.storage_dir),
+                "total_results": 0,
+                "total_size_mb": 0.0,
+                "formats": {},
             }
 
             for format_dir in ["json", "pickle", "csv"]:
@@ -361,35 +371,35 @@ class AnalysisResultStorage:
                 files = list(format_path.glob("*"))
 
                 format_stats = {
-                    'count': len(files),
-                    'size_mb': sum(f.stat().st_size for f in files) / (1024 * 1024)
+                    "count": len(files),
+                    "size_mb": sum(f.stat().st_size for f in files) / (1024 * 1024),
                 }
 
-                stats['formats'][format_dir] = format_stats
-                stats['total_results'] += format_stats['count']
-                stats['total_size_mb'] += format_stats['size_mb']
+                stats["formats"][format_dir] = format_stats
+                stats["total_results"] += format_stats["count"]
+                stats["total_size_mb"] += format_stats["size_mb"]
 
             # Adjust total results (each result is saved in 3 formats)
-            stats['total_results'] = stats['formats']['json']['count']
+            stats["total_results"] = stats["formats"]["json"]["count"]
 
             return stats
 
         except Exception as e:
             self.logger.error(f"Failed to get storage stats: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def _save_json(self, result: AnalysisResult, analysis_id: str):
         """Save result as JSON."""
         json_file = self.storage_dir / "json" / f"{analysis_id}.json"
 
-        with open(json_file, 'w') as f:
+        with open(json_file, "w") as f:
             json.dump(result.to_dict(), f, indent=2, default=str)
 
     def _save_pickle(self, result: AnalysisResult, analysis_id: str):
         """Save result as pickle."""
         pickle_file = self.storage_dir / "pickle" / f"{analysis_id}.pkl"
 
-        with open(pickle_file, 'wb') as f:
+        with open(pickle_file, "wb") as f:
             pickle.dump(result, f)
 
     def _save_csv_summary(self, result: AnalysisResult, analysis_id: str):
@@ -399,34 +409,56 @@ class AnalysisResultStorage:
         csv_file = self.storage_dir / "csv" / f"{analysis_id}.csv"
 
         # Create CSV with pattern summary
-        with open(csv_file, 'w', newline='') as f:
+        with open(csv_file, "w", newline="") as f:
             writer = csv.writer(f)
 
             # Write header
-            writer.writerow(['Analysis ID', 'Timestamp', 'Symbol', 'Timeframe', 'Patterns Found', 'Analysis Time'])
-            writer.writerow([
-                result.analysis_id,
-                result.timestamp.isoformat(),
-                result.symbol,
-                result.timeframe,
-                result.patterns_found,
-                f"{result.analysis_time_seconds:.2f}s"
-            ])
+            writer.writerow(
+                [
+                    "Analysis ID",
+                    "Timestamp",
+                    "Symbol",
+                    "Timeframe",
+                    "Patterns Found",
+                    "Analysis Time",
+                ]
+            )
+            writer.writerow(
+                [
+                    result.analysis_id,
+                    result.timestamp.isoformat(),
+                    result.symbol,
+                    result.timeframe,
+                    result.patterns_found,
+                    f"{result.analysis_time_seconds:.2f}s",
+                ]
+            )
 
             # Write patterns
             if result.patterns:
                 writer.writerow([])  # Empty row
-                writer.writerow(['Pattern Type', 'Category', 'Confidence', 'Start Time', 'End Time', 'Description'])
+                writer.writerow(
+                    [
+                        "Pattern Type",
+                        "Category",
+                        "Confidence",
+                        "Start Time",
+                        "End Time",
+                        "Description",
+                    ]
+                )
 
                 for pattern in result.patterns:
-                    writer.writerow([
-                        pattern.get('type', ''),
-                        pattern.get('category', ''),
-                        pattern.get('confidence', ''),
-                        pattern.get('start_time', ''),
-                        pattern.get('end_time', ''),
-                        pattern.get('description', '')
-                    ])
+                    writer.writerow(
+                        [
+                            pattern.get("type", ""),
+                            pattern.get("category", ""),
+                            pattern.get("confidence", ""),
+                            pattern.get("start_time", ""),
+                            pattern.get("end_time", ""),
+                            pattern.get("description", ""),
+                        ]
+                    )
 
     def _load_json(self, analysis_id: str) -> Optional[AnalysisResult]:
         """Load result from JSON."""
@@ -435,7 +467,7 @@ class AnalysisResultStorage:
         if not json_file.exists():
             return None
 
-        with open(json_file, 'r') as f:
+        with open(json_file, "r") as f:
             data = json.load(f)
 
         return AnalysisResult.from_dict(data)
@@ -447,5 +479,5 @@ class AnalysisResultStorage:
         if not pickle_file.exists():
             return None
 
-        with open(pickle_file, 'rb') as f:
+        with open(pickle_file, "rb") as f:
             return pickle.load(f)  # nosec B301 - Internal analysis data only

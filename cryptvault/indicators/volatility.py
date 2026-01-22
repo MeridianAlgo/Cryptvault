@@ -9,14 +9,15 @@ Example:
     >>> atr = calculate_atr(highs, lows, closes)
 """
 
+from typing import Dict, List, Union
+
 import numpy as np
-from typing import List, Union, Dict
-from .trend import calculate_sma, calculate_ema
+
+from .trend import calculate_ema, calculate_sma
+
 
 def calculate_bollinger_bands(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20,
-    std_dev: float = 2.0
+    prices: Union[List[float], np.ndarray], period: int = 20, std_dev: float = 2.0
 ) -> Dict[str, np.ndarray]:
     """Calculate Bollinger Bands."""
     prices = np.array(prices, dtype=float)
@@ -24,19 +25,19 @@ def calculate_bollinger_bands(
 
     std = np.full(len(prices), np.nan)
     for i in range(period - 1, len(prices)):
-        std[i] = np.std(prices[i - period + 1:i + 1])
+        std[i] = np.std(prices[i - period + 1 : i + 1])
 
     upper = middle + (std_dev * std)
     lower = middle - (std_dev * std)
 
-    return {'upper': upper, 'middle': middle, 'lower': lower}
+    return {"upper": upper, "middle": middle, "lower": lower}
 
 
 def calculate_atr(
     highs: Union[List[float], np.ndarray],
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
-    period: int = 14
+    period: int = 14,
 ) -> np.ndarray:
     """Calculate Average True Range."""
     highs = np.array(highs, dtype=float)
@@ -47,11 +48,7 @@ def calculate_atr(
     tr[0] = highs[0] - lows[0]
 
     for i in range(1, len(closes)):
-        tr[i] = max(
-            highs[i] - lows[i],
-            abs(highs[i] - closes[i-1]),
-            abs(lows[i] - closes[i-1])
-        )
+        tr[i] = max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1]))
 
     atr = calculate_sma(tr, period)
     return atr
@@ -62,7 +59,7 @@ def calculate_keltner_channels(
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
     period: int = 20,
-    multiplier: float = 2.0
+    multiplier: float = 2.0,
 ) -> Dict[str, np.ndarray]:
     """Calculate Keltner Channels."""
     closes = np.array(closes, dtype=float)
@@ -72,4 +69,4 @@ def calculate_keltner_channels(
     upper = middle + (multiplier * atr)
     lower = middle - (multiplier * atr)
 
-    return {'upper': upper, 'middle': middle, 'lower': lower}
+    return {"upper": upper, "middle": middle, "lower": lower}

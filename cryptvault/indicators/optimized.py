@@ -15,15 +15,16 @@ Example:
     >>> indicators = calc.calculate_all(data)
 """
 
-import numpy as np
-from typing import Dict, List, Union, Optional
 import logging
+from typing import Dict, List, Optional, Union
 
-from .trend import calculate_sma, calculate_ema
-from .momentum import calculate_rsi, calculate_macd
-from .volatility import calculate_bollinger_bands, calculate_atr
-from ..utils.calculation_cache import cached_calculation, BatchCalculator
+import numpy as np
+
 from ..data.models import PriceDataFrame
+from ..utils.calculation_cache import BatchCalculator, cached_calculation
+from .momentum import calculate_macd, calculate_rsi
+from .trend import calculate_ema, calculate_sma
+from .volatility import calculate_atr, calculate_bollinger_bands
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +79,8 @@ class OptimizedIndicators:
         ema_12 = calculate_ema(closes, 12)
         ema_26 = calculate_ema(closes, 26)
 
-        indicators['ema_12'] = ema_12
-        indicators['ema_26'] = ema_26
+        indicators["ema_12"] = ema_12
+        indicators["ema_26"] = ema_26
 
         # MACD (reuses EMAs)
         macd_line = ema_12 - ema_26
@@ -88,38 +89,40 @@ class OptimizedIndicators:
         signal_line = np.full(len(closes), np.nan)
         start_idx = 26 - 1 + 9 - 1
         if start_idx < len(closes):
-            signal_line[start_idx:start_idx + len(signal_line_values)] = signal_line_values
+            signal_line[start_idx : start_idx + len(signal_line_values)] = signal_line_values
 
-        indicators['macd'] = macd_line
-        indicators['macd_signal'] = signal_line
-        indicators['macd_histogram'] = macd_line - signal_line
+        indicators["macd"] = macd_line
+        indicators["macd_signal"] = signal_line
+        indicators["macd_histogram"] = macd_line - signal_line
 
         # SMAs
-        indicators['sma_20'] = calculate_sma(closes, 20)
-        indicators['sma_50'] = calculate_sma(closes, 50)
-        indicators['sma_200'] = calculate_sma(closes, 200)
+        indicators["sma_20"] = calculate_sma(closes, 20)
+        indicators["sma_50"] = calculate_sma(closes, 50)
+        indicators["sma_200"] = calculate_sma(closes, 200)
 
         # RSI
-        indicators['rsi'] = calculate_rsi(closes, 14)
+        indicators["rsi"] = calculate_rsi(closes, 14)
 
         # Bollinger Bands
         bb = calculate_bollinger_bands(closes, period=20, std_dev=2.0)
-        indicators['bb_upper'] = bb['upper']
-        indicators['bb_middle'] = bb['middle']
-        indicators['bb_lower'] = bb['lower']
+        indicators["bb_upper"] = bb["upper"]
+        indicators["bb_middle"] = bb["middle"]
+        indicators["bb_lower"] = bb["lower"]
 
         # ATR
-        indicators['atr'] = calculate_atr(highs, lows, closes, period=14)
+        indicators["atr"] = calculate_atr(highs, lows, closes, period=14)
 
         # Volume SMA
-        indicators['volume_sma'] = calculate_sma(volumes, 20)
+        indicators["volume_sma"] = calculate_sma(volumes, 20)
 
         logger.debug(f"Calculated {len(indicators)} indicators for {len(closes)} data points")
 
         return indicators
 
     @cached_calculation(ttl=300)
-    def calculate_trend_indicators(self, closes: Union[List[float], np.ndarray]) -> Dict[str, np.ndarray]:
+    def calculate_trend_indicators(
+        self, closes: Union[List[float], np.ndarray]
+    ) -> Dict[str, np.ndarray]:
         """
         Calculate only trend indicators efficiently.
 
@@ -132,16 +135,18 @@ class OptimizedIndicators:
         closes = np.array(closes, dtype=float)
 
         return {
-            'sma_20': calculate_sma(closes, 20),
-            'sma_50': calculate_sma(closes, 50),
-            'sma_200': calculate_sma(closes, 200),
-            'ema_12': calculate_ema(closes, 12),
-            'ema_26': calculate_ema(closes, 26),
-            'ema_50': calculate_ema(closes, 50)
+            "sma_20": calculate_sma(closes, 20),
+            "sma_50": calculate_sma(closes, 50),
+            "sma_200": calculate_sma(closes, 200),
+            "ema_12": calculate_ema(closes, 12),
+            "ema_26": calculate_ema(closes, 26),
+            "ema_50": calculate_ema(closes, 50),
         }
 
     @cached_calculation(ttl=300)
-    def calculate_momentum_indicators(self, closes: Union[List[float], np.ndarray]) -> Dict[str, np.ndarray]:
+    def calculate_momentum_indicators(
+        self, closes: Union[List[float], np.ndarray]
+    ) -> Dict[str, np.ndarray]:
         """
         Calculate only momentum indicators efficiently.
 
@@ -160,10 +165,10 @@ class OptimizedIndicators:
         macd_data = calculate_macd(closes)
 
         return {
-            'rsi': rsi,
-            'macd': macd_data['macd'],
-            'macd_signal': macd_data['signal'],
-            'macd_histogram': macd_data['histogram']
+            "rsi": rsi,
+            "macd": macd_data["macd"],
+            "macd_signal": macd_data["signal"],
+            "macd_histogram": macd_data["histogram"],
         }
 
     def calculate_batch(self, data_frames: List[PriceDataFrame]) -> List[Dict[str, np.ndarray]]:
@@ -189,11 +194,11 @@ class OptimizedIndicators:
 
     def clear_cache(self) -> None:
         """Clear all cached calculations."""
-        if hasattr(self.calculate_all, 'clear_cache'):
+        if hasattr(self.calculate_all, "clear_cache"):
             self.calculate_all.clear_cache()
-        if hasattr(self.calculate_trend_indicators, 'clear_cache'):
+        if hasattr(self.calculate_trend_indicators, "clear_cache"):
             self.calculate_trend_indicators.clear_cache()
-        if hasattr(self.calculate_momentum_indicators, 'clear_cache'):
+        if hasattr(self.calculate_momentum_indicators, "clear_cache"):
             self.calculate_momentum_indicators.clear_cache()
 
     def get_cache_stats(self) -> Dict[str, Any]:
@@ -205,12 +210,12 @@ class OptimizedIndicators:
         """
         stats = {}
 
-        if hasattr(self.calculate_all, 'get_cache_stats'):
-            stats['calculate_all'] = self.calculate_all.get_cache_stats()
-        if hasattr(self.calculate_trend_indicators, 'get_cache_stats'):
-            stats['trend_indicators'] = self.calculate_trend_indicators.get_cache_stats()
-        if hasattr(self.calculate_momentum_indicators, 'get_cache_stats'):
-            stats['momentum_indicators'] = self.calculate_momentum_indicators.get_cache_stats()
+        if hasattr(self.calculate_all, "get_cache_stats"):
+            stats["calculate_all"] = self.calculate_all.get_cache_stats()
+        if hasattr(self.calculate_trend_indicators, "get_cache_stats"):
+            stats["trend_indicators"] = self.calculate_trend_indicators.get_cache_stats()
+        if hasattr(self.calculate_momentum_indicators, "get_cache_stats"):
+            stats["momentum_indicators"] = self.calculate_momentum_indicators.get_cache_stats()
 
         return stats
 
@@ -219,7 +224,7 @@ def calculate_indicators_vectorized(
     closes: np.ndarray,
     highs: Optional[np.ndarray] = None,
     lows: Optional[np.ndarray] = None,
-    volumes: Optional[np.ndarray] = None
+    volumes: Optional[np.ndarray] = None,
 ) -> Dict[str, np.ndarray]:
     """
     Calculate multiple indicators in a single vectorized pass.
@@ -253,27 +258,27 @@ def calculate_indicators_vectorized(
     # Calculate SMA 20 using convolution (fastest method)
     if n >= 20:
         weights = np.ones(20) / 20
-        sma_values = np.convolve(closes, weights, mode='valid')
+        sma_values = np.convolve(closes, weights, mode="valid")
         sma_20[19:] = sma_values
-    indicators['sma_20'] = sma_20
+    indicators["sma_20"] = sma_20
 
     # Calculate EMAs efficiently
     if n >= 12:
         multiplier_12 = 2.0 / 13.0
         ema_12[11] = np.mean(closes[:12])
         for i in range(12, n):
-            ema_12[i] = (closes[i] - ema_12[i-1]) * multiplier_12 + ema_12[i-1]
-    indicators['ema_12'] = ema_12
+            ema_12[i] = (closes[i] - ema_12[i - 1]) * multiplier_12 + ema_12[i - 1]
+    indicators["ema_12"] = ema_12
 
     if n >= 26:
         multiplier_26 = 2.0 / 27.0
         ema_26[25] = np.mean(closes[:26])
         for i in range(26, n):
-            ema_26[i] = (closes[i] - ema_26[i-1]) * multiplier_26 + ema_26[i-1]
-    indicators['ema_26'] = ema_26
+            ema_26[i] = (closes[i] - ema_26[i - 1]) * multiplier_26 + ema_26[i - 1]
+    indicators["ema_26"] = ema_26
 
     # MACD (reuses EMAs)
-    indicators['macd'] = ema_12 - ema_26
+    indicators["macd"] = ema_12 - ema_26
 
     # RSI (optimized calculation)
     if n >= 15:
@@ -295,7 +300,7 @@ def calculate_indicators_vectorized(
                 rs = avg_gain / avg_loss
                 rsi[i + 1] = 100.0 - (100.0 / (1.0 + rs))
 
-        indicators['rsi'] = rsi
+        indicators["rsi"] = rsi
 
     return indicators
 
@@ -320,12 +325,12 @@ def optimize_calculation_order(required_indicators: List[str]) -> List[str]:
     """
     # Define dependencies
     dependencies = {
-        'macd': ['ema_12', 'ema_26'],
-        'macd_signal': ['macd'],
-        'macd_histogram': ['macd', 'macd_signal'],
-        'bb_upper': ['sma_20'],
-        'bb_middle': ['sma_20'],
-        'bb_lower': ['sma_20']
+        "macd": ["ema_12", "ema_26"],
+        "macd_signal": ["macd"],
+        "macd_histogram": ["macd", "macd_signal"],
+        "bb_upper": ["sma_20"],
+        "bb_middle": ["sma_20"],
+        "bb_lower": ["sma_20"],
     }
 
     # Topological sort

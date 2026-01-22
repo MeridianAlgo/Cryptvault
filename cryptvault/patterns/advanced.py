@@ -1,10 +1,11 @@
 """Advanced pattern detection algorithms for complex geometric patterns."""
 
-from typing import List, Dict, Optional, Tuple
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
 from ..data.models import PriceDataFrame
-from ..indicators.trend_analysis import TrendAnalysis, PeakTrough
-from .types import PatternType, PatternCategory, DetectedPattern, VolumeProfile, PATTERN_CATEGORIES
+from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
+from .types import PATTERN_CATEGORIES, DetectedPattern, PatternCategory, PatternType, VolumeProfile
 
 
 class AdvancedPatternAnalyzer:
@@ -16,8 +17,9 @@ class AdvancedPatternAnalyzer:
         self.min_pattern_length = 20
         self.max_pattern_length = 120
 
-    def detect_diamond_patterns(self, data: PriceDataFrame,
-                              sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_diamond_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect diamond patterns (expanding then contracting formations).
 
@@ -36,10 +38,16 @@ class AdvancedPatternAnalyzer:
         lows = data.get_lows()
 
         # Find peaks and troughs for diamond analysis
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=3)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=3)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=3)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=3)
+            if pt.type == "trough"
+        ]
 
         if len(high_peaks) < 4 or len(low_troughs) < 4:
             return patterns
@@ -54,8 +62,9 @@ class AdvancedPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def detect_expanding_triangle_patterns(self, data: PriceDataFrame,
-                                         sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_expanding_triangle_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect expanding triangle (broadening formation) patterns.
 
@@ -74,10 +83,16 @@ class AdvancedPatternAnalyzer:
         lows = data.get_lows()
 
         # Find peaks and troughs
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=4)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=4)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=4)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=4)
+            if pt.type == "trough"
+        ]
 
         if len(high_peaks) < 3 or len(low_troughs) < 3:
             return patterns
@@ -92,8 +107,9 @@ class AdvancedPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_diamond_candidates(self, high_peaks: List[PeakTrough],
-                               low_troughs: List[PeakTrough]) -> List[Dict]:
+    def _find_diamond_candidates(
+        self, high_peaks: List[PeakTrough], low_troughs: List[PeakTrough]
+    ) -> List[Dict]:
         """Find potential diamond formations."""
         candidates = []
 
@@ -101,14 +117,13 @@ class AdvancedPatternAnalyzer:
         # Need at least 4 peaks and 4 troughs
         for i in range(len(high_peaks) - 3):
             for j in range(i + 3, min(i + 8, len(high_peaks))):  # Limit search range
-                peak_group = high_peaks[i:j+1]
+                peak_group = high_peaks[i : j + 1]
 
                 # Find corresponding troughs in the same time range
                 start_time = peak_group[0].index
                 end_time = peak_group[-1].index
 
-                relevant_troughs = [t for t in low_troughs
-                                  if start_time <= t.index <= end_time]
+                relevant_troughs = [t for t in low_troughs if start_time <= t.index <= end_time]
 
                 if len(relevant_troughs) < 4:
                     continue
@@ -116,62 +131,65 @@ class AdvancedPatternAnalyzer:
                 # Check if this forms a diamond pattern
                 diamond_data = self._analyze_diamond_structure(peak_group, relevant_troughs)
 
-                if diamond_data['is_diamond']:
-                    candidates.append({
-                        'peaks': peak_group,
-                        'troughs': relevant_troughs,
-                        'start_index': start_time,
-                        'end_index': end_time,
-                        'expansion_score': diamond_data['expansion_score'],
-                        'contraction_score': diamond_data['contraction_score']
-                    })
+                if diamond_data["is_diamond"]:
+                    candidates.append(
+                        {
+                            "peaks": peak_group,
+                            "troughs": relevant_troughs,
+                            "start_index": start_time,
+                            "end_index": end_time,
+                            "expansion_score": diamond_data["expansion_score"],
+                            "contraction_score": diamond_data["contraction_score"],
+                        }
+                    )
 
         return candidates
 
-    def _analyze_diamond_structure(self, peaks: List[PeakTrough],
-                                 troughs: List[PeakTrough]) -> Dict:
+    def _analyze_diamond_structure(
+        self, peaks: List[PeakTrough], troughs: List[PeakTrough]
+    ) -> Dict:
         """Analyze if peaks and troughs form a diamond structure."""
 
         if len(peaks) < 4 or len(troughs) < 4:
-            return {'is_diamond': False}
+            return {"is_diamond": False}
 
         # Sort by time
         all_points = sorted(peaks + troughs, key=lambda x: x.index)
 
         if len(all_points) < 8:
-            return {'is_diamond': False}
+            return {"is_diamond": False}
 
         # Diamond should have expanding then contracting price range
         # Calculate range at different points in time
         quarter_points = len(all_points) // 4
 
         # Early range (first quarter)
-        early_points = all_points[:quarter_points*2]
+        early_points = all_points[: quarter_points * 2]
         early_highs = [p.value for p in early_points if p in peaks]
         early_lows = [p.value for p in early_points if p in troughs]
 
         if not early_highs or not early_lows:
-            return {'is_diamond': False}
+            return {"is_diamond": False}
 
         early_range = max(early_highs) - min(early_lows)
 
         # Middle range (second and third quarters)
-        middle_points = all_points[quarter_points:quarter_points*3]
+        middle_points = all_points[quarter_points : quarter_points * 3]
         middle_highs = [p.value for p in middle_points if p in peaks]
         middle_lows = [p.value for p in middle_points if p in troughs]
 
         if not middle_highs or not middle_lows:
-            return {'is_diamond': False}
+            return {"is_diamond": False}
 
         middle_range = max(middle_highs) - min(middle_lows)
 
         # Late range (last quarter)
-        late_points = all_points[quarter_points*3:]
+        late_points = all_points[quarter_points * 3 :]
         late_highs = [p.value for p in late_points if p in peaks]
         late_lows = [p.value for p in late_points if p in troughs]
 
         if not late_highs or not late_lows:
-            return {'is_diamond': False}
+            return {"is_diamond": False}
 
         late_range = max(late_highs) - min(late_lows)
 
@@ -191,20 +209,21 @@ class AdvancedPatternAnalyzer:
         is_diamond = expansion_score > 0.3 and contraction_score > 0.3
 
         return {
-            'is_diamond': is_diamond,
-            'expansion_score': expansion_score,
-            'contraction_score': contraction_score,
-            'early_range': early_range,
-            'middle_range': middle_range,
-            'late_range': late_range
+            "is_diamond": is_diamond,
+            "expansion_score": expansion_score,
+            "contraction_score": contraction_score,
+            "early_range": early_range,
+            "middle_range": middle_range,
+            "late_range": late_range,
         }
 
-    def _analyze_diamond_formation(self, data: PriceDataFrame, candidate: Dict,
-                                 sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_diamond_formation(
+        self, data: PriceDataFrame, candidate: Dict, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """Analyze diamond candidate and create pattern if valid."""
 
-        start_idx = candidate['start_index']
-        end_idx = candidate['end_index']
+        start_idx = candidate["start_index"]
+        end_idx = candidate["end_index"]
         pattern_length = end_idx - start_idx
 
         # Validate pattern length
@@ -221,8 +240,8 @@ class AdvancedPatternAnalyzer:
         volume_profile = self._calculate_volume_profile(data, start_idx, end_idx)
 
         # Get price levels
-        peaks = candidate['peaks']
-        troughs = candidate['troughs']
+        peaks = candidate["peaks"]
+        troughs = candidate["troughs"]
 
         highest_peak = max(peaks, key=lambda x: x.value)
         lowest_trough = min(troughs, key=lambda x: x.value)
@@ -236,18 +255,19 @@ class AdvancedPatternAnalyzer:
             start_index=start_idx,
             end_index=end_idx,
             key_levels={
-                'highest_peak': highest_peak.value,
-                'lowest_trough': lowest_trough.value,
-                'expansion_score': candidate['expansion_score'],
-                'contraction_score': candidate['contraction_score'],
-                'pattern_range': highest_peak.value - lowest_trough.value
+                "highest_peak": highest_peak.value,
+                "lowest_trough": lowest_trough.value,
+                "expansion_score": candidate["expansion_score"],
+                "contraction_score": candidate["contraction_score"],
+                "pattern_range": highest_peak.value - lowest_trough.value,
             },
             volume_profile=volume_profile,
-            description=f"Diamond pattern with expanding then contracting price action. Range: {highest_peak.value - lowest_trough.value:.2f}. Confidence: {confidence:.1%}"
+            description=f"Diamond pattern with expanding then contracting price action. Range: {highest_peak.value - lowest_trough.value:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _find_expanding_triangle_candidates(self, high_peaks: List[PeakTrough],
-                                          low_troughs: List[PeakTrough]) -> List[Dict]:
+    def _find_expanding_triangle_candidates(
+        self, high_peaks: List[PeakTrough], low_troughs: List[PeakTrough]
+    ) -> List[Dict]:
         """Find potential expanding triangle formations."""
         candidates = []
 
@@ -257,8 +277,7 @@ class AdvancedPatternAnalyzer:
                 peak1, peak2 = high_peaks[i], high_peaks[j]
 
                 # Find troughs in the same time range
-                relevant_troughs = [t for t in low_troughs
-                                  if peak1.index <= t.index <= peak2.index]
+                relevant_troughs = [t for t in low_troughs if peak1.index <= t.index <= peak2.index]
 
                 if len(relevant_troughs) < 2:
                     continue
@@ -273,26 +292,29 @@ class AdvancedPatternAnalyzer:
                             peak1, peak2, trough1, trough2
                         )
 
-                        if expanding_data['is_expanding']:
-                            candidates.append({
-                                'peak1': peak1,
-                                'peak2': peak2,
-                                'trough1': trough1,
-                                'trough2': trough2,
-                                'start_index': min(peak1.index, trough1.index),
-                                'end_index': max(peak2.index, trough2.index),
-                                'divergence_score': expanding_data['divergence_score']
-                            })
+                        if expanding_data["is_expanding"]:
+                            candidates.append(
+                                {
+                                    "peak1": peak1,
+                                    "peak2": peak2,
+                                    "trough1": trough1,
+                                    "trough2": trough2,
+                                    "start_index": min(peak1.index, trough1.index),
+                                    "end_index": max(peak2.index, trough2.index),
+                                    "divergence_score": expanding_data["divergence_score"],
+                                }
+                            )
 
         return candidates
 
-    def _analyze_expanding_structure(self, peak1: PeakTrough, peak2: PeakTrough,
-                                   trough1: PeakTrough, trough2: PeakTrough) -> Dict:
+    def _analyze_expanding_structure(
+        self, peak1: PeakTrough, peak2: PeakTrough, trough1: PeakTrough, trough2: PeakTrough
+    ) -> Dict:
         """Analyze if four points form an expanding triangle."""
 
         # Calculate slopes
         if peak2.index == peak1.index or trough2.index == trough1.index:
-            return {'is_expanding': False}
+            return {"is_expanding": False}
 
         upper_slope = (peak2.value - peak1.value) / (peak2.index - peak1.index)
         lower_slope = (trough2.value - trough1.value) / (trough2.index - trough1.index)
@@ -306,7 +328,9 @@ class AdvancedPatternAnalyzer:
         # Check for classic expanding triangle (upper rising, lower falling)
         if upper_slope > 0.001 and lower_slope < -0.001:
             # Lines are diverging
-            divergence_score = min(abs(upper_slope), abs(lower_slope)) / max(abs(upper_slope), abs(lower_slope))
+            divergence_score = min(abs(upper_slope), abs(lower_slope)) / max(
+                abs(upper_slope), abs(lower_slope)
+            )
             is_expanding = divergence_score > 0.3
 
         # Check for expanding range over time
@@ -324,18 +348,19 @@ class AdvancedPatternAnalyzer:
                 is_expanding = divergence_score > 0.4
 
         return {
-            'is_expanding': is_expanding,
-            'divergence_score': divergence_score,
-            'upper_slope': upper_slope,
-            'lower_slope': lower_slope
+            "is_expanding": is_expanding,
+            "divergence_score": divergence_score,
+            "upper_slope": upper_slope,
+            "lower_slope": lower_slope,
         }
 
-    def _analyze_expanding_triangle(self, data: PriceDataFrame, candidate: Dict,
-                                  sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_expanding_triangle(
+        self, data: PriceDataFrame, candidate: Dict, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """Analyze expanding triangle candidate."""
 
-        start_idx = candidate['start_index']
-        end_idx = candidate['end_index']
+        start_idx = candidate["start_index"]
+        end_idx = candidate["end_index"]
         pattern_length = end_idx - start_idx
 
         # Validate pattern length
@@ -351,10 +376,10 @@ class AdvancedPatternAnalyzer:
         # Calculate volume profile
         volume_profile = self._calculate_volume_profile(data, start_idx, end_idx)
 
-        peak1 = candidate['peak1']
-        peak2 = candidate['peak2']
-        trough1 = candidate['trough1']
-        trough2 = candidate['trough2']
+        peak1 = candidate["peak1"]
+        peak2 = candidate["peak2"]
+        trough1 = candidate["trough1"]
+        trough2 = candidate["trough2"]
 
         return DetectedPattern(
             pattern_type=PatternType.EXPANDING_TRIANGLE,
@@ -365,37 +390,39 @@ class AdvancedPatternAnalyzer:
             start_index=start_idx,
             end_index=end_idx,
             key_levels={
-                'peak1_price': peak1.value,
-                'peak2_price': peak2.value,
-                'trough1_price': trough1.value,
-                'trough2_price': trough2.value,
-                'divergence_score': candidate['divergence_score'],
-                'range_expansion': abs(peak2.value - trough2.value) - abs(peak1.value - trough1.value)
+                "peak1_price": peak1.value,
+                "peak2_price": peak2.value,
+                "trough1_price": trough1.value,
+                "trough2_price": trough2.value,
+                "divergence_score": candidate["divergence_score"],
+                "range_expansion": abs(peak2.value - trough2.value)
+                - abs(peak1.value - trough1.value),
             },
             volume_profile=volume_profile,
-            description=f"Expanding Triangle with diverging trend lines. Divergence score: {candidate['divergence_score']:.2f}. Confidence: {confidence:.1%}"
+            description=f"Expanding Triangle with diverging trend lines. Divergence score: {candidate['divergence_score']:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _calculate_diamond_confidence(self, data: PriceDataFrame, candidate: Dict,
-                                    sensitivity: float) -> float:
+    def _calculate_diamond_confidence(
+        self, data: PriceDataFrame, candidate: Dict, sensitivity: float
+    ) -> float:
         """Calculate confidence for diamond pattern."""
         confidence_factors = []
 
         # 1. Expansion and contraction scores
-        expansion_score = candidate['expansion_score']
-        contraction_score = candidate['contraction_score']
+        expansion_score = candidate["expansion_score"]
+        contraction_score = candidate["contraction_score"]
 
         confidence_factors.append(expansion_score * 0.3)
         confidence_factors.append(contraction_score * 0.3)
 
         # 2. Symmetry of the diamond
-        peaks = candidate['peaks']
-        troughs = candidate['troughs']
+        peaks = candidate["peaks"]
+        troughs = candidate["troughs"]
 
         if len(peaks) >= 2 and len(troughs) >= 2:
             # Check time symmetry
-            total_time = candidate['end_index'] - candidate['start_index']
-            mid_time = candidate['start_index'] + total_time // 2
+            total_time = candidate["end_index"] - candidate["start_index"]
+            mid_time = candidate["start_index"] + total_time // 2
 
             # Count points before and after midpoint
             early_points = sum(1 for p in peaks + troughs if p.index < mid_time)
@@ -410,12 +437,12 @@ class AdvancedPatternAnalyzer:
             confidence_factors.append(0.0)
 
         # 3. Volume pattern (should increase with expansion)
-        volumes = data.get_volumes()[candidate['start_index']:candidate['end_index']+1]
+        volumes = data.get_volumes()[candidate["start_index"] : candidate["end_index"] + 1]
         volume_score = self._analyze_diamond_volume_pattern(volumes)
         confidence_factors.append(volume_score * 0.1)
 
         # 4. Pattern length appropriateness
-        pattern_length = candidate['end_index'] - candidate['start_index']
+        pattern_length = candidate["end_index"] - candidate["start_index"]
         length_score = self._score_pattern_length(pattern_length)
         confidence_factors.append(length_score * 0.1)
 
@@ -427,19 +454,20 @@ class AdvancedPatternAnalyzer:
 
         return final_confidence
 
-    def _calculate_expanding_triangle_confidence(self, data: PriceDataFrame, candidate: Dict,
-                                               sensitivity: float) -> float:
+    def _calculate_expanding_triangle_confidence(
+        self, data: PriceDataFrame, candidate: Dict, sensitivity: float
+    ) -> float:
         """Calculate confidence for expanding triangle pattern."""
         confidence_factors = []
 
         # 1. Divergence quality
-        divergence_score = candidate['divergence_score']
+        divergence_score = candidate["divergence_score"]
         confidence_factors.append(divergence_score * 0.4)
 
         # 2. Volume pattern (should increase with expansion)
-        start_idx = candidate['start_index']
-        end_idx = candidate['end_index']
-        volumes = data.get_volumes()[start_idx:end_idx+1]
+        start_idx = candidate["start_index"]
+        end_idx = candidate["end_index"]
+        volumes = data.get_volumes()[start_idx : end_idx + 1]
         volume_score = self._analyze_expanding_volume_pattern(volumes)
         confidence_factors.append(volume_score * 0.3)
 
@@ -449,10 +477,10 @@ class AdvancedPatternAnalyzer:
         confidence_factors.append(length_score * 0.2)
 
         # 4. Range expansion consistency
-        peak1 = candidate['peak1']
-        peak2 = candidate['peak2']
-        trough1 = candidate['trough1']
-        trough2 = candidate['trough2']
+        peak1 = candidate["peak1"]
+        peak2 = candidate["peak2"]
+        trough1 = candidate["trough1"]
+        trough2 = candidate["trough2"]
 
         start_range = abs(peak1.value - trough1.value)
         end_range = abs(peak2.value - trough2.value)
@@ -485,8 +513,8 @@ class AdvancedPatternAnalyzer:
         third = len(valid_volumes) // 3
 
         early_vol = sum(valid_volumes[:third]) / third
-        middle_vol = sum(valid_volumes[third:2*third]) / third
-        late_vol = sum(valid_volumes[2*third:]) / (len(valid_volumes) - 2*third)
+        middle_vol = sum(valid_volumes[third : 2 * third]) / third
+        late_vol = sum(valid_volumes[2 * third :]) / (len(valid_volumes) - 2 * third)
 
         # Score based on volume pattern
         score = 0.0
@@ -509,8 +537,8 @@ class AdvancedPatternAnalyzer:
             return 0.5
 
         # Volume should generally increase with expansion
-        first_half = valid_volumes[:len(valid_volumes)//2]
-        second_half = valid_volumes[len(valid_volumes)//2:]
+        first_half = valid_volumes[: len(valid_volumes) // 2]
+        second_half = valid_volumes[len(valid_volumes) // 2 :]
 
         if not first_half or not second_half:
             return 0.5
@@ -537,25 +565,22 @@ class AdvancedPatternAnalyzer:
         else:  # pattern_length > ideal_max
             return max(0.3, ideal_max / pattern_length)
 
-    def _calculate_volume_profile(self, data: PriceDataFrame,
-                                start_index: int, end_index: int) -> VolumeProfile:
+    def _calculate_volume_profile(
+        self, data: PriceDataFrame, start_index: int, end_index: int
+    ) -> VolumeProfile:
         """Calculate volume profile for the pattern period."""
-        volumes = data.get_volumes()[start_index:end_index+1]
+        volumes = data.get_volumes()[start_index : end_index + 1]
         valid_volumes = [v for v in volumes if v is not None and v > 0]
 
         if not valid_volumes:
-            return VolumeProfile(
-                avg_volume=0.0,
-                volume_trend="unknown",
-                volume_confirmation=False
-            )
+            return VolumeProfile(avg_volume=0.0, volume_trend="unknown", volume_confirmation=False)
 
         avg_volume = sum(valid_volumes) / len(valid_volumes)
 
         # Determine volume trend
         if len(valid_volumes) >= 3:
-            first_half = valid_volumes[:len(valid_volumes)//2]
-            second_half = valid_volumes[len(valid_volumes)//2:]
+            first_half = valid_volumes[: len(valid_volumes) // 2]
+            second_half = valid_volumes[len(valid_volumes) // 2 :]
 
             avg_first = sum(first_half) / len(first_half)
             avg_second = sum(second_half) / len(second_half)
@@ -577,10 +602,12 @@ class AdvancedPatternAnalyzer:
         return VolumeProfile(
             avg_volume=avg_volume,
             volume_trend=volume_trend,
-            volume_confirmation=volume_confirmation
+            volume_confirmation=volume_confirmation,
         )
 
-    def _filter_overlapping_patterns(self, patterns: List[DetectedPattern]) -> List[DetectedPattern]:
+    def _filter_overlapping_patterns(
+        self, patterns: List[DetectedPattern]
+    ) -> List[DetectedPattern]:
         """Filter out overlapping patterns, keeping the highest confidence ones."""
         if not patterns:
             return patterns
@@ -611,8 +638,9 @@ class AdvancedPatternAnalyzer:
 
         return filtered_patterns
 
-    def detect_harmonic_patterns(self, data: PriceDataFrame,
-                                sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_harmonic_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect harmonic patterns (Gartley, Butterfly, Bat, Crab, ABCD, Cypher).
 
@@ -631,10 +659,16 @@ class AdvancedPatternAnalyzer:
         lows = data.get_lows()
 
         # Find significant peaks and troughs for harmonic analysis
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=5)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=5)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=5)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=5)
+            if pt.type == "trough"
+        ]
 
         # Combine and sort all turning points
         all_points = sorted(high_peaks + low_troughs, key=lambda x: x.index)
@@ -652,14 +686,15 @@ class AdvancedPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_harmonic_patterns(self, data: PriceDataFrame, points: List,
-                              sensitivity: float) -> List[DetectedPattern]:
+    def _find_harmonic_patterns(
+        self, data: PriceDataFrame, points: List, sensitivity: float
+    ) -> List[DetectedPattern]:
         """Find 5-point harmonic patterns (XABCD structure)."""
         patterns = []
 
         # Look for 5 consecutive turning points
         for i in range(len(points) - 4):
-            X, A, B, C, D = points[i:i+5]
+            X, A, B, C, D = points[i : i + 5]
 
             # Validate time spacing
             total_time = D.index - X.index
@@ -684,14 +719,15 @@ class AdvancedPatternAnalyzer:
 
         return patterns
 
-    def _find_abcd_patterns(self, data: PriceDataFrame, points: List,
-                          sensitivity: float) -> List[DetectedPattern]:
+    def _find_abcd_patterns(
+        self, data: PriceDataFrame, points: List, sensitivity: float
+    ) -> List[DetectedPattern]:
         """Find 4-point ABCD patterns."""
         patterns = []
 
         # Look for 4 consecutive turning points
         for i in range(len(points) - 3):
-            A, B, C, D = points[i:i+4]
+            A, B, C, D = points[i : i + 4]
 
             # Validate ABCD structure
             if not self._validate_abcd_structure(A, B, C, D):
@@ -701,9 +737,7 @@ class AdvancedPatternAnalyzer:
             ratios = self._calculate_abcd_ratios(A, B, C, D)
 
             if ratios and self._is_valid_abcd_ratios(ratios):
-                abcd_pattern = self._create_abcd_pattern(
-                    data, A, B, C, D, ratios, sensitivity
-                )
+                abcd_pattern = self._create_abcd_pattern(data, A, B, C, D, ratios, sensitivity)
                 if abcd_pattern:
                     patterns.append(abcd_pattern)
 
@@ -725,13 +759,13 @@ class AdvancedPatternAnalyzer:
                 return None
 
             ratios = {
-                'AB_XA': AB / XA,
-                'BC_AB': BC / AB,
-                'CD_BC': CD / BC if BC != 0 else 0,
-                'XB_XA': XB / XA,
-                'XC_XA': XC / XA,
-                'XD_XA': XD / XA,
-                'CD_AB': CD / AB if AB != 0 else 0
+                "AB_XA": AB / XA,
+                "BC_AB": BC / AB,
+                "CD_BC": CD / BC if BC != 0 else 0,
+                "XB_XA": XB / XA,
+                "XC_XA": XC / XA,
+                "XD_XA": XD / XA,
+                "CD_AB": CD / AB if AB != 0 else 0,
             }
 
             return ratios
@@ -749,33 +783,43 @@ class AdvancedPatternAnalyzer:
             return abs(actual - expected) <= tol
 
         # Gartley Pattern (222)
-        if (ratio_matches(ratios['AB_XA'], 0.618) and
-            ratio_matches(ratios['BC_AB'], 0.382, 0.1) and
-            ratio_matches(ratios['XD_XA'], 0.786)):
+        if (
+            ratio_matches(ratios["AB_XA"], 0.618)
+            and ratio_matches(ratios["BC_AB"], 0.382, 0.1)
+            and ratio_matches(ratios["XD_XA"], 0.786)
+        ):
             return PatternType.GARTLEY
 
         # Butterfly Pattern
-        if (ratio_matches(ratios['AB_XA'], 0.786) and
-            ratio_matches(ratios['BC_AB'], 0.382, 0.1) and
-            ratio_matches(ratios['XD_XA'], 1.27, 0.1)):
+        if (
+            ratio_matches(ratios["AB_XA"], 0.786)
+            and ratio_matches(ratios["BC_AB"], 0.382, 0.1)
+            and ratio_matches(ratios["XD_XA"], 1.27, 0.1)
+        ):
             return PatternType.BUTTERFLY
 
         # Bat Pattern
-        if (ratio_matches(ratios['AB_XA'], 0.382, 0.1) and
-            ratio_matches(ratios['BC_AB'], 0.382, 0.1) and
-            ratio_matches(ratios['XD_XA'], 0.886, 0.05)):
+        if (
+            ratio_matches(ratios["AB_XA"], 0.382, 0.1)
+            and ratio_matches(ratios["BC_AB"], 0.382, 0.1)
+            and ratio_matches(ratios["XD_XA"], 0.886, 0.05)
+        ):
             return PatternType.BAT
 
         # Crab Pattern
-        if (ratio_matches(ratios['AB_XA'], 0.382, 0.1) and
-            ratio_matches(ratios['BC_AB'], 0.382, 0.1) and
-            ratio_matches(ratios['XD_XA'], 1.618, 0.1)):
+        if (
+            ratio_matches(ratios["AB_XA"], 0.382, 0.1)
+            and ratio_matches(ratios["BC_AB"], 0.382, 0.1)
+            and ratio_matches(ratios["XD_XA"], 1.618, 0.1)
+        ):
             return PatternType.CRAB
 
         # Cypher Pattern
-        if (ratio_matches(ratios['AB_XA'], 0.382, 0.1) and
-            ratio_matches(ratios['BC_AB'], 1.272, 0.1) and
-            ratio_matches(ratios['XD_XA'], 0.786)):
+        if (
+            ratio_matches(ratios["AB_XA"], 0.382, 0.1)
+            and ratio_matches(ratios["BC_AB"], 1.272, 0.1)
+            and ratio_matches(ratios["XD_XA"], 0.786)
+        ):
             return PatternType.CYPHER
 
         return None
@@ -790,11 +834,7 @@ class AdvancedPatternAnalyzer:
             if AB == 0 or BC == 0:
                 return None
 
-            return {
-                'CD_AB': CD / AB,
-                'time_AB': B.index - A.index,
-                'time_CD': D.index - C.index
-            }
+            return {"CD_AB": CD / AB, "time_AB": B.index - A.index, "time_CD": D.index - C.index}
 
         except (ZeroDivisionError, AttributeError):
             return None
@@ -821,13 +861,13 @@ class AdvancedPatternAnalyzer:
         """Check if ABCD ratios are valid."""
 
         # CD should be 0.618 to 1.618 times AB
-        cd_ab_ratio = ratios['CD_AB']
+        cd_ab_ratio = ratios["CD_AB"]
         if not (0.618 <= cd_ab_ratio <= 1.618):
             return False
 
         # Time symmetry check (optional)
-        time_ab = ratios['time_AB']
-        time_cd = ratios['time_CD']
+        time_ab = ratios["time_AB"]
+        time_cd = ratios["time_CD"]
 
         if time_ab > 0:
             time_ratio = time_cd / time_ab
@@ -837,9 +877,18 @@ class AdvancedPatternAnalyzer:
 
         return True
 
-    def _create_harmonic_pattern(self, data: PriceDataFrame, pattern_type: PatternType,
-                               X, A, B, C, D, ratios: Dict[str, float],
-                               sensitivity: float) -> Optional[DetectedPattern]:
+    def _create_harmonic_pattern(
+        self,
+        data: PriceDataFrame,
+        pattern_type: PatternType,
+        X,
+        A,
+        B,
+        C,
+        D,
+        ratios: Dict[str, float],
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Create harmonic pattern from XABCD points."""
 
         # Calculate confidence based on ratio accuracy
@@ -863,24 +912,25 @@ class AdvancedPatternAnalyzer:
             start_index=X.index,
             end_index=D.index,
             key_levels={
-                'X_price': X.value,
-                'A_price': A.value,
-                'B_price': B.value,
-                'C_price': C.value,
-                'D_price': D.value,
-                'AB_XA_ratio': ratios['AB_XA'],
-                'BC_AB_ratio': ratios['BC_AB'],
-                'XD_XA_ratio': ratios['XD_XA'],
-                'target_1': fibonacci_levels.get('target_1'),
-                'target_2': fibonacci_levels.get('target_2')
+                "X_price": X.value,
+                "A_price": A.value,
+                "B_price": B.value,
+                "C_price": C.value,
+                "D_price": D.value,
+                "AB_XA_ratio": ratios["AB_XA"],
+                "BC_AB_ratio": ratios["BC_AB"],
+                "XD_XA_ratio": ratios["XD_XA"],
+                "target_1": fibonacci_levels.get("target_1"),
+                "target_2": fibonacci_levels.get("target_2"),
             },
             volume_profile=volume_profile,
             fibonacci_levels=fibonacci_levels,
-            description=f"{pattern_type.value.replace('_', ' ').title()} harmonic pattern. XD/XA ratio: {ratios['XD_XA']:.3f}. Confidence: {confidence:.1%}"
+            description=f"{pattern_type.value.replace('_', ' ').title()} harmonic pattern. XD/XA ratio: {ratios['XD_XA']:.3f}. Confidence: {confidence:.1%}",
         )
 
-    def _create_abcd_pattern(self, data: PriceDataFrame, A, B, C, D,
-                           ratios: Dict[str, float], sensitivity: float) -> Optional[DetectedPattern]:
+    def _create_abcd_pattern(
+        self, data: PriceDataFrame, A, B, C, D, ratios: Dict[str, float], sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """Create ABCD pattern."""
 
         # Calculate confidence
@@ -906,17 +956,17 @@ class AdvancedPatternAnalyzer:
             start_index=A.index,
             end_index=D.index,
             key_levels={
-                'A_price': A.value,
-                'B_price': B.value,
-                'C_price': C.value,
-                'D_price': D.value,
-                'CD_AB_ratio': ratios['CD_AB'],
-                'target_1': target_1,
-                'target_2': target_2
+                "A_price": A.value,
+                "B_price": B.value,
+                "C_price": C.value,
+                "D_price": D.value,
+                "CD_AB_ratio": ratios["CD_AB"],
+                "target_1": target_1,
+                "target_2": target_2,
             },
             volume_profile=volume_profile,
-            fibonacci_levels={'target_1': target_1, 'target_2': target_2},
-            description=f"ABCD harmonic pattern. CD/AB ratio: {ratios['CD_AB']:.3f}. Confidence: {confidence:.1%}"
+            fibonacci_levels={"target_1": target_1, "target_2": target_2},
+            description=f"ABCD harmonic pattern. CD/AB ratio: {ratios['CD_AB']:.3f}. Confidence: {confidence:.1%}",
         )
 
     def _calculate_fibonacci_levels(self, X, A, B, C, D) -> Dict[str, float]:
@@ -931,30 +981,31 @@ class AdvancedPatternAnalyzer:
         fib_levels = {}
 
         # Retracement levels from D
-        fib_levels['D_236'] = D.value + CD * 0.236
-        fib_levels['D_382'] = D.value + CD * 0.382
-        fib_levels['D_618'] = D.value + CD * 0.618
-        fib_levels['D_786'] = D.value + CD * 0.786
+        fib_levels["D_236"] = D.value + CD * 0.236
+        fib_levels["D_382"] = D.value + CD * 0.382
+        fib_levels["D_618"] = D.value + CD * 0.618
+        fib_levels["D_786"] = D.value + CD * 0.786
 
         # Extension levels
-        fib_levels['target_1'] = D.value + abs(XA) * 0.618 * (1 if CD > 0 else -1)
-        fib_levels['target_2'] = D.value + abs(XA) * 1.272 * (1 if CD > 0 else -1)
+        fib_levels["target_1"] = D.value + abs(XA) * 0.618 * (1 if CD > 0 else -1)
+        fib_levels["target_2"] = D.value + abs(XA) * 1.272 * (1 if CD > 0 else -1)
 
         return fib_levels
 
-    def _calculate_harmonic_confidence(self, ratios: Dict[str, float],
-                                     pattern_type: PatternType, sensitivity: float) -> float:
+    def _calculate_harmonic_confidence(
+        self, ratios: Dict[str, float], pattern_type: PatternType, sensitivity: float
+    ) -> float:
         """Calculate confidence for harmonic pattern based on ratio accuracy."""
 
         confidence_factors = []
 
         # Define ideal ratios for each pattern type
         ideal_ratios = {
-            PatternType.GARTLEY: {'AB_XA': 0.618, 'BC_AB': 0.382, 'XD_XA': 0.786},
-            PatternType.BUTTERFLY: {'AB_XA': 0.786, 'BC_AB': 0.382, 'XD_XA': 1.27},
-            PatternType.BAT: {'AB_XA': 0.382, 'BC_AB': 0.382, 'XD_XA': 0.886},
-            PatternType.CRAB: {'AB_XA': 0.382, 'BC_AB': 0.382, 'XD_XA': 1.618},
-            PatternType.CYPHER: {'AB_XA': 0.382, 'BC_AB': 1.272, 'XD_XA': 0.786}
+            PatternType.GARTLEY: {"AB_XA": 0.618, "BC_AB": 0.382, "XD_XA": 0.786},
+            PatternType.BUTTERFLY: {"AB_XA": 0.786, "BC_AB": 0.382, "XD_XA": 1.27},
+            PatternType.BAT: {"AB_XA": 0.382, "BC_AB": 0.382, "XD_XA": 0.886},
+            PatternType.CRAB: {"AB_XA": 0.382, "BC_AB": 0.382, "XD_XA": 1.618},
+            PatternType.CYPHER: {"AB_XA": 0.382, "BC_AB": 1.272, "XD_XA": 0.786},
         }
 
         if pattern_type not in ideal_ratios:
@@ -988,7 +1039,7 @@ class AdvancedPatternAnalyzer:
         confidence_factors = []
 
         # 1. CD/AB ratio accuracy (ideal is around 0.786 or 1.272)
-        cd_ab_ratio = ratios['CD_AB']
+        cd_ab_ratio = ratios["CD_AB"]
 
         # Score based on proximity to ideal Fibonacci ratios
         ideal_ratios = [0.618, 0.786, 1.0, 1.272, 1.618]
@@ -1001,8 +1052,8 @@ class AdvancedPatternAnalyzer:
         confidence_factors.append(best_match_score * 0.6)
 
         # 2. Time symmetry
-        time_ab = ratios['time_AB']
-        time_cd = ratios['time_CD']
+        time_ab = ratios["time_AB"]
+        time_cd = ratios["time_CD"]
 
         if time_ab > 0:
             time_ratio = time_cd / time_ab

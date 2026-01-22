@@ -9,13 +9,15 @@ Example:
     >>> vwap = calculate_vwap(highs, lows, closes, volumes)
 """
 
-import numpy as np
 from typing import List, Union
+
+import numpy as np
+
 from .trend import calculate_sma
 
+
 def calculate_obv(
-    closes: Union[List[float], np.ndarray],
-    volumes: Union[List[float], np.ndarray]
+    closes: Union[List[float], np.ndarray], volumes: Union[List[float], np.ndarray]
 ) -> np.ndarray:
     """Calculate On-Balance Volume."""
     closes = np.array(closes, dtype=float)
@@ -25,12 +27,12 @@ def calculate_obv(
     obv[0] = volumes[0]
 
     for i in range(1, len(closes)):
-        if closes[i] > closes[i-1]:
-            obv[i] = obv[i-1] + volumes[i]
-        elif closes[i] < closes[i-1]:
-            obv[i] = obv[i-1] - volumes[i]
+        if closes[i] > closes[i - 1]:
+            obv[i] = obv[i - 1] + volumes[i]
+        elif closes[i] < closes[i - 1]:
+            obv[i] = obv[i - 1] - volumes[i]
         else:
-            obv[i] = obv[i-1]
+            obv[i] = obv[i - 1]
 
     return obv
 
@@ -39,7 +41,7 @@ def calculate_vwap(
     highs: Union[List[float], np.ndarray],
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
-    volumes: Union[List[float], np.ndarray]
+    volumes: Union[List[float], np.ndarray],
 ) -> np.ndarray:
     """Calculate Volume Weighted Average Price."""
     highs = np.array(highs, dtype=float)
@@ -58,7 +60,7 @@ def calculate_mfi(
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
     volumes: Union[List[float], np.ndarray],
-    period: int = 14
+    period: int = 14,
 ) -> np.ndarray:
     """Calculate Money Flow Index."""
     highs = np.array(highs, dtype=float)
@@ -77,9 +79,9 @@ def calculate_mfi(
 
         for j in range(i - period + 1, i + 1):
             if j > 0:
-                if typical_price[j] > typical_price[j-1]:
+                if typical_price[j] > typical_price[j - 1]:
                     positive_flow += money_flow[j]
-                elif typical_price[j] < typical_price[j-1]:
+                elif typical_price[j] < typical_price[j - 1]:
                     negative_flow += money_flow[j]
 
         if negative_flow == 0:

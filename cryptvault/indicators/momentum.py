@@ -19,19 +19,17 @@ Example:
     >>> macd_data = calculate_macd(prices)
 """
 
-import numpy as np
-from typing import List, Union, Dict, Tuple
 import logging
+from typing import Dict, List, Tuple, Union
+
+import numpy as np
 
 from .trend import calculate_ema, calculate_sma
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_rsi(
-    prices: Union[List[float], np.ndarray],
-    period: int = 14
-) -> np.ndarray:
+def calculate_rsi(prices: Union[List[float], np.ndarray], period: int = 14) -> np.ndarray:
     """
     Calculate Relative Strength Index.
 
@@ -93,7 +91,7 @@ def calculate_macd(
     prices: Union[List[float], np.ndarray],
     fast_period: int = 12,
     slow_period: int = 26,
-    signal_period: int = 9
+    signal_period: int = 9,
 ) -> Dict[str, np.ndarray]:
     """
     Calculate MACD (Moving Average Convergence Divergence).
@@ -140,16 +138,12 @@ def calculate_macd(
     start_idx = slow_period - 1 + signal_period - 1
     if start_idx < len(prices) and len(signal_line_values) > 0:
         end_idx = min(start_idx + len(signal_line_values), len(prices))
-        signal_line[start_idx:end_idx] = signal_line_values[:end_idx - start_idx]
+        signal_line[start_idx:end_idx] = signal_line_values[: end_idx - start_idx]
 
     # Calculate histogram
     histogram = macd_line - signal_line
 
-    return {
-        'macd': macd_line,
-        'signal': signal_line,
-        'histogram': histogram
-    }
+    return {"macd": macd_line, "signal": signal_line, "histogram": histogram}
 
 
 def calculate_stochastic(
@@ -157,7 +151,7 @@ def calculate_stochastic(
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
     k_period: int = 14,
-    d_period: int = 3
+    d_period: int = 3,
 ) -> Dict[str, np.ndarray]:
     """
     Calculate Stochastic Oscillator.
@@ -189,17 +183,14 @@ def calculate_stochastic(
         raise ValueError("Highs, lows, and closes must have same length")
 
     if len(closes) < k_period:
-        return {
-            'k': np.full(len(closes), np.nan),
-            'd': np.full(len(closes), np.nan)
-        }
+        return {"k": np.full(len(closes), np.nan), "d": np.full(len(closes), np.nan)}
 
     # Calculate %K
     k = np.full(len(closes), np.nan)
 
     for i in range(k_period - 1, len(closes)):
-        high_max = np.max(highs[i - k_period + 1:i + 1])
-        low_min = np.min(lows[i - k_period + 1:i + 1])
+        high_max = np.max(highs[i - k_period + 1 : i + 1])
+        low_min = np.min(lows[i - k_period + 1 : i + 1])
 
         if high_max - low_min != 0:
             k[i] = 100.0 * (closes[i] - low_min) / (high_max - low_min)
@@ -213,15 +204,12 @@ def calculate_stochastic(
     d_aligned = np.full(len(closes), np.nan)
     start_idx = k_period - 1 + d_period - 1
     if start_idx < len(closes):
-        d_aligned[start_idx:start_idx + len(d)] = d
+        d_aligned[start_idx : start_idx + len(d)] = d
 
-    return {'k': k, 'd': d_aligned}
+    return {"k": k, "d": d_aligned}
 
 
-def calculate_roc(
-    prices: Union[List[float], np.ndarray],
-    period: int = 12
-) -> np.ndarray:
+def calculate_roc(prices: Union[List[float], np.ndarray], period: int = 12) -> np.ndarray:
     """
     Calculate Rate of Change.
 
@@ -256,7 +244,7 @@ def calculate_cci(
     highs: Union[List[float], np.ndarray],
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
-    period: int = 20
+    period: int = 20,
 ) -> np.ndarray:
     """
     Calculate Commodity Channel Index.
@@ -295,7 +283,7 @@ def calculate_cci(
     cci = np.full(len(typical_price), np.nan)
 
     for i in range(period - 1, len(typical_price)):
-        window = typical_price[i - period + 1:i + 1]
+        window = typical_price[i - period + 1 : i + 1]
         mean_dev = np.mean(np.abs(window - sma_tp[i]))
 
         if mean_dev != 0:
@@ -308,7 +296,7 @@ def calculate_williams_r(
     highs: Union[List[float], np.ndarray],
     lows: Union[List[float], np.ndarray],
     closes: Union[List[float], np.ndarray],
-    period: int = 14
+    period: int = 14,
 ) -> np.ndarray:
     """
     Calculate Williams %R.
@@ -339,8 +327,8 @@ def calculate_williams_r(
     williams_r = np.full(len(closes), np.nan)
 
     for i in range(period - 1, len(closes)):
-        high_max = np.max(highs[i - period + 1:i + 1])
-        low_min = np.min(lows[i - period + 1:i + 1])
+        high_max = np.max(highs[i - period + 1 : i + 1])
+        low_min = np.min(lows[i - period + 1 : i + 1])
 
         if high_max - low_min != 0:
             williams_r[i] = -100.0 * (high_max - closes[i]) / (high_max - low_min)
@@ -350,10 +338,7 @@ def calculate_williams_r(
     return williams_r
 
 
-def calculate_momentum(
-    prices: Union[List[float], np.ndarray],
-    period: int = 10
-) -> np.ndarray:
+def calculate_momentum(prices: Union[List[float], np.ndarray], period: int = 10) -> np.ndarray:
     """
     Calculate Momentum indicator.
 
@@ -382,9 +367,7 @@ def calculate_momentum(
 
 
 def calculate_tsi(
-    prices: Union[List[float], np.ndarray],
-    long_period: int = 25,
-    short_period: int = 13
+    prices: Union[List[float], np.ndarray], long_period: int = 25, short_period: int = 13
 ) -> np.ndarray:
     """
     Calculate True Strength Index.
@@ -430,13 +413,11 @@ def calculate_tsi(
     if len(ema2) > 0 and len(abs_ema2) > 0:
         min_len = min(len(ema2), len(abs_ema2))
         tsi_values = np.where(
-            abs_ema2[:min_len] != 0,
-            100.0 * ema2[:min_len] / abs_ema2[:min_len],
-            0.0
+            abs_ema2[:min_len] != 0, 100.0 * ema2[:min_len] / abs_ema2[:min_len], 0.0
         )
 
         start_idx = long_period + short_period - 1
         if start_idx < len(prices):
-            tsi[start_idx:start_idx + len(tsi_values)] = tsi_values
+            tsi[start_idx : start_idx + len(tsi_values)] = tsi_values
 
     return tsi

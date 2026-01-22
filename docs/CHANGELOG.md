@@ -5,6 +5,83 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-01-21
+
+### Major Release - Enhanced ML Models & Professional CI/CD
+
+This major release focuses on significantly improving machine learning capabilities, implementing professional CI/CD workflows, and establishing comprehensive code quality standards.
+
+### Added
+
+#### Machine Learning Enhancements
+- **Advanced ML Models**: Added CatBoost, Bayesian Ridge, Quantile Regression, and Stacked Ensemble predictors
+- **Optimized Hyperparameters**: Fine-tuned all ML models (Random Forest, XGBoost, LightGBM, Gradient Boosting) for better accuracy
+- **Enhanced Ensemble**: Improved ensemble predictor with 10+ models and weighted voting based on historical performance
+- **Model Diversity**: Added AdaBoost for additional ensemble diversity
+- **Advanced Features**: Implemented uncertainty quantification and prediction intervals
+- **Feature Engineering**: Enhanced feature preparation with consistent dimensionality handling
+
+#### CI/CD & Automation
+- **Comprehensive Test Workflow**: Multi-platform testing (Ubuntu, Windows, macOS) across Python 3.9-3.12
+- **Automated Linting**: Professional code quality checks (Black, isort, Flake8, Pylint, MyPy, Bandit, Safety)
+- **Automated Issue Creation**: GitHub issues automatically created on workflow failures with detailed debugging information
+- **Code Coverage**: Integrated Codecov for tracking test coverage across all platforms
+- **Security Scanning**: Bandit security linting and Safety dependency vulnerability checks
+
+#### Documentation & Community
+- **Code of Conduct**: Added Contributor Covenant Code of Conduct v2.1
+- **Professional README**: Redesigned README with status badges, cleaner formatting, and professional tone
+- **Status Badges**: Added workflow status, code coverage, and code style badges
+- **Enhanced Documentation**: Improved technical documentation with better structure
+
+#### Code Quality
+- **Code Formatting**: Applied Black formatter to entire codebase (100-character line length)
+- **Import Sorting**: Organized imports with isort across all modules
+- **Type Hints**: Improved type annotations throughout the codebase
+- **Error Handling**: Enhanced exception handling in ML models
+
+### Changed
+
+#### ML Model Improvements
+- **Random Forest**: Increased estimators to 200, depth to 12, optimized split parameters
+- **Gradient Boosting**: Enhanced with 150 estimators, learning rate 0.05, subsample 0.8
+- **XGBoost**: Upgraded to 200 estimators with regularization (alpha=0.1, lambda=1.0)
+- **LightGBM**: Optimized with 200 estimators, 31 leaves, improved regularization
+- **Neural Network**: Enhanced MLP with 3 hidden layers (100, 50, 25), adaptive learning, early stopping
+- **Feature Handling**: Improved feature dimension consistency across training and prediction
+
+#### Version Updates
+- Updated version to 5.0.0 across all files
+- Updated copyright year to 2026
+- Updated project description to reflect new capabilities
+
+#### Dependencies
+- Added optional dependencies: `xgboost>=1.7.0`, `lightgbm>=3.3.0`, `catboost>=1.1.0`
+- Created `advanced-ml` optional dependency group
+- Updated `full` installation to include all advanced ML libraries
+
+### Removed
+- **CodeQL Workflow**: Removed conflicting CodeQL workflow (replaced with comprehensive linting)
+- **Unnecessary Files**: Cleaned up `__pycache__` directories from root
+
+### Fixed
+- **Dimension Mismatch**: Resolved feature dimension inconsistencies in ensemble predictor
+- **Training Data Preparation**: Fixed training data creation for consistent feature matrices
+- **Prediction Features**: Enhanced prediction feature preparation with proper dimensionality
+- **Model Scoring**: Improved model performance scoring and weight calculation
+
+### Security
+- Implemented Bandit security scanning in CI/CD
+- Added Safety checks for dependency vulnerabilities
+- Enhanced input validation across all modules
+
+### Performance
+- Optimized ML model hyperparameters for better accuracy
+- Improved feature engineering efficiency
+- Enhanced ensemble prediction speed with better caching
+
+---
+
 ## [4.0.0] - 2024-11-12
 
 ### Major Restructuring - Enterprise-Grade Production Release

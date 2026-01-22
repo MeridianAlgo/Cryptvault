@@ -5,12 +5,13 @@ Detects reversal patterns including double/triple tops/bottoms and head & should
 These patterns signal potential trend reversals and are critical for identifying market turning points.
 """
 
-from typing import List, Dict, Optional
 from datetime import datetime
-from .base import BasePatternDetector, DetectedPattern
+from typing import Dict, List, Optional
+
 from ..data.models import PriceDataFrame
-from ..indicators.trend_analysis import TrendAnalysis, PeakTrough
-from .types import PatternType, PatternCategory, VolumeProfile, PATTERN_CATEGORIES
+from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
+from .base import BasePatternDetector, DetectedPattern
+from .types import PATTERN_CATEGORIES, PatternCategory, PatternType, VolumeProfile
 
 
 class ReversalPatternDetector(BasePatternDetector):
@@ -101,16 +102,17 @@ class ReversalPatternDetector(BasePatternDetector):
             List of pattern type names
         """
         return [
-            'Double Top',
-            'Double Bottom',
-            'Triple Top',
-            'Triple Bottom',
-            'Head and Shoulders',
-            'Inverse Head and Shoulders'
+            "Double Top",
+            "Double Bottom",
+            "Triple Top",
+            "Triple Bottom",
+            "Head and Shoulders",
+            "Inverse Head and Shoulders",
         ]
 
-    def detect_double_triple_patterns(self, data: PriceDataFrame,
-                                    sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_double_triple_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect double/triple top and bottom patterns.
 
@@ -129,10 +131,16 @@ class ReversalPatternDetector(BasePatternDetector):
         lows = data.get_lows()
 
         # Find peaks and troughs
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=5)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=5)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=5)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=5)
+            if pt.type == "trough"
+        ]
 
         # Detect double/triple tops
         if len(high_peaks) >= 2:
@@ -146,8 +154,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_multiple_top_patterns(self, data: PriceDataFrame, peaks: List[PeakTrough],
-                                  sensitivity: float) -> List[DetectedPattern]:
+    def _find_multiple_top_patterns(
+        self, data: PriceDataFrame, peaks: List[PeakTrough], sensitivity: float
+    ) -> List[DetectedPattern]:
         """
         Find double and triple top patterns in peak data.
 
@@ -182,16 +191,20 @@ class ReversalPatternDetector(BasePatternDetector):
                     peak1, peak2, peak3 = peaks[i], peaks[j], peaks[k]
 
                     # Check if all three peaks are similar
-                    if (self._are_peaks_similar(peak1.value, peak2.value, tolerance=0.03) and
-                        self._are_peaks_similar(peak2.value, peak3.value, tolerance=0.03)):
-                        triple_top = self._analyze_triple_top(data, peak1, peak2, peak3, sensitivity)
+                    if self._are_peaks_similar(
+                        peak1.value, peak2.value, tolerance=0.03
+                    ) and self._are_peaks_similar(peak2.value, peak3.value, tolerance=0.03):
+                        triple_top = self._analyze_triple_top(
+                            data, peak1, peak2, peak3, sensitivity
+                        )
                         if triple_top:
                             patterns.append(triple_top)
 
         return patterns
 
-    def _find_multiple_bottom_patterns(self, data: PriceDataFrame, troughs: List[PeakTrough],
-                                     sensitivity: float) -> List[DetectedPattern]:
+    def _find_multiple_bottom_patterns(
+        self, data: PriceDataFrame, troughs: List[PeakTrough], sensitivity: float
+    ) -> List[DetectedPattern]:
         """
         Find double and triple bottom patterns in trough data.
 
@@ -226,9 +239,12 @@ class ReversalPatternDetector(BasePatternDetector):
                     trough1, trough2, trough3 = troughs[i], troughs[j], troughs[k]
 
                     # Check if all three troughs are similar
-                    if (self._are_peaks_similar(trough1.value, trough2.value, tolerance=0.03) and
-                        self._are_peaks_similar(trough2.value, trough3.value, tolerance=0.03)):
-                        triple_bottom = self._analyze_triple_bottom(data, trough1, trough2, trough3, sensitivity)
+                    if self._are_peaks_similar(
+                        trough1.value, trough2.value, tolerance=0.03
+                    ) and self._are_peaks_similar(trough2.value, trough3.value, tolerance=0.03):
+                        triple_bottom = self._analyze_triple_bottom(
+                            data, trough1, trough2, trough3, sensitivity
+                        )
                         if triple_bottom:
                             patterns.append(triple_bottom)
 
@@ -253,8 +269,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return abs(value1 - value2) / abs(value1) <= tolerance
 
-    def _analyze_double_top(self, data: PriceDataFrame, peak1: PeakTrough, peak2: PeakTrough,
-                          sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_double_top(
+        self, data: PriceDataFrame, peak1: PeakTrough, peak2: PeakTrough, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """
         Analyze and validate a double top pattern.
 
@@ -281,7 +298,7 @@ class ReversalPatternDetector(BasePatternDetector):
         if valley_end - valley_start < 5:  # Too close together
             return None
 
-        lows = data.get_lows()[valley_start:valley_end+1]
+        lows = data.get_lows()[valley_start : valley_end + 1]
         valley_low = min(l for l in lows if l is not None)
         valley_index = valley_start + next(i for i, l in enumerate(lows) if l == valley_low)
 
@@ -290,7 +307,9 @@ class ReversalPatternDetector(BasePatternDetector):
             return None
 
         # Calculate confidence
-        confidence = self._calculate_double_top_confidence(data, peak1, peak2, valley_low, sensitivity)
+        confidence = self._calculate_double_top_confidence(
+            data, peak1, peak2, valley_low, sensitivity
+        )
 
         if confidence < (0.4 + sensitivity * 0.3):
             return None
@@ -307,18 +326,19 @@ class ReversalPatternDetector(BasePatternDetector):
             start_index=peak1.index,
             end_index=peak2.index,
             key_levels={
-                'peak1_price': peak1.value,
-                'peak2_price': peak2.value,
-                'valley_price': valley_low,
-                'neckline_price': valley_low,
-                'target_price': valley_low - (peak1.value - valley_low)  # Measured move
+                "peak1_price": peak1.value,
+                "peak2_price": peak2.value,
+                "valley_price": valley_low,
+                "neckline_price": valley_low,
+                "target_price": valley_low - (peak1.value - valley_low),  # Measured move
             },
             volume_profile=volume_profile,
-            description=f"Double Top reversal pattern. Peaks at {peak1.value:.2f} and {peak2.value:.2f}, neckline at {valley_low:.2f}. Confidence: {confidence:.1%}"
+            description=f"Double Top reversal pattern. Peaks at {peak1.value:.2f} and {peak2.value:.2f}, neckline at {valley_low:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _analyze_double_bottom(self, data: PriceDataFrame, trough1: PeakTrough, trough2: PeakTrough,
-                             sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_double_bottom(
+        self, data: PriceDataFrame, trough1: PeakTrough, trough2: PeakTrough, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """
         Analyze and validate a double bottom pattern.
 
@@ -345,7 +365,7 @@ class ReversalPatternDetector(BasePatternDetector):
         if peak_end - peak_start < 5:  # Too close together
             return None
 
-        highs = data.get_highs()[peak_start:peak_end+1]
+        highs = data.get_highs()[peak_start : peak_end + 1]
         peak_high = max(h for h in highs if h is not None)
         peak_index = peak_start + next(i for i, h in enumerate(highs) if h == peak_high)
 
@@ -354,7 +374,9 @@ class ReversalPatternDetector(BasePatternDetector):
             return None
 
         # Calculate confidence
-        confidence = self._calculate_double_bottom_confidence(data, trough1, trough2, peak_high, sensitivity)
+        confidence = self._calculate_double_bottom_confidence(
+            data, trough1, trough2, peak_high, sensitivity
+        )
 
         if confidence < (0.4 + sensitivity * 0.3):
             return None
@@ -371,23 +393,29 @@ class ReversalPatternDetector(BasePatternDetector):
             start_index=trough1.index,
             end_index=trough2.index,
             key_levels={
-                'trough1_price': trough1.value,
-                'trough2_price': trough2.value,
-                'peak_price': peak_high,
-                'neckline_price': peak_high,
-                'target_price': peak_high + (peak_high - trough1.value)  # Measured move
+                "trough1_price": trough1.value,
+                "trough2_price": trough2.value,
+                "peak_price": peak_high,
+                "neckline_price": peak_high,
+                "target_price": peak_high + (peak_high - trough1.value),  # Measured move
             },
             volume_profile=volume_profile,
-            description=f"Double Bottom reversal pattern. Troughs at {trough1.value:.2f} and {trough2.value:.2f}, neckline at {peak_high:.2f}. Confidence: {confidence:.1%}"
+            description=f"Double Bottom reversal pattern. Troughs at {trough1.value:.2f} and {trough2.value:.2f}, neckline at {peak_high:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _analyze_triple_top(self, data: PriceDataFrame, peak1: PeakTrough, peak2: PeakTrough,
-                          peak3: PeakTrough, sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_triple_top(
+        self,
+        data: PriceDataFrame,
+        peak1: PeakTrough,
+        peak2: PeakTrough,
+        peak3: PeakTrough,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Analyze triple top pattern."""
 
         # Find valleys between peaks
-        valley1_lows = data.get_lows()[peak1.index:peak2.index+1]
-        valley2_lows = data.get_lows()[peak2.index:peak3.index+1]
+        valley1_lows = data.get_lows()[peak1.index : peak2.index + 1]
+        valley2_lows = data.get_lows()[peak2.index : peak3.index + 1]
 
         valley1_low = min(l for l in valley1_lows if l is not None)
         valley2_low = min(l for l in valley2_lows if l is not None)
@@ -396,7 +424,9 @@ class ReversalPatternDetector(BasePatternDetector):
         neckline_price = max(valley1_low, valley2_low)
 
         # Calculate confidence
-        confidence = self._calculate_triple_top_confidence(data, peak1, peak2, peak3, neckline_price, sensitivity)
+        confidence = self._calculate_triple_top_confidence(
+            data, peak1, peak2, peak3, neckline_price, sensitivity
+        )
 
         if confidence < (0.4 + sensitivity * 0.3):
             return None
@@ -413,23 +443,29 @@ class ReversalPatternDetector(BasePatternDetector):
             start_index=peak1.index,
             end_index=peak3.index,
             key_levels={
-                'peak1_price': peak1.value,
-                'peak2_price': peak2.value,
-                'peak3_price': peak3.value,
-                'neckline_price': neckline_price,
-                'target_price': neckline_price - (peak1.value - neckline_price)
+                "peak1_price": peak1.value,
+                "peak2_price": peak2.value,
+                "peak3_price": peak3.value,
+                "neckline_price": neckline_price,
+                "target_price": neckline_price - (peak1.value - neckline_price),
             },
             volume_profile=volume_profile,
-            description=f"Triple Top reversal pattern. Peaks at {peak1.value:.2f}, {peak2.value:.2f}, {peak3.value:.2f}. Confidence: {confidence:.1%}"
+            description=f"Triple Top reversal pattern. Peaks at {peak1.value:.2f}, {peak2.value:.2f}, {peak3.value:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _analyze_triple_bottom(self, data: PriceDataFrame, trough1: PeakTrough, trough2: PeakTrough,
-                             trough3: PeakTrough, sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_triple_bottom(
+        self,
+        data: PriceDataFrame,
+        trough1: PeakTrough,
+        trough2: PeakTrough,
+        trough3: PeakTrough,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Analyze triple bottom pattern."""
 
         # Find peaks between troughs
-        peak1_highs = data.get_highs()[trough1.index:trough2.index+1]
-        peak2_highs = data.get_highs()[trough2.index:trough3.index+1]
+        peak1_highs = data.get_highs()[trough1.index : trough2.index + 1]
+        peak2_highs = data.get_highs()[trough2.index : trough3.index + 1]
 
         peak1_high = max(h for h in peak1_highs if h is not None)
         peak2_high = max(h for h in peak2_highs if h is not None)
@@ -438,7 +474,9 @@ class ReversalPatternDetector(BasePatternDetector):
         neckline_price = min(peak1_high, peak2_high)
 
         # Calculate confidence
-        confidence = self._calculate_triple_bottom_confidence(data, trough1, trough2, trough3, neckline_price, sensitivity)
+        confidence = self._calculate_triple_bottom_confidence(
+            data, trough1, trough2, trough3, neckline_price, sensitivity
+        )
 
         if confidence < (0.4 + sensitivity * 0.3):
             return None
@@ -455,18 +493,19 @@ class ReversalPatternDetector(BasePatternDetector):
             start_index=trough1.index,
             end_index=trough3.index,
             key_levels={
-                'trough1_price': trough1.value,
-                'trough2_price': trough2.value,
-                'trough3_price': trough3.value,
-                'neckline_price': neckline_price,
-                'target_price': neckline_price + (neckline_price - trough1.value)
+                "trough1_price": trough1.value,
+                "trough2_price": trough2.value,
+                "trough3_price": trough3.value,
+                "neckline_price": neckline_price,
+                "target_price": neckline_price + (neckline_price - trough1.value),
             },
             volume_profile=volume_profile,
-            description=f"Triple Bottom reversal pattern. Troughs at {trough1.value:.2f}, {trough2.value:.2f}, {trough3.value:.2f}. Confidence: {confidence:.1%}"
+            description=f"Triple Bottom reversal pattern. Troughs at {trough1.value:.2f}, {trough2.value:.2f}, {trough3.value:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _validate_double_top(self, peak1: PeakTrough, peak2: PeakTrough,
-                           valley_low: float, valley_index: int) -> bool:
+    def _validate_double_top(
+        self, peak1: PeakTrough, peak2: PeakTrough, valley_low: float, valley_index: int
+    ) -> bool:
         """
         Validate double top pattern meets structural requirements.
 
@@ -500,8 +539,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return True
 
-    def _validate_double_bottom(self, trough1: PeakTrough, trough2: PeakTrough,
-                              peak_high: float, peak_index: int) -> bool:
+    def _validate_double_bottom(
+        self, trough1: PeakTrough, trough2: PeakTrough, peak_high: float, peak_index: int
+    ) -> bool:
         """Validate double bottom pattern characteristics."""
 
         # Peak should be significantly higher than troughs
@@ -520,8 +560,14 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return True
 
-    def _calculate_double_top_confidence(self, data: PriceDataFrame, peak1: PeakTrough, peak2: PeakTrough,
-                                       valley_low: float, sensitivity: float) -> float:
+    def _calculate_double_top_confidence(
+        self,
+        data: PriceDataFrame,
+        peak1: PeakTrough,
+        peak2: PeakTrough,
+        valley_low: float,
+        sensitivity: float,
+    ) -> float:
         """
         Calculate confidence score for double top pattern.
 
@@ -573,13 +619,21 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return final_confidence
 
-    def _calculate_double_bottom_confidence(self, data: PriceDataFrame, trough1: PeakTrough, trough2: PeakTrough,
-                                          peak_high: float, sensitivity: float) -> float:
+    def _calculate_double_bottom_confidence(
+        self,
+        data: PriceDataFrame,
+        trough1: PeakTrough,
+        trough2: PeakTrough,
+        peak_high: float,
+        sensitivity: float,
+    ) -> float:
         """Calculate confidence for double bottom pattern."""
         confidence_factors = []
 
         # 1. Trough similarity
-        trough_similarity = 1.0 - abs(trough1.value - trough2.value) / max(trough1.value, trough2.value)
+        trough_similarity = 1.0 - abs(trough1.value - trough2.value) / max(
+            trough1.value, trough2.value
+        )
         confidence_factors.append(trough_similarity * 0.3)
 
         # 2. Peak height
@@ -606,8 +660,15 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return final_confidence
 
-    def _calculate_triple_top_confidence(self, data: PriceDataFrame, peak1: PeakTrough, peak2: PeakTrough,
-                                       peak3: PeakTrough, neckline_price: float, sensitivity: float) -> float:
+    def _calculate_triple_top_confidence(
+        self,
+        data: PriceDataFrame,
+        peak1: PeakTrough,
+        peak2: PeakTrough,
+        peak3: PeakTrough,
+        neckline_price: float,
+        sensitivity: float,
+    ) -> float:
         """Calculate confidence for triple top pattern."""
         confidence_factors = []
 
@@ -615,7 +676,7 @@ class ReversalPatternDetector(BasePatternDetector):
         peaks = [peak1.value, peak2.value, peak3.value]
         peak_avg = sum(peaks) / 3
         peak_variance = sum((p - peak_avg) ** 2 for p in peaks) / 3
-        peak_similarity = max(0.0, 1.0 - (peak_variance / (peak_avg ** 2)))
+        peak_similarity = max(0.0, 1.0 - (peak_variance / (peak_avg**2)))
         confidence_factors.append(peak_similarity * 0.4)
 
         # 2. Neckline retracement
@@ -641,8 +702,15 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return final_confidence
 
-    def _calculate_triple_bottom_confidence(self, data: PriceDataFrame, trough1: PeakTrough, trough2: PeakTrough,
-                                          trough3: PeakTrough, neckline_price: float, sensitivity: float) -> float:
+    def _calculate_triple_bottom_confidence(
+        self,
+        data: PriceDataFrame,
+        trough1: PeakTrough,
+        trough2: PeakTrough,
+        trough3: PeakTrough,
+        neckline_price: float,
+        sensitivity: float,
+    ) -> float:
         """Calculate confidence for triple bottom pattern."""
         confidence_factors = []
 
@@ -650,7 +718,7 @@ class ReversalPatternDetector(BasePatternDetector):
         troughs = [trough1.value, trough2.value, trough3.value]
         trough_avg = sum(troughs) / 3
         trough_variance = sum((t - trough_avg) ** 2 for t in troughs) / 3
-        trough_similarity = max(0.0, 1.0 - (trough_variance / (trough_avg ** 2)))
+        trough_similarity = max(0.0, 1.0 - (trough_variance / (trough_avg**2)))
         confidence_factors.append(trough_similarity * 0.4)
 
         # 2. Neckline bounce
@@ -676,7 +744,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return final_confidence
 
-    def _analyze_reversal_volume_pattern(self, volumes: List[float], start_idx: int, end_idx: int) -> float:
+    def _analyze_reversal_volume_pattern(
+        self, volumes: List[float], start_idx: int, end_idx: int
+    ) -> float:
         """
         Analyze volume pattern for reversal confirmation.
 
@@ -696,15 +766,15 @@ class ReversalPatternDetector(BasePatternDetector):
         if end_idx >= len(volumes) or start_idx >= end_idx:
             return 0.5
 
-        pattern_volumes = volumes[start_idx:end_idx+1]
+        pattern_volumes = volumes[start_idx : end_idx + 1]
         valid_volumes = [v for v in pattern_volumes if v is not None and v > 0]
 
         if len(valid_volumes) < 3:
             return 0.5
 
         # For reversals, volume should increase towards the end (confirmation)
-        first_third = valid_volumes[:len(valid_volumes)//3]
-        last_third = valid_volumes[-len(valid_volumes)//3:]
+        first_third = valid_volumes[: len(valid_volumes) // 3]
+        last_third = valid_volumes[-len(valid_volumes) // 3 :]
 
         if not first_third or not last_third:
             return 0.5
@@ -744,8 +814,9 @@ class ReversalPatternDetector(BasePatternDetector):
         else:  # pattern_length > ideal_max
             return max(0.3, ideal_max / pattern_length)
 
-    def _calculate_volume_profile(self, data: PriceDataFrame,
-                                start_index: int, end_index: int) -> VolumeProfile:
+    def _calculate_volume_profile(
+        self, data: PriceDataFrame, start_index: int, end_index: int
+    ) -> VolumeProfile:
         """
         Calculate volume profile for the pattern period.
 
@@ -762,22 +833,18 @@ class ReversalPatternDetector(BasePatternDetector):
         Returns:
             VolumeProfile with volume analysis
         """
-        volumes = data.get_volumes()[start_index:end_index+1]
+        volumes = data.get_volumes()[start_index : end_index + 1]
         valid_volumes = [v for v in volumes if v is not None and v > 0]
 
         if not valid_volumes:
-            return VolumeProfile(
-                avg_volume=0.0,
-                volume_trend="unknown",
-                volume_confirmation=False
-            )
+            return VolumeProfile(avg_volume=0.0, volume_trend="unknown", volume_confirmation=False)
 
         avg_volume = sum(valid_volumes) / len(valid_volumes)
 
         # Determine volume trend
         if len(valid_volumes) >= 3:
-            first_half = valid_volumes[:len(valid_volumes)//2]
-            second_half = valid_volumes[len(valid_volumes)//2:]
+            first_half = valid_volumes[: len(valid_volumes) // 2]
+            second_half = valid_volumes[len(valid_volumes) // 2 :]
 
             avg_first = sum(first_half) / len(first_half)
             avg_second = sum(second_half) / len(second_half)
@@ -799,13 +866,12 @@ class ReversalPatternDetector(BasePatternDetector):
         return VolumeProfile(
             avg_volume=avg_volume,
             volume_trend=volume_trend,
-            volume_confirmation=volume_confirmation
+            volume_confirmation=volume_confirmation,
         )
 
-
-
-    def detect_head_and_shoulders_patterns(self, data: PriceDataFrame,
-                                         sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_head_and_shoulders_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect head and shoulders and inverse head and shoulders patterns.
 
@@ -836,12 +902,18 @@ class ReversalPatternDetector(BasePatternDetector):
         lows = data.get_lows()
 
         # Find peaks for head and shoulders
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=4)
-                     if pt.type == 'peak']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=4)
+            if pt.type == "peak"
+        ]
 
         # Find troughs for inverse head and shoulders
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=4)
-                      if pt.type == 'trough']
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=4)
+            if pt.type == "trough"
+        ]
 
         # Detect head and shoulders (bearish reversal)
         if len(high_peaks) >= 3:
@@ -855,8 +927,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_head_and_shoulders(self, data: PriceDataFrame, peaks: List[PeakTrough],
-                               sensitivity: float) -> List[DetectedPattern]:
+    def _find_head_and_shoulders(
+        self, data: PriceDataFrame, peaks: List[PeakTrough], sensitivity: float
+    ) -> List[DetectedPattern]:
         """
         Find head and shoulders patterns in peak data.
 
@@ -889,8 +962,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return patterns
 
-    def _find_inverse_head_and_shoulders(self, data: PriceDataFrame, troughs: List[PeakTrough],
-                                       sensitivity: float) -> List[DetectedPattern]:
+    def _find_inverse_head_and_shoulders(
+        self, data: PriceDataFrame, troughs: List[PeakTrough], sensitivity: float
+    ) -> List[DetectedPattern]:
         """Find inverse head and shoulders patterns in troughs."""
         patterns = []
 
@@ -901,7 +975,9 @@ class ReversalPatternDetector(BasePatternDetector):
             right_shoulder = troughs[i + 2]
 
             # Validate inverse head and shoulders structure
-            if self._validate_inverse_head_and_shoulders_structure(left_shoulder, head, right_shoulder):
+            if self._validate_inverse_head_and_shoulders_structure(
+                left_shoulder, head, right_shoulder
+            ):
                 ihs_pattern = self._analyze_inverse_head_and_shoulders(
                     data, left_shoulder, head, right_shoulder, sensitivity
                 )
@@ -910,8 +986,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return patterns
 
-    def _validate_head_and_shoulders_structure(self, left_shoulder: PeakTrough,
-                                             head: PeakTrough, right_shoulder: PeakTrough) -> bool:
+    def _validate_head_and_shoulders_structure(
+        self, left_shoulder: PeakTrough, head: PeakTrough, right_shoulder: PeakTrough
+    ) -> bool:
         """
         Validate head and shoulders pattern meets structural requirements.
 
@@ -958,8 +1035,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return True
 
-    def _validate_inverse_head_and_shoulders_structure(self, left_shoulder: PeakTrough,
-                                                     head: PeakTrough, right_shoulder: PeakTrough) -> bool:
+    def _validate_inverse_head_and_shoulders_structure(
+        self, left_shoulder: PeakTrough, head: PeakTrough, right_shoulder: PeakTrough
+    ) -> bool:
         """Validate inverse head and shoulders pattern structure."""
 
         # Head should be lower than both shoulders
@@ -990,9 +1068,14 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return True
 
-    def _analyze_head_and_shoulders(self, data: PriceDataFrame, left_shoulder: PeakTrough,
-                                  head: PeakTrough, right_shoulder: PeakTrough,
-                                  sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_head_and_shoulders(
+        self,
+        data: PriceDataFrame,
+        left_shoulder: PeakTrough,
+        head: PeakTrough,
+        right_shoulder: PeakTrough,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """
         Analyze and validate head and shoulders pattern.
 
@@ -1019,8 +1102,8 @@ class ReversalPatternDetector(BasePatternDetector):
         right_valley_end = right_shoulder.index
 
         # Find valley lows
-        left_valley_lows = data.get_lows()[left_valley_start:left_valley_end+1]
-        right_valley_lows = data.get_lows()[right_valley_start:right_valley_end+1]
+        left_valley_lows = data.get_lows()[left_valley_start : left_valley_end + 1]
+        right_valley_lows = data.get_lows()[right_valley_start : right_valley_end + 1]
 
         left_valley_low = min(l for l in left_valley_lows if l is not None)
         right_valley_low = min(l for l in right_valley_lows if l is not None)
@@ -1037,7 +1120,9 @@ class ReversalPatternDetector(BasePatternDetector):
             return None
 
         # Calculate volume profile
-        volume_profile = self._calculate_volume_profile(data, left_shoulder.index, right_shoulder.index)
+        volume_profile = self._calculate_volume_profile(
+            data, left_shoulder.index, right_shoulder.index
+        )
 
         # Calculate target price (measured move)
         head_to_neckline = head.value - neckline_price
@@ -1052,21 +1137,26 @@ class ReversalPatternDetector(BasePatternDetector):
             start_index=left_shoulder.index,
             end_index=right_shoulder.index,
             key_levels={
-                'left_shoulder_price': left_shoulder.value,
-                'head_price': head.value,
-                'right_shoulder_price': right_shoulder.value,
-                'neckline_price': neckline_price,
-                'target_price': target_price,
-                'left_valley_low': left_valley_low,
-                'right_valley_low': right_valley_low
+                "left_shoulder_price": left_shoulder.value,
+                "head_price": head.value,
+                "right_shoulder_price": right_shoulder.value,
+                "neckline_price": neckline_price,
+                "target_price": target_price,
+                "left_valley_low": left_valley_low,
+                "right_valley_low": right_valley_low,
             },
             volume_profile=volume_profile,
-            description=f"Head and Shoulders reversal pattern. Head at {head.value:.2f}, neckline at {neckline_price:.2f}, target {target_price:.2f}. Confidence: {confidence:.1%}"
+            description=f"Head and Shoulders reversal pattern. Head at {head.value:.2f}, neckline at {neckline_price:.2f}, target {target_price:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _analyze_inverse_head_and_shoulders(self, data: PriceDataFrame, left_shoulder: PeakTrough,
-                                          head: PeakTrough, right_shoulder: PeakTrough,
-                                          sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_inverse_head_and_shoulders(
+        self,
+        data: PriceDataFrame,
+        left_shoulder: PeakTrough,
+        head: PeakTrough,
+        right_shoulder: PeakTrough,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Analyze inverse head and shoulders pattern."""
 
         # Find neckline (connect the peaks between shoulders and head)
@@ -1076,8 +1166,8 @@ class ReversalPatternDetector(BasePatternDetector):
         right_peak_end = right_shoulder.index
 
         # Find peak highs
-        left_peak_highs = data.get_highs()[left_peak_start:left_peak_end+1]
-        right_peak_highs = data.get_highs()[right_peak_start:right_peak_end+1]
+        left_peak_highs = data.get_highs()[left_peak_start : left_peak_end + 1]
+        right_peak_highs = data.get_highs()[right_peak_start : right_peak_end + 1]
 
         left_peak_high = max(h for h in left_peak_highs if h is not None)
         right_peak_high = max(h for h in right_peak_highs if h is not None)
@@ -1094,7 +1184,9 @@ class ReversalPatternDetector(BasePatternDetector):
             return None
 
         # Calculate volume profile
-        volume_profile = self._calculate_volume_profile(data, left_shoulder.index, right_shoulder.index)
+        volume_profile = self._calculate_volume_profile(
+            data, left_shoulder.index, right_shoulder.index
+        )
 
         # Calculate target price (measured move)
         neckline_to_head = neckline_price - head.value
@@ -1109,21 +1201,27 @@ class ReversalPatternDetector(BasePatternDetector):
             start_index=left_shoulder.index,
             end_index=right_shoulder.index,
             key_levels={
-                'left_shoulder_price': left_shoulder.value,
-                'head_price': head.value,
-                'right_shoulder_price': right_shoulder.value,
-                'neckline_price': neckline_price,
-                'target_price': target_price,
-                'left_peak_high': left_peak_high,
-                'right_peak_high': right_peak_high
+                "left_shoulder_price": left_shoulder.value,
+                "head_price": head.value,
+                "right_shoulder_price": right_shoulder.value,
+                "neckline_price": neckline_price,
+                "target_price": target_price,
+                "left_peak_high": left_peak_high,
+                "right_peak_high": right_peak_high,
             },
             volume_profile=volume_profile,
-            description=f"Inverse Head and Shoulders reversal pattern. Head at {head.value:.2f}, neckline at {neckline_price:.2f}, target {target_price:.2f}. Confidence: {confidence:.1%}"
+            description=f"Inverse Head and Shoulders reversal pattern. Head at {head.value:.2f}, neckline at {neckline_price:.2f}, target {target_price:.2f}. Confidence: {confidence:.1%}",
         )
 
-    def _calculate_head_shoulders_confidence(self, data: PriceDataFrame, left_shoulder: PeakTrough,
-                                           head: PeakTrough, right_shoulder: PeakTrough,
-                                           neckline_price: float, sensitivity: float) -> float:
+    def _calculate_head_shoulders_confidence(
+        self,
+        data: PriceDataFrame,
+        left_shoulder: PeakTrough,
+        head: PeakTrough,
+        right_shoulder: PeakTrough,
+        neckline_price: float,
+        sensitivity: float,
+    ) -> float:
         """
         Calculate confidence score for head and shoulders pattern.
 
@@ -1200,9 +1298,15 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return final_confidence
 
-    def _calculate_inverse_head_shoulders_confidence(self, data: PriceDataFrame, left_shoulder: PeakTrough,
-                                                   head: PeakTrough, right_shoulder: PeakTrough,
-                                                   neckline_price: float, sensitivity: float) -> float:
+    def _calculate_inverse_head_shoulders_confidence(
+        self,
+        data: PriceDataFrame,
+        left_shoulder: PeakTrough,
+        head: PeakTrough,
+        right_shoulder: PeakTrough,
+        neckline_price: float,
+        sensitivity: float,
+    ) -> float:
         """Calculate confidence for inverse head and shoulders pattern."""
         confidence_factors = []
 
@@ -1257,9 +1361,9 @@ class ReversalPatternDetector(BasePatternDetector):
 
         return final_confidence
 
-    def _analyze_head_shoulders_volume_pattern(self, volumes: List[float],
-                                             left_shoulder_idx: int, head_idx: int,
-                                             right_shoulder_idx: int) -> float:
+    def _analyze_head_shoulders_volume_pattern(
+        self, volumes: List[float], left_shoulder_idx: int, head_idx: int, right_shoulder_idx: int
+    ) -> float:
         """
         Analyze volume pattern for head and shoulders confirmation.
 
@@ -1284,9 +1388,13 @@ class ReversalPatternDetector(BasePatternDetector):
 
         try:
             # Get volume at each key point
-            left_shoulder_vol = volumes[left_shoulder_idx] if volumes[left_shoulder_idx] is not None else 0
+            left_shoulder_vol = (
+                volumes[left_shoulder_idx] if volumes[left_shoulder_idx] is not None else 0
+            )
             head_vol = volumes[head_idx] if volumes[head_idx] is not None else 0
-            right_shoulder_vol = volumes[right_shoulder_idx] if volumes[right_shoulder_idx] is not None else 0
+            right_shoulder_vol = (
+                volumes[right_shoulder_idx] if volumes[right_shoulder_idx] is not None else 0
+            )
 
             if left_shoulder_vol == 0 or head_vol == 0 or right_shoulder_vol == 0:
                 return 0.5

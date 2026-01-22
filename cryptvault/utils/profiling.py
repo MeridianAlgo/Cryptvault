@@ -17,17 +17,17 @@ Example:
     ...     # operation code
 """
 
-import time
-import functools
-import logging
 import cProfile
-import pstats
+import functools
 import io
-from typing import Callable, Dict, Any, Optional, List
+import logging
+import pstats
+import time
+import tracemalloc
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
-import tracemalloc
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class PerformanceMetrics:
         timestamp: When measurement was taken
         metadata: Additional metadata
     """
+
     operation_name: str
     execution_time: float
     memory_used: Optional[float] = None
@@ -55,13 +56,13 @@ class PerformanceMetrics:
     def to_dict(self) -> Dict[str, Any]:
         """Convert metrics to dictionary."""
         return {
-            'operation': self.operation_name,
-            'execution_time_seconds': round(self.execution_time, 4),
-            'execution_time_ms': round(self.execution_time * 1000, 2),
-            'memory_mb': round(self.memory_used, 2) if self.memory_used else None,
-            'call_count': self.call_count,
-            'timestamp': self.timestamp.isoformat(),
-            'metadata': self.metadata
+            "operation": self.operation_name,
+            "execution_time_seconds": round(self.execution_time, 4),
+            "execution_time_ms": round(self.execution_time * 1000, 2),
+            "memory_mb": round(self.memory_used, 2) if self.memory_used else None,
+            "call_count": self.call_count,
+            "timestamp": self.timestamp.isoformat(),
+            "metadata": self.metadata,
         }
 
 
@@ -124,9 +125,7 @@ class PerformanceProfiler:
         metadata = self.active_operations.pop(f"{operation_name}_metadata", {})
 
         metrics = PerformanceMetrics(
-            operation_name=operation_name,
-            execution_time=execution_time,
-            metadata=metadata
+            operation_name=operation_name, execution_time=execution_time, metadata=metadata
         )
 
         self.metrics.append(metrics)
@@ -166,11 +165,7 @@ class PerformanceProfiler:
             - operations: Per-operation statistics
         """
         if not self.metrics:
-            return {
-                'total_operations': 0,
-                'total_time_seconds': 0.0,
-                'operations': {}
-            }
+            return {"total_operations": 0, "total_time_seconds": 0.0, "operations": {}}
 
         # Group by operation
         operations_summary = {}
@@ -178,36 +173,36 @@ class PerformanceProfiler:
             op_name = metric.operation_name
             if op_name not in operations_summary:
                 operations_summary[op_name] = {
-                    'count': 0,
-                    'total_time': 0.0,
-                    'min_time': float('inf'),
-                    'max_time': 0.0,
-                    'times': []
+                    "count": 0,
+                    "total_time": 0.0,
+                    "min_time": float("inf"),
+                    "max_time": 0.0,
+                    "times": [],
                 }
 
             op_stats = operations_summary[op_name]
-            op_stats['count'] += 1
-            op_stats['total_time'] += metric.execution_time
-            op_stats['min_time'] = min(op_stats['min_time'], metric.execution_time)
-            op_stats['max_time'] = max(op_stats['max_time'], metric.execution_time)
-            op_stats['times'].append(metric.execution_time)
+            op_stats["count"] += 1
+            op_stats["total_time"] += metric.execution_time
+            op_stats["min_time"] = min(op_stats["min_time"], metric.execution_time)
+            op_stats["max_time"] = max(op_stats["max_time"], metric.execution_time)
+            op_stats["times"].append(metric.execution_time)
 
         # Calculate averages and format
         for op_name, stats in operations_summary.items():
-            stats['avg_time'] = stats['total_time'] / stats['count']
-            stats['total_time_ms'] = round(stats['total_time'] * 1000, 2)
-            stats['avg_time_ms'] = round(stats['avg_time'] * 1000, 2)
-            stats['min_time_ms'] = round(stats['min_time'] * 1000, 2)
-            stats['max_time_ms'] = round(stats['max_time'] * 1000, 2)
-            del stats['times']  # Remove raw times from summary
+            stats["avg_time"] = stats["total_time"] / stats["count"]
+            stats["total_time_ms"] = round(stats["total_time"] * 1000, 2)
+            stats["avg_time_ms"] = round(stats["avg_time"] * 1000, 2)
+            stats["min_time_ms"] = round(stats["min_time"] * 1000, 2)
+            stats["max_time_ms"] = round(stats["max_time"] * 1000, 2)
+            del stats["times"]  # Remove raw times from summary
 
         total_time = sum(m.execution_time for m in self.metrics)
 
         return {
-            'total_operations': len(self.metrics),
-            'total_time_seconds': round(total_time, 4),
-            'total_time_ms': round(total_time * 1000, 2),
-            'operations': operations_summary
+            "total_operations": len(self.metrics),
+            "total_time_seconds": round(total_time, 4),
+            "total_time_ms": round(total_time * 1000, 2),
+            "operations": operations_summary,
         }
 
     def clear(self) -> None:
@@ -244,6 +239,7 @@ def profile_function(func: Callable) -> Callable:
         ...     # calculation code
         ...     pass
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         operation_name = f"{func.__module__}.{func.__name__}"
@@ -255,8 +251,7 @@ def profile_function(func: Callable) -> Callable:
         finally:
             execution_time = time.perf_counter() - start_time
             metrics = PerformanceMetrics(
-                operation_name=operation_name,
-                execution_time=execution_time
+                operation_name=operation_name, execution_time=execution_time
             )
             _global_profiler.record_metric(metrics)
 
@@ -286,9 +281,7 @@ def benchmark_operation(operation_name: str, metadata: Optional[Dict] = None):
         ...     data = fetch_data("BTC")
     """
     metrics = PerformanceMetrics(
-        operation_name=operation_name,
-        execution_time=0.0,
-        metadata=metadata or {}
+        operation_name=operation_name, execution_time=0.0, metadata=metadata or {}
     )
 
     start_time = time.perf_counter()
@@ -319,7 +312,7 @@ def profile_memory(operation_name: str):
         ...     patterns = detect_patterns(data)
         >>> print(f"Memory used: {mem_stats['peak_mb']:.2f} MB")
     """
-    mem_stats = {'peak_mb': 0.0, 'current_mb': 0.0}
+    mem_stats = {"peak_mb": 0.0, "current_mb": 0.0}
 
     tracemalloc.start()
     start_time = time.perf_counter()
@@ -332,13 +325,13 @@ def profile_memory(operation_name: str):
 
         execution_time = time.perf_counter() - start_time
 
-        mem_stats['current_mb'] = current / 1024 / 1024
-        mem_stats['peak_mb'] = peak / 1024 / 1024
+        mem_stats["current_mb"] = current / 1024 / 1024
+        mem_stats["peak_mb"] = peak / 1024 / 1024
 
         metrics = PerformanceMetrics(
             operation_name=operation_name,
             execution_time=execution_time,
-            memory_used=mem_stats['peak_mb']
+            memory_used=mem_stats["peak_mb"],
         )
         _global_profiler.record_metric(metrics)
 
@@ -367,6 +360,7 @@ def profile_with_cprofile(func: Callable) -> Callable:
         ...     # analysis code
         ...     pass
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         profiler = cProfile.Profile()
@@ -380,7 +374,7 @@ def profile_with_cprofile(func: Callable) -> Callable:
 
             # Print stats
             s = io.StringIO()
-            ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+            ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
             ps.print_stats(20)  # Top 20 functions
 
             logger.info(f"cProfile results for {func.__name__}:\n{s.getvalue()}")
@@ -418,15 +412,16 @@ def benchmark_function(func: Callable, iterations: int = 100, *args, **kwargs) -
         times.append(time.perf_counter() - start)
 
     return {
-        'iterations': iterations,
-        'total_time_seconds': sum(times),
-        'avg_time_seconds': sum(times) / iterations,
-        'avg_time_ms': (sum(times) / iterations) * 1000,
-        'min_time_seconds': min(times),
-        'min_time_ms': min(times) * 1000,
-        'max_time_seconds': max(times),
-        'max_time_ms': max(times) * 1000,
-        'std_dev_ms': (sum((t - sum(times)/iterations)**2 for t in times) / iterations)**0.5 * 1000
+        "iterations": iterations,
+        "total_time_seconds": sum(times),
+        "avg_time_seconds": sum(times) / iterations,
+        "avg_time_ms": (sum(times) / iterations) * 1000,
+        "min_time_seconds": min(times),
+        "min_time_ms": min(times) * 1000,
+        "max_time_seconds": max(times),
+        "max_time_ms": max(times) * 1000,
+        "std_dev_ms": (sum((t - sum(times) / iterations) ** 2 for t in times) / iterations) ** 0.5
+        * 1000,
     }
 
 
@@ -443,7 +438,7 @@ def generate_performance_report() -> str:
     """
     summary = _global_profiler.get_summary()
 
-    if summary['total_operations'] == 0:
+    if summary["total_operations"] == 0:
         return "No performance data collected."
 
     lines = [
@@ -454,14 +449,12 @@ def generate_performance_report() -> str:
         f"Total Time: {summary['total_time_ms']:.2f}ms ({summary['total_time_seconds']:.4f}s)",
         "",
         "Operation Breakdown:",
-        "-" * 80
+        "-" * 80,
     ]
 
     # Sort operations by total time
     operations = sorted(
-        summary['operations'].items(),
-        key=lambda x: x[1]['total_time'],
-        reverse=True
+        summary["operations"].items(), key=lambda x: x[1]["total_time"], reverse=True
     )
 
     for op_name, stats in operations:

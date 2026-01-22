@@ -13,11 +13,12 @@ Functions:
 """
 
 import re
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 class ValidationError(Exception):
     """Exception raised for validation errors."""
+
     pass
 
 
@@ -48,7 +49,7 @@ def validate_ticker(ticker: str, supported_tickers: Optional[List[str]] = None) 
     ticker = sanitize_input(ticker).upper()
 
     # Check format (alphanumeric, 1-10 characters)
-    if not re.match(r'^[A-Z0-9]{1,10}$', ticker):
+    if not re.match(r"^[A-Z0-9]{1,10}$", ticker):
         raise ValidationError(
             f"Invalid ticker symbol format: '{ticker}'. "
             "Ticker must be 1-10 alphanumeric characters."
@@ -96,9 +97,7 @@ def validate_days(days: int, min_days: int = 1, max_days: int = 3650) -> int:
         raise ValidationError(f"Days must be a valid integer, got: {days}")
 
     if days < min_days or days > max_days:
-        raise ValidationError(
-            f"Days must be between {min_days} and {max_days}. Got: {days}"
-        )
+        raise ValidationError(f"Days must be between {min_days} and {max_days}. Got: {days}")
 
     return days
 
@@ -129,9 +128,18 @@ def validate_interval(interval: str) -> str:
 
     # Supported intervals
     valid_intervals = {
-        '1m', '5m', '15m', '30m',  # Minutes
-        '1h', '2h', '4h', '6h', '12h',  # Hours
-        '1d', '1w', '1mo'  # Days, weeks, months
+        "1m",
+        "5m",
+        "15m",
+        "30m",  # Minutes
+        "1h",
+        "2h",
+        "4h",
+        "6h",
+        "12h",  # Hours
+        "1d",
+        "1w",
+        "1mo",  # Days, weeks, months
     }
 
     if interval not in valid_intervals:
@@ -168,13 +176,13 @@ def validate_portfolio_holdings(holdings_str: List[str]) -> Dict[str, float]:
     for holding in holdings_str:
         holding = sanitize_input(holding)
 
-        if ':' not in holding:
+        if ":" not in holding:
             raise ValidationError(
                 f"Invalid holding format: '{holding}'. "
                 "Expected format: SYMBOL:AMOUNT (e.g., BTC:0.5)"
             )
 
-        parts = holding.split(':')
+        parts = holding.split(":")
         if len(parts) != 2:
             raise ValidationError(
                 f"Invalid holding format: '{holding}'. "
@@ -185,24 +193,19 @@ def validate_portfolio_holdings(holdings_str: List[str]) -> Dict[str, float]:
         symbol = symbol.upper().strip()
 
         # Validate symbol format
-        if not re.match(r'^[A-Z0-9]{1,10}$', symbol):
-            raise ValidationError(
-                f"Invalid ticker symbol in holding: '{symbol}'"
-            )
+        if not re.match(r"^[A-Z0-9]{1,10}$", symbol):
+            raise ValidationError(f"Invalid ticker symbol in holding: '{symbol}'")
 
         # Validate amount
         try:
             amount = float(amount_str.strip())
         except ValueError:
             raise ValidationError(
-                f"Invalid amount for {symbol}: '{amount_str}'. "
-                "Amount must be a valid number."
+                f"Invalid amount for {symbol}: '{amount_str}'. " "Amount must be a valid number."
             )
 
         if amount <= 0:
-            raise ValidationError(
-                f"Amount for {symbol} must be positive, got: {amount}"
-            )
+            raise ValidationError(f"Amount for {symbol} must be positive, got: {amount}")
 
         holdings[symbol] = amount
 
@@ -229,20 +232,17 @@ def validate_file_path(file_path: str, must_exist: bool = False) -> str:
     file_path = sanitize_input(file_path)
 
     # Check for directory traversal attempts
-    if '..' in file_path or file_path.startswith('/'):
-        raise ValidationError(
-            "Invalid file path: directory traversal not allowed"
-        )
+    if ".." in file_path or file_path.startswith("/"):
+        raise ValidationError("Invalid file path: directory traversal not allowed")
 
     # Check for valid file extensions for charts
-    valid_extensions = ['.png', '.jpg', '.jpeg', '.svg', '.pdf']
+    valid_extensions = [".png", ".jpg", ".jpeg", ".svg", ".pdf"]
     if not any(file_path.lower().endswith(ext) for ext in valid_extensions):
-        raise ValidationError(
-            f"Invalid file extension. Supported: {', '.join(valid_extensions)}"
-        )
+        raise ValidationError(f"Invalid file extension. Supported: {', '.join(valid_extensions)}")
 
     if must_exist:
         import os
+
         if not os.path.exists(file_path):
             raise ValidationError(f"File not found: {file_path}")
 
@@ -267,12 +267,11 @@ def sanitize_input(user_input: str) -> str:
         return str(user_input)
 
     # Remove null bytes
-    user_input = user_input.replace('\x00', '')
+    user_input = user_input.replace("\x00", "")
 
     # Remove control characters except common whitespace
-    user_input = ''.join(
-        char for char in user_input
-        if char.isprintable() or char in [' ', '\t', '\n']
+    user_input = "".join(
+        char for char in user_input if char.isprintable() or char in [" ", "\t", "\n"]
     )
 
     # Strip leading/trailing whitespace
@@ -281,7 +280,9 @@ def sanitize_input(user_input: str) -> str:
     return user_input
 
 
-def _find_similar_tickers(ticker: str, supported_tickers: List[str], max_suggestions: int = 5) -> List[str]:
+def _find_similar_tickers(
+    ticker: str, supported_tickers: List[str], max_suggestions: int = 5
+) -> List[str]:
     """
     Find similar ticker symbols using simple string matching.
 

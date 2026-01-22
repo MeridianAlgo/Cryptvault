@@ -16,6 +16,6 @@ Example:
     ...     print(f"Found {len(result.patterns)} patterns")
 """
 
-from .analyzer import PatternAnalyzer, AnalysisResult, ResultValidator
+from .analyzer import AnalysisResult, PatternAnalyzer, ResultValidator
 
-__all__ = ['PatternAnalyzer', 'AnalysisResult', 'ResultValidator']
+__all__ = ["PatternAnalyzer", "AnalysisResult", "ResultValidator"]

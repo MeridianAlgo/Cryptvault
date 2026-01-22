@@ -14,15 +14,16 @@ Feature Importance:
 - Price action: ~10% (Momentum, volatility, volume)
 """
 
-import numpy as np
-from typing import List, Dict, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, List
+
+import numpy as np
 
 from ..data.models import PriceDataFrame
-from ..indicators.trend import calculate_sma, calculate_ema
-from ..indicators.momentum import calculate_rsi, calculate_macd
-from ..indicators.volatility import calculate_bollinger_bands, calculate_atr
+from ..indicators.momentum import calculate_macd, calculate_rsi
+from ..indicators.trend import calculate_ema, calculate_sma
+from ..indicators.volatility import calculate_atr, calculate_bollinger_bands
 
 
 class TechnicalFeatureExtractor:
@@ -86,36 +87,44 @@ class TechnicalFeatureExtractor:
             current_rsi_14 = rsi_14[-1] if not np.isnan(rsi_14[-1]) else 50.0
             current_rsi_21 = rsi_21[-1] if not np.isnan(rsi_21[-1]) else 50.0
 
-            features.extend([
-                current_rsi_14 / 100.0,  # Normalize to 0-1
-                current_rsi_21 / 100.0,
-                1.0 if current_rsi_14 > 70 else 0.0,  # Overbought flag
-                1.0 if current_rsi_14 < 30 else 0.0,  # Oversold flag
-                (current_rsi_14 - 50.0) / 50.0  # RSI momentum
-            ])
+            features.extend(
+                [
+                    current_rsi_14 / 100.0,  # Normalize to 0-1
+                    current_rsi_21 / 100.0,
+                    1.0 if current_rsi_14 > 70 else 0.0,  # Overbought flag
+                    1.0 if current_rsi_14 < 30 else 0.0,  # Oversold flag
+                    (current_rsi_14 - 50.0) / 50.0,  # RSI momentum
+                ]
+            )
 
             # MACD features - High importance
             macd_data = calculate_macd(closes)
-            current_macd = macd_data['macd'][-1] if not np.isnan(macd_data['macd'][-1]) else 0.0
-            current_signal = macd_data['signal'][-1] if not np.isnan(macd_data['signal'][-1]) else 0.0
-            current_histogram = macd_data['histogram'][-1] if not np.isnan(macd_data['histogram'][-1]) else 0.0
+            current_macd = macd_data["macd"][-1] if not np.isnan(macd_data["macd"][-1]) else 0.0
+            current_signal = (
+                macd_data["signal"][-1] if not np.isnan(macd_data["signal"][-1]) else 0.0
+            )
+            current_histogram = (
+                macd_data["histogram"][-1] if not np.isnan(macd_data["histogram"][-1]) else 0.0
+            )
 
             # Normalize MACD values
             price_range = closes[-1] * 0.1
-            features.extend([
-                current_macd / price_range,
-                current_signal / price_range,
-                current_histogram / price_range,
-                1.0 if current_macd > current_signal else 0.0,  # Bullish crossover
-                1.0 if current_histogram > 0 else 0.0  # Positive histogram
-            ])
+            features.extend(
+                [
+                    current_macd / price_range,
+                    current_signal / price_range,
+                    current_histogram / price_range,
+                    1.0 if current_macd > current_signal else 0.0,  # Bullish crossover
+                    1.0 if current_histogram > 0 else 0.0,  # Positive histogram
+                ]
+            )
 
             # Bollinger Bands features - Medium importance
             bb = calculate_bollinger_bands(closes, 20, 2.0)
             current_price = closes[-1]
-            upper_band = bb['upper'][-1] if not np.isnan(bb['upper'][-1]) else current_price
-            middle_band = bb['middle'][-1] if not np.isnan(bb['middle'][-1]) else current_price
-            lower_band = bb['lower'][-1] if not np.isnan(bb['lower'][-1]) else current_price
+            upper_band = bb["upper"][-1] if not np.isnan(bb["upper"][-1]) else current_price
+            middle_band = bb["middle"][-1] if not np.isnan(bb["middle"][-1]) else current_price
+            lower_band = bb["lower"][-1] if not np.isnan(bb["lower"][-1]) else current_price
 
             # Bollinger Band position (0 = lower band, 1 = upper band)
             if upper_band != lower_band:
@@ -125,12 +134,14 @@ class TechnicalFeatureExtractor:
 
             band_width = (upper_band - lower_band) / middle_band if middle_band > 0 else 0.0
 
-            features.extend([
-                bb_position,
-                band_width,
-                1.0 if current_price > upper_band else 0.0,  # Above upper band
-                1.0 if current_price < lower_band else 0.0   # Below lower band
-            ])
+            features.extend(
+                [
+                    bb_position,
+                    band_width,
+                    1.0 if current_price > upper_band else 0.0,  # Above upper band
+                    1.0 if current_price < lower_band else 0.0,  # Below lower band
+                ]
+            )
 
             # Moving average features - Medium importance
             sma_20 = calculate_sma(closes, 20)
@@ -143,13 +154,27 @@ class TechnicalFeatureExtractor:
             current_ema_12 = ema_12[-1] if not np.isnan(ema_12[-1]) else current_price
             current_ema_26 = ema_26[-1] if not np.isnan(ema_26[-1]) else current_price
 
-            features.extend([
-                (current_price - current_sma_20) / current_sma_20 if current_sma_20 > 0 else 0.0,
-                (current_price - current_sma_50) / current_sma_50 if current_sma_50 > 0 else 0.0,
-                (current_price - current_ema_12) / current_ema_12 if current_ema_12 > 0 else 0.0,
-                1.0 if current_sma_20 > current_sma_50 else 0.0,  # Golden cross indicator
-                1.0 if current_price > current_sma_20 else 0.0     # Price above SMA20
-            ])
+            features.extend(
+                [
+                    (
+                        (current_price - current_sma_20) / current_sma_20
+                        if current_sma_20 > 0
+                        else 0.0
+                    ),
+                    (
+                        (current_price - current_sma_50) / current_sma_50
+                        if current_sma_50 > 0
+                        else 0.0
+                    ),
+                    (
+                        (current_price - current_ema_12) / current_ema_12
+                        if current_ema_12 > 0
+                        else 0.0
+                    ),
+                    1.0 if current_sma_20 > current_sma_50 else 0.0,  # Golden cross indicator
+                    1.0 if current_price > current_sma_20 else 0.0,  # Price above SMA20
+                ]
+            )
 
             # Volatility features - Medium importance
             if len(closes) >= 20:
@@ -157,11 +182,13 @@ class TechnicalFeatureExtractor:
                 volatility = np.std(returns)
                 volatility_ma = np.mean(np.abs(returns))
 
-                features.extend([
-                    volatility,
-                    volatility_ma,
-                    1.0 if volatility > 0.03 else 0.0  # High volatility flag
-                ])
+                features.extend(
+                    [
+                        volatility,
+                        volatility_ma,
+                        1.0 if volatility > 0.03 else 0.0,  # High volatility flag
+                    ]
+                )
             else:
                 features.extend([0.02, 0.015, 0.0])
 
@@ -179,11 +206,13 @@ class TechnicalFeatureExtractor:
                 else:
                     volume_trend = 0.0
 
-                features.extend([
-                    min(volume_ratio, 5.0),  # Cap at 5x
-                    volume_trend,
-                    1.0 if volume_ratio > 1.5 else 0.0  # High volume flag
-                ])
+                features.extend(
+                    [
+                        min(volume_ratio, 5.0),  # Cap at 5x
+                        volume_trend,
+                        1.0 if volume_ratio > 1.5 else 0.0,  # High volume flag
+                    ]
+                )
             else:
                 features.extend([1.0, 0.0, 0.0])
 
@@ -201,11 +230,7 @@ class TechnicalFeatureExtractor:
                 else:
                     body_ratio = 0.5
 
-                features.extend([
-                    price_change_1d,
-                    price_change_3d,
-                    body_ratio
-                ])
+                features.extend([price_change_1d, price_change_3d, body_ratio])
             else:
                 features.extend([0.0, 0.0, 0.5])
 
@@ -230,21 +255,42 @@ class TechnicalFeatureExtractor:
         """
         return [
             # RSI features (5)
-            'rsi_14', 'rsi_21', 'rsi_overbought', 'rsi_oversold', 'rsi_momentum',
+            "rsi_14",
+            "rsi_21",
+            "rsi_overbought",
+            "rsi_oversold",
+            "rsi_momentum",
             # MACD features (5)
-            'macd', 'macd_signal', 'macd_histogram', 'macd_bullish', 'macd_positive',
+            "macd",
+            "macd_signal",
+            "macd_histogram",
+            "macd_bullish",
+            "macd_positive",
             # Bollinger Bands features (4)
-            'bb_position', 'bb_width', 'bb_above_upper', 'bb_below_lower',
+            "bb_position",
+            "bb_width",
+            "bb_above_upper",
+            "bb_below_lower",
             # Moving average features (5)
-            'price_vs_sma20', 'price_vs_sma50', 'price_vs_ema12', 'golden_cross', 'price_above_sma20',
+            "price_vs_sma20",
+            "price_vs_sma50",
+            "price_vs_ema12",
+            "golden_cross",
+            "price_above_sma20",
             # Volatility features (3)
-            'volatility', 'volatility_ma', 'high_volatility',
+            "volatility",
+            "volatility_ma",
+            "high_volatility",
             # Volume features (3)
-            'volume_ratio', 'volume_trend', 'high_volume',
+            "volume_ratio",
+            "volume_trend",
+            "high_volume",
             # Price action features (3)
-            'price_change_1d', 'price_change_3d', 'body_ratio',
+            "price_change_1d",
+            "price_change_3d",
+            "body_ratio",
             # ATR (1)
-            'atr_normalized'
+            "atr_normalized",
         ]
 
 
@@ -296,16 +342,22 @@ class PatternFeatureExtractor:
 
             # Pattern presence features (8 features)
             key_patterns = [
-                'triangle', 'flag', 'wedge', 'rectangle',
-                'head_shoulders', 'double_top', 'double_bottom', 'cup_handle'
+                "triangle",
+                "flag",
+                "wedge",
+                "rectangle",
+                "head_shoulders",
+                "double_top",
+                "double_bottom",
+                "cup_handle",
             ]
 
             pattern_names = []
             for p in patterns:
-                if hasattr(p, 'pattern_type'):
+                if hasattr(p, "pattern_type"):
                     pattern_names.append(p.pattern_type.value.lower())
                 elif isinstance(p, dict):
-                    pattern_names.append(p.get('pattern_type', '').lower())
+                    pattern_names.append(p.get("pattern_type", "").lower())
 
             for pattern_type in key_patterns:
                 present = any(pattern_type in name for name in pattern_names)
@@ -315,21 +367,25 @@ class PatternFeatureExtractor:
             if patterns:
                 confidences = []
                 for p in patterns:
-                    if hasattr(p, 'confidence'):
+                    if hasattr(p, "confidence"):
                         confidences.append(p.confidence)
                     elif isinstance(p, dict):
-                        conf_str = p.get('confidence', '0')
+                        conf_str = p.get("confidence", "0")
                         if isinstance(conf_str, str):
-                            confidences.append(float(conf_str.rstrip('%')) / 100.0)
+                            confidences.append(float(conf_str.rstrip("%")) / 100.0)
                         else:
                             confidences.append(float(conf_str))
 
                 if confidences:
-                    features.extend([
-                        max(confidences),  # Highest confidence
-                        np.mean(confidences),  # Average confidence
-                        float(len([c for c in confidences if c > 0.7]))  # High-confidence count
-                    ])
+                    features.extend(
+                        [
+                            max(confidences),  # Highest confidence
+                            np.mean(confidences),  # Average confidence
+                            float(
+                                len([c for c in confidences if c > 0.7])
+                            ),  # High-confidence count
+                        ]
+                    )
                 else:
                     features.extend([0.0, 0.0, 0.0])
             else:
@@ -337,35 +393,37 @@ class PatternFeatureExtractor:
 
             # Category features (4 features)
             category_counts = {
-                'bullish_continuation': 0,
-                'bearish_continuation': 0,
-                'bullish_reversal': 0,
-                'bearish_reversal': 0
+                "bullish_continuation": 0,
+                "bearish_continuation": 0,
+                "bullish_reversal": 0,
+                "bearish_reversal": 0,
             }
 
             for p in patterns:
-                category = ''
-                if hasattr(p, 'category'):
+                category = ""
+                if hasattr(p, "category"):
                     category = str(p.category).lower()
                 elif isinstance(p, dict):
-                    category = p.get('category', '').lower()
+                    category = p.get("category", "").lower()
 
-                if 'bullish' in category and 'continuation' in category:
-                    category_counts['bullish_continuation'] += 1
-                elif 'bearish' in category and 'continuation' in category:
-                    category_counts['bearish_continuation'] += 1
-                elif 'bullish' in category and 'reversal' in category:
-                    category_counts['bullish_reversal'] += 1
-                elif 'bearish' in category and 'reversal' in category:
-                    category_counts['bearish_reversal'] += 1
+                if "bullish" in category and "continuation" in category:
+                    category_counts["bullish_continuation"] += 1
+                elif "bearish" in category and "continuation" in category:
+                    category_counts["bearish_continuation"] += 1
+                elif "bullish" in category and "reversal" in category:
+                    category_counts["bullish_reversal"] += 1
+                elif "bearish" in category and "reversal" in category:
+                    category_counts["bearish_reversal"] += 1
 
             total_patterns = len(patterns) if patterns else 1
-            features.extend([
-                category_counts['bullish_continuation'] / total_patterns,
-                category_counts['bearish_continuation'] / total_patterns,
-                category_counts['bullish_reversal'] / total_patterns,
-                category_counts['bearish_reversal'] / total_patterns
-            ])
+            features.extend(
+                [
+                    category_counts["bullish_continuation"] / total_patterns,
+                    category_counts["bearish_continuation"] / total_patterns,
+                    category_counts["bullish_reversal"] / total_patterns,
+                    category_counts["bearish_reversal"] / total_patterns,
+                ]
+            )
 
             # Timing features (2 features)
             if patterns:
@@ -373,26 +431,30 @@ class PatternFeatureExtractor:
                     # Get most recent pattern
                     most_recent = None
                     for p in patterns:
-                        if hasattr(p, 'end_time'):
+                        if hasattr(p, "end_time"):
                             if most_recent is None or p.end_time > most_recent.end_time:
                                 most_recent = p
 
-                    if most_recent and hasattr(most_recent, 'start_time'):
-                        pattern_age = (most_recent.end_time - most_recent.start_time).total_seconds() / 86400
+                    if most_recent and hasattr(most_recent, "start_time"):
+                        pattern_age = (
+                            most_recent.end_time - most_recent.start_time
+                        ).total_seconds() / 86400
 
                         # Average duration
                         durations = []
                         for p in patterns:
-                            if hasattr(p, 'start_time') and hasattr(p, 'end_time'):
+                            if hasattr(p, "start_time") and hasattr(p, "end_time"):
                                 dur = (p.end_time - p.start_time).total_seconds() / 86400
                                 durations.append(dur)
 
                         avg_duration = np.mean(durations) if durations else 7.0
 
-                        features.extend([
-                            min(pattern_age, 30.0) / 30.0,  # Normalize to 0-1
-                            min(avg_duration, 14.0) / 14.0   # Normalize to 0-1
-                        ])
+                        features.extend(
+                            [
+                                min(pattern_age, 30.0) / 30.0,  # Normalize to 0-1
+                                min(avg_duration, 14.0) / 14.0,  # Normalize to 0-1
+                            ]
+                        )
                     else:
                         features.extend([0.0, 0.0])
                 except:
@@ -416,15 +478,26 @@ class PatternFeatureExtractor:
         """
         return [
             # Pattern presence (8)
-            'has_triangle', 'has_flag', 'has_wedge', 'has_rectangle',
-            'has_head_shoulders', 'has_double_top', 'has_double_bottom', 'has_cup_handle',
+            "has_triangle",
+            "has_flag",
+            "has_wedge",
+            "has_rectangle",
+            "has_head_shoulders",
+            "has_double_top",
+            "has_double_bottom",
+            "has_cup_handle",
             # Confidence features (3)
-            'max_confidence', 'avg_confidence', 'high_confidence_count',
+            "max_confidence",
+            "avg_confidence",
+            "high_confidence_count",
             # Category features (4)
-            'bullish_continuation_ratio', 'bearish_continuation_ratio',
-            'bullish_reversal_ratio', 'bearish_reversal_ratio',
+            "bullish_continuation_ratio",
+            "bearish_continuation_ratio",
+            "bullish_reversal_ratio",
+            "bearish_reversal_ratio",
             # Timing features (2)
-            'pattern_age', 'avg_duration'
+            "pattern_age",
+            "avg_duration",
         ]
 
 
@@ -524,15 +597,27 @@ class TimeFeatureExtractor:
         """
         return [
             # Day of week (7)
-            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
             # Hour (1)
-            'hour_normalized',
+            "hour_normalized",
             # Month seasonality (2)
-            'month_sin', 'month_cos',
+            "month_sin",
+            "month_cos",
             # Quarter (4)
-            'q1', 'q2', 'q3', 'q4',
+            "q1",
+            "q2",
+            "q3",
+            "q4",
             # Weekend (1)
-            'is_weekend',
+            "is_weekend",
             # Market sessions (3)
-            'asian_session', 'european_session', 'us_session'
+            "asian_session",
+            "european_session",
+            "us_session",
         ]

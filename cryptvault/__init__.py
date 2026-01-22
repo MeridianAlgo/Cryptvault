@@ -6,28 +6,28 @@ machine learning predictions, and technical indicators.
 """
 
 from cryptvault.__version__ import (
+    __author__,
+    __copyright__,
+    __description__,
+    __license__,
+    __url__,
     __version__,
     __version_info__,
-    __author__,
-    __license__,
-    __copyright__,
-    __url__,
-    __description__
 )
 
-from .data.models import PricePoint, PriceDataFrame
-from .patterns.detector import PatternDetector
-from .visualization.terminal_chart import TerminalChart
 from .core.analyzer import PatternAnalyzer
+from .data.models import PriceDataFrame, PricePoint
+from .patterns.detector import PatternDetector
 
 # Optional dependency utilities
 from .utils.optional_deps import (
-    is_available,
-    require_optional,
+    OptionalDependencyError,
     get_available_features,
+    is_available,
     print_feature_status,
-    OptionalDependencyError
+    require_optional,
 )
+from .visualization.terminal_chart import TerminalChart
 
 __all__ = [
     # Version info

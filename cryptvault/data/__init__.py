@@ -17,7 +17,7 @@ Example:
     >>> data = fetcher.fetch('BTC', days=60)
 """
 
-from .models import PricePoint, PriceDataFrame
+from .models import PriceDataFrame, PricePoint
 
 # Import other components if they exist
 try:
@@ -32,12 +32,12 @@ except ImportError:
 
 __all__ = [
     # Models
-    'PricePoint',
-    'PriceDataFrame',
+    "PricePoint",
+    "PriceDataFrame",
 ]
 
 # Add optional exports if available
 if DataFetcher:
-    __all__.append('DataFetcher')
+    __all__.append("DataFetcher")
 if DataCache:
-    __all__.append('DataCache')
+    __all__.append("DataCache")

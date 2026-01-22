@@ -1,17 +1,18 @@
 """Data handling module for CryptVault."""
 
-from .models import PricePoint, PriceDataFrame
+from .models import PriceDataFrame, PricePoint
+
 # TickerInfo and MarketData are in parent models.py, not models/models.py
 try:
-    from ..models import TickerInfo, MarketData
+    from ..models import MarketData, TickerInfo
 except ImportError:
     # Fallback if not available
     TickerInfo = None
     MarketData = None
 
+from .package_fetcher import PackageDataFetcher
 from .parsers import CSVParser, JSONParser
 from .validator import DataValidator
-from .package_fetcher import PackageDataFetcher
 
 __all__ = [
     "PricePoint",

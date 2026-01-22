@@ -1,6 +1,7 @@
 """Technical indicators calculations."""
 
 from typing import List, Optional
+
 import numpy as np
 
 
@@ -18,7 +19,7 @@ class TechnicalIndicators:
         rsi_values = [None] * period
 
         # Calculate price changes
-        changes = [prices[i] - prices[i-1] for i in range(1, len(prices))]
+        changes = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
 
         # Separate gains and losses
         gains = [max(0, change) for change in changes]
@@ -48,9 +49,9 @@ class TechnicalIndicators:
         """Calculate MACD (Moving Average Convergence Divergence)."""
         if len(prices) < slow:
             return {
-                'macd': [None] * len(prices),
-                'signal': [None] * len(prices),
-                'histogram': [None] * len(prices)
+                "macd": [None] * len(prices),
+                "signal": [None] * len(prices),
+                "histogram": [None] * len(prices),
             }
 
         # Calculate EMAs
@@ -79,11 +80,7 @@ class TechnicalIndicators:
             else:
                 histogram.append(None)
 
-        return {
-            'macd': macd_line,
-            'signal': signal_padded,
-            'histogram': histogram
-        }
+        return {"macd": macd_line, "signal": signal_padded, "histogram": histogram}
 
     def _calculate_ema(self, prices: List[float], period: int) -> List[Optional[float]]:
         """Calculate Exponential Moving Average."""
@@ -114,18 +111,20 @@ class TechnicalIndicators:
         sma_values = [None] * (period - 1)
 
         for i in range(period - 1, len(prices)):
-            sma = sum(prices[i - period + 1:i + 1]) / period
+            sma = sum(prices[i - period + 1 : i + 1]) / period
             sma_values.append(sma)
 
         return sma_values
 
-    def calculate_bollinger_bands(self, prices: List[float], period: int = 20, std_dev: float = 2.0):
+    def calculate_bollinger_bands(
+        self, prices: List[float], period: int = 20, std_dev: float = 2.0
+    ):
         """Calculate Bollinger Bands."""
         if len(prices) < period:
             return {
-                'upper': [None] * len(prices),
-                'middle': [None] * len(prices),
-                'lower': [None] * len(prices)
+                "upper": [None] * len(prices),
+                "middle": [None] * len(prices),
+                "lower": [None] * len(prices),
             }
 
         middle_band = self.calculate_sma(prices, period)
@@ -135,7 +134,7 @@ class TechnicalIndicators:
         for i in range(len(prices)):
             if middle_band[i] is not None:
                 # Calculate standard deviation
-                window = prices[max(0, i - period + 1):i + 1]
+                window = prices[max(0, i - period + 1) : i + 1]
                 std = np.std(window)
 
                 upper_band.append(middle_band[i] + (std_dev * std))
@@ -144,8 +143,4 @@ class TechnicalIndicators:
                 upper_band.append(None)
                 lower_band.append(None)
 
-        return {
-            'upper': upper_band,
-            'middle': middle_band,
-            'lower': lower_band
-        }
+        return {"upper": upper_band, "middle": middle_band, "lower": lower_band}

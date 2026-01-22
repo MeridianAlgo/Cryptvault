@@ -10,4 +10,4 @@ Components:
     - helpers: General helper functions
 """
 
-__all__ = ['logging', 'decorators', 'helpers']
+__all__ = ["logging", "decorators", "helpers"]

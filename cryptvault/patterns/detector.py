@@ -1,6 +1,7 @@
 """Main pattern detector orchestrator - base implementation."""
 
 from typing import List
+
 from ..data.models import PriceDataFrame
 from .types import DetectedPattern
 

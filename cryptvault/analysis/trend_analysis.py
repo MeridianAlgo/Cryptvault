@@ -1,14 +1,16 @@
 """Trend line analysis and peak/trough detection utilities."""
 
-from typing import List, Tuple, Optional, Dict
 import math
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
 from ..data.models import PriceDataFrame
 
 
 @dataclass
 class TrendLine:
     """Represents a trend line with slope and intercept."""
+
     slope: float
     intercept: float
     start_index: int
@@ -27,6 +29,7 @@ class TrendLine:
 @dataclass
 class PeakTrough:
     """Represents a peak or trough point."""
+
     index: int
     value: float
     type: str  # 'peak' or 'trough'
@@ -40,8 +43,9 @@ class TrendAnalysis:
         """Initialize trend analysis utilities."""
         pass
 
-    def fit_trend_line(self, values: List[float], start_index: int = 0,
-                      end_index: Optional[int] = None) -> TrendLine:
+    def fit_trend_line(
+        self, values: List[float], start_index: int = 0, end_index: Optional[int] = None
+    ) -> TrendLine:
         """
         Fit a trend line using linear regression.
 
@@ -61,7 +65,7 @@ class TrendAnalysis:
 
         # Extract data for the specified range
         x_values = list(range(start_index, end_index + 1))
-        y_values = values[start_index:end_index + 1]
+        y_values = values[start_index : end_index + 1]
 
         # Remove None values
         valid_points = [(x, y) for x, y in zip(x_values, y_values) if y is not None]
@@ -107,11 +111,12 @@ class TrendAnalysis:
             intercept=intercept,
             start_index=start_index,
             end_index=end_index,
-            r_squared=max(0, r_squared)  # Ensure non-negative
+            r_squared=max(0, r_squared),  # Ensure non-negative
         )
 
-    def find_peaks_and_troughs(self, values: List[float], min_distance: int = 5,
-                              prominence_threshold: float = 0.01) -> List[PeakTrough]:
+    def find_peaks_and_troughs(
+        self, values: List[float], min_distance: int = 5, prominence_threshold: float = 0.01
+    ) -> List[PeakTrough]:
         """
         Find peaks and troughs with strength calculation.
 
@@ -140,8 +145,8 @@ class TrendAnalysis:
             if values[i] is None:
                 continue
 
-            left_val = values[i-1]
-            right_val = values[i+1]
+            left_val = values[i - 1]
+            right_val = values[i + 1]
 
             if left_val is None or right_val is None:
                 continue
@@ -150,25 +155,27 @@ class TrendAnalysis:
 
             # Check for peak
             if current_val > left_val and current_val > right_val:
-                prominence = self._calculate_prominence(values, i, 'peak')
+                prominence = self._calculate_prominence(values, i, "peak")
                 if prominence >= min_prominence:
                     # Check minimum distance from last peak
-                    last_peak = next((pt for pt in reversed(peaks_troughs)
-                                    if pt.type == 'peak'), None)
+                    last_peak = next(
+                        (pt for pt in reversed(peaks_troughs) if pt.type == "peak"), None
+                    )
                     if not last_peak or i - last_peak.index >= min_distance:
                         strength = min(1.0, prominence / (value_range * 0.1))  # Normalize strength
-                        peaks_troughs.append(PeakTrough(i, current_val, 'peak', strength))
+                        peaks_troughs.append(PeakTrough(i, current_val, "peak", strength))
 
             # Check for trough
             elif current_val < left_val and current_val < right_val:
-                prominence = self._calculate_prominence(values, i, 'trough')
+                prominence = self._calculate_prominence(values, i, "trough")
                 if prominence >= min_prominence:
                     # Check minimum distance from last trough
-                    last_trough = next((pt for pt in reversed(peaks_troughs)
-                                      if pt.type == 'trough'), None)
+                    last_trough = next(
+                        (pt for pt in reversed(peaks_troughs) if pt.type == "trough"), None
+                    )
                     if not last_trough or i - last_trough.index >= min_distance:
                         strength = min(1.0, prominence / (value_range * 0.1))  # Normalize strength
-                        peaks_troughs.append(PeakTrough(i, current_val, 'trough', strength))
+                        peaks_troughs.append(PeakTrough(i, current_val, "trough", strength))
 
         return sorted(peaks_troughs, key=lambda x: x.index)
 
@@ -187,21 +194,22 @@ class TrendAnalysis:
         left_bound = max(0, index - search_range)
         right_bound = min(len(values), index + search_range + 1)
 
-        if peak_type == 'peak':
+        if peak_type == "peak":
             # For peaks, find the lowest point on each side
             left_min = min(v for v in values[left_bound:index] if v is not None)
-            right_min = min(v for v in values[index+1:right_bound] if v is not None)
+            right_min = min(v for v in values[index + 1 : right_bound] if v is not None)
             prominence = current_val - max(left_min, right_min)
         else:  # trough
             # For troughs, find the highest point on each side
             left_max = max(v for v in values[left_bound:index] if v is not None)
-            right_max = max(v for v in values[index+1:right_bound] if v is not None)
+            right_max = max(v for v in values[index + 1 : right_bound] if v is not None)
             prominence = min(left_max, right_max) - current_val
 
         return max(0, prominence)
 
-    def find_support_resistance_levels(self, data: PriceDataFrame,
-                                     lookback_period: int = 50) -> Dict[str, List[float]]:
+    def find_support_resistance_levels(
+        self, data: PriceDataFrame, lookback_period: int = 50
+    ) -> Dict[str, List[float]]:
         """
         Identify support and resistance levels based on peaks and troughs.
 
@@ -217,20 +225,17 @@ class TrendAnalysis:
 
         # Find peaks in highs (resistance levels)
         high_peaks = self.find_peaks_and_troughs(highs, min_distance=10)
-        resistance_candidates = [pt.value for pt in high_peaks if pt.type == 'peak']
+        resistance_candidates = [pt.value for pt in high_peaks if pt.type == "peak"]
 
         # Find troughs in lows (support levels)
         low_troughs = self.find_peaks_and_troughs(lows, min_distance=10)
-        support_candidates = [pt.value for pt in low_troughs if pt.type == 'trough']
+        support_candidates = [pt.value for pt in low_troughs if pt.type == "trough"]
 
         # Cluster similar levels
         support_levels = self._cluster_levels(support_candidates)
         resistance_levels = self._cluster_levels(resistance_candidates)
 
-        return {
-            'support': support_levels,
-            'resistance': resistance_levels
-        }
+        return {"support": support_levels, "resistance": resistance_levels}
 
     def _cluster_levels(self, levels: List[float], tolerance: float = 0.02) -> List[float]:
         """Cluster similar price levels together."""
@@ -269,14 +274,14 @@ class TrendAnalysis:
             'uptrend', 'downtrend', or 'sideways'
         """
         if len(values) < period:
-            return 'sideways'
+            return "sideways"
 
         # Use the last 'period' values
         recent_values = values[-period:]
         valid_values = [v for v in recent_values if v is not None]
 
         if len(valid_values) < period // 2:
-            return 'sideways'
+            return "sideways"
 
         # Fit trend line to recent data
         try:
@@ -285,21 +290,21 @@ class TrendAnalysis:
 
             # Determine trend based on slope and R-squared
             if trend_line.r_squared < 0.3:  # Low correlation
-                return 'sideways'
+                return "sideways"
 
             # Calculate slope as percentage of average value
             avg_value = sum(valid_values) / len(valid_values)
             slope_percent = (trend_line.slope * period) / avg_value
 
             if slope_percent > 0.05:  # 5% increase over period
-                return 'uptrend'
+                return "uptrend"
             elif slope_percent < -0.05:  # 5% decrease over period
-                return 'downtrend'
+                return "downtrend"
             else:
-                return 'sideways'
+                return "sideways"
 
         except ValueError:
-            return 'sideways'
+            return "sideways"
 
     def find_trend_channels(self, data: PriceDataFrame, min_touches: int = 3) -> List[Dict]:
         """
@@ -316,8 +321,8 @@ class TrendAnalysis:
         lows = data.get_lows()
 
         # Find peaks and troughs
-        high_peaks = [pt for pt in self.find_peaks_and_troughs(highs) if pt.type == 'peak']
-        low_troughs = [pt for pt in self.find_peaks_and_troughs(lows) if pt.type == 'trough']
+        high_peaks = [pt for pt in self.find_peaks_and_troughs(highs) if pt.type == "peak"]
+        low_troughs = [pt for pt in self.find_peaks_and_troughs(lows) if pt.type == "trough"]
 
         channels = []
 
@@ -346,9 +351,13 @@ class TrendAnalysis:
                                 continue
 
                             # Check if trough line is roughly parallel
-                            trough_slope = (trough2.value - trough1.value) / (trough2.index - trough1.index)
+                            trough_slope = (trough2.value - trough1.value) / (
+                                trough2.index - trough1.index
+                            )
 
-                            if abs(slope - trough_slope) / abs(slope + 1e-10) < 0.3:  # Within 30% slope difference
+                            if (
+                                abs(slope - trough_slope) / abs(slope + 1e-10) < 0.3
+                            ):  # Within 30% slope difference
                                 # Count touches for this channel
                                 touches = self._count_channel_touches(
                                     highs, lows, peak1, peak2, trough1, trough2
@@ -359,29 +368,39 @@ class TrendAnalysis:
                                     best_trough_line = (trough1, trough2)
 
                     if best_trough_line and max_touches >= min_touches:
-                        channels.append({
-                            'upper_line': {
-                                'start': (peak1.index, peak1.value),
-                                'end': (peak2.index, peak2.value),
-                                'slope': slope
-                            },
-                            'lower_line': {
-                                'start': (best_trough_line[0].index, best_trough_line[0].value),
-                                'end': (best_trough_line[1].index, best_trough_line[1].value),
-                                'slope': (best_trough_line[1].value - best_trough_line[0].value) /
-                                        (best_trough_line[1].index - best_trough_line[0].index)
-                            },
-                            'touches': max_touches,
-                            'width': abs(peak1.value - best_trough_line[0].value)  # Approximate channel width
-                        })
+                        channels.append(
+                            {
+                                "upper_line": {
+                                    "start": (peak1.index, peak1.value),
+                                    "end": (peak2.index, peak2.value),
+                                    "slope": slope,
+                                },
+                                "lower_line": {
+                                    "start": (best_trough_line[0].index, best_trough_line[0].value),
+                                    "end": (best_trough_line[1].index, best_trough_line[1].value),
+                                    "slope": (best_trough_line[1].value - best_trough_line[0].value)
+                                    / (best_trough_line[1].index - best_trough_line[0].index),
+                                },
+                                "touches": max_touches,
+                                "width": abs(
+                                    peak1.value - best_trough_line[0].value
+                                ),  # Approximate channel width
+                            }
+                        )
 
         # Sort channels by number of touches (best first)
-        return sorted(channels, key=lambda x: x['touches'], reverse=True)
+        return sorted(channels, key=lambda x: x["touches"], reverse=True)
 
-    def _count_channel_touches(self, highs: List[float], lows: List[float],
-                              peak1: PeakTrough, peak2: PeakTrough,
-                              trough1: PeakTrough, trough2: PeakTrough,
-                              tolerance: float = 0.02) -> int:
+    def _count_channel_touches(
+        self,
+        highs: List[float],
+        lows: List[float],
+        peak1: PeakTrough,
+        peak2: PeakTrough,
+        trough1: PeakTrough,
+        trough2: PeakTrough,
+        tolerance: float = 0.02,
+    ) -> int:
         """Count how many points touch the channel lines."""
         touches = 4  # Start with the 4 defining points
 

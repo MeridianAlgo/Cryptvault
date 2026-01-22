@@ -18,15 +18,17 @@ Training Requirements:
 - Targets should be returns (not absolute prices) for better generalization
 """
 
-import numpy as np
-from typing import List, Optional, Dict, Any, Tuple
 import logging
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 try:
     import torch
     import torch.nn as nn
     import torch.optim as optim
+
     PYTORCH_AVAILABLE = True
 except ImportError:
     PYTORCH_AVAILABLE = False
@@ -99,7 +101,9 @@ class LinearPredictor:
             self.feature_count = features.shape[1]
             self.is_trained = True
 
-            self.logger.info(f"Linear model trained with {features.shape[1]} features on {features.shape[0]} samples")
+            self.logger.info(
+                f"Linear model trained with {features.shape[1]} features on {features.shape[0]} samples"
+            )
             return True
 
         except Exception as e:
@@ -296,7 +300,7 @@ class LSTMPredictor:
         try:
             # Prepare input sequence
             if len(features) >= self.sequence_length:
-                X = features[-self.sequence_length:].reshape(1, self.sequence_length, -1)
+                X = features[-self.sequence_length :].reshape(1, self.sequence_length, -1)
             else:
                 # Pad if needed
                 pad_size = self.sequence_length - len(features)
@@ -351,11 +355,13 @@ class LSTMPredictor:
 
     def _create_lstm_model(self, input_size: int):
         """Create LSTM model architecture."""
+
         class LSTMNet(nn.Module):
             def __init__(self, input_size, hidden_size, num_layers=2):
                 super(LSTMNet, self).__init__()
-                self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
-                                   batch_first=True, dropout=0.2)
+                self.lstm = nn.LSTM(
+                    input_size, hidden_size, num_layers, batch_first=True, dropout=0.2
+                )
                 self.fc = nn.Linear(hidden_size, 1)
 
             def forward(self, x):
@@ -364,12 +370,14 @@ class LSTMPredictor:
 
         return LSTMNet(input_size, self.hidden_units)
 
-    def _prepare_sequences(self, features: np.ndarray, targets: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _prepare_sequences(
+        self, features: np.ndarray, targets: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Prepare sequences for LSTM training."""
         X, y = [], []
 
         for i in range(self.sequence_length, len(features)):
-            X.append(features[i-self.sequence_length:i])
+            X.append(features[i - self.sequence_length : i])
             y.append(targets[i])
 
         return np.array(X), np.array(y)
@@ -405,20 +413,17 @@ class EnsembleModel:
 
         # Initialize component models - LSTM now enabled with proper dimensions
         self.models = {
-            'linear': LinearPredictor(),
-            'lstm': LSTMPredictor(sequence_length=60, hidden_units=128)
+            "linear": LinearPredictor(),
+            "lstm": LSTMPredictor(sequence_length=60, hidden_units=128),
         }
 
         # Initial weights (will be adjusted dynamically based on performance)
-        self.weights = {
-            'linear': 0.4,
-            'lstm': 0.6
-        }
+        self.weights = {"linear": 0.4, "lstm": 0.6}
 
         # Performance tracking for adaptive weighting
         self.model_performance = {
-            'linear': {'correct': 0, 'total': 0, 'accuracy': 0.5},
-            'lstm': {'correct': 0, 'total': 0, 'accuracy': 0.5}
+            "linear": {"correct": 0, "total": 0, "accuracy": 0.5},
+            "lstm": {"correct": 0, "total": 0, "accuracy": 0.5},
         }
 
         self.is_trained = False
@@ -435,39 +440,45 @@ class EnsembleModel:
             True if at least one model trained successfully
         """
         try:
-            self.logger.info(f"Training ensemble model with {features.shape[0]} samples, {features.shape[1]} features")
+            self.logger.info(
+                f"Training ensemble model with {features.shape[0]} samples, {features.shape[1]} features"
+            )
 
             training_results = {}
 
             # Train linear model
             self.logger.info("Training linear model...")
-            linear_success = self.models['linear'].train(features, targets)
-            training_results['linear'] = linear_success
+            linear_success = self.models["linear"].train(features, targets)
+            training_results["linear"] = linear_success
 
             # Train LSTM model
             self.logger.info("Training LSTM model...")
-            lstm_success = self.models['lstm'].train(features, targets)
-            training_results['lstm'] = lstm_success
+            lstm_success = self.models["lstm"].train(features, targets)
+            training_results["lstm"] = lstm_success
 
             # Dynamically adjust weights based on training success and validation
             if linear_success and lstm_success:
                 # Both models trained - use validation to adjust weights
                 self._adjust_weights_by_validation(features, targets)
             elif not lstm_success:
-                self.weights['linear'] = 1.0
-                self.weights['lstm'] = 0.0
+                self.weights["linear"] = 1.0
+                self.weights["lstm"] = 0.0
                 self.logger.info("LSTM training failed, using linear model only")
             elif not linear_success:
-                self.weights['linear'] = 0.0
-                self.weights['lstm'] = 1.0
+                self.weights["linear"] = 0.0
+                self.weights["lstm"] = 1.0
                 self.logger.info("Linear training failed, using LSTM model only")
 
             # Mark as trained if at least one model succeeded
             self.is_trained = any(training_results.values())
 
             if self.is_trained:
-                self.logger.info(f"Ensemble training completed. Active models: {sum(training_results.values())}")
-                self.logger.info(f"Adaptive weights: Linear={self.weights['linear']:.2f}, LSTM={self.weights['lstm']:.2f}")
+                self.logger.info(
+                    f"Ensemble training completed. Active models: {sum(training_results.values())}"
+                )
+                self.logger.info(
+                    f"Adaptive weights: Linear={self.weights['linear']:.2f}, LSTM={self.weights['lstm']:.2f}"
+                )
             else:
                 self.logger.error("All models failed to train")
 
@@ -480,7 +491,7 @@ class EnsembleModel:
     def _adjust_weights_by_validation(self, features: np.ndarray, targets: np.ndarray) -> None:
         """
         Adjust model weights based on validation performance.
-        
+
         Args:
             features: Feature matrix
             targets: Target values
@@ -493,8 +504,8 @@ class EnsembleModel:
                 val_targets = targets[split_idx:]
 
                 # Get predictions from each model
-                linear_preds = self.models['linear'].predict(val_features)
-                lstm_preds = self.models['lstm'].predict(val_features)
+                linear_preds = self.models["linear"].predict(val_features)
+                lstm_preds = self.models["lstm"].predict(val_features)
 
                 # Calculate directional accuracy (more important than MSE for trading)
                 linear_correct = np.sum((linear_preds > 0) == (val_targets > 0))
@@ -504,61 +515,65 @@ class EnsembleModel:
                 lstm_accuracy = lstm_correct / len(val_targets)
 
                 # Update performance tracking
-                self.model_performance['linear']['accuracy'] = linear_accuracy
-                self.model_performance['lstm']['accuracy'] = lstm_accuracy
+                self.model_performance["linear"]["accuracy"] = linear_accuracy
+                self.model_performance["lstm"]["accuracy"] = lstm_accuracy
 
                 # Adjust weights based on relative performance
                 total_accuracy = linear_accuracy + lstm_accuracy
                 if total_accuracy > 0:
-                    self.weights['linear'] = linear_accuracy / total_accuracy
-                    self.weights['lstm'] = lstm_accuracy / total_accuracy
+                    self.weights["linear"] = linear_accuracy / total_accuracy
+                    self.weights["lstm"] = lstm_accuracy / total_accuracy
 
-                    self.logger.info(f"Validation accuracy - Linear: {linear_accuracy:.2%}, LSTM: {lstm_accuracy:.2%}")
+                    self.logger.info(
+                        f"Validation accuracy - Linear: {linear_accuracy:.2%}, LSTM: {lstm_accuracy:.2%}"
+                    )
                 else:
                     # Fallback to default weights
-                    self.weights['linear'] = 0.4
-                    self.weights['lstm'] = 0.6
+                    self.weights["linear"] = 0.4
+                    self.weights["lstm"] = 0.6
 
         except Exception as e:
             self.logger.warning(f"Weight adjustment failed, using default weights: {e}")
-            self.weights['linear'] = 0.4
-            self.weights['lstm'] = 0.6
+            self.weights["linear"] = 0.4
+            self.weights["lstm"] = 0.6
 
     def update_performance(self, model_name: str, prediction_correct: bool) -> None:
         """
         Update model performance tracking for online learning.
-        
+
         Args:
             model_name: Name of the model ('linear' or 'lstm')
             prediction_correct: Whether the prediction was correct
         """
         if model_name in self.model_performance:
             perf = self.model_performance[model_name]
-            perf['total'] += 1
+            perf["total"] += 1
             if prediction_correct:
-                perf['correct'] += 1
-            
+                perf["correct"] += 1
+
             # Update accuracy with exponential moving average
             alpha = 0.1  # Learning rate
-            new_accuracy = perf['correct'] / perf['total']
-            perf['accuracy'] = alpha * new_accuracy + (1 - alpha) * perf['accuracy']
+            new_accuracy = perf["correct"] / perf["total"]
+            perf["accuracy"] = alpha * new_accuracy + (1 - alpha) * perf["accuracy"]
 
             # Rebalance weights every 10 predictions
-            if perf['total'] % 10 == 0:
+            if perf["total"] % 10 == 0:
                 self._rebalance_weights()
 
     def _rebalance_weights(self) -> None:
         """Rebalance ensemble weights based on recent performance."""
         try:
-            linear_acc = self.model_performance['linear']['accuracy']
-            lstm_acc = self.model_performance['lstm']['accuracy']
+            linear_acc = self.model_performance["linear"]["accuracy"]
+            lstm_acc = self.model_performance["lstm"]["accuracy"]
 
             total_acc = linear_acc + lstm_acc
             if total_acc > 0:
-                self.weights['linear'] = linear_acc / total_acc
-                self.weights['lstm'] = lstm_acc / total_acc
+                self.weights["linear"] = linear_acc / total_acc
+                self.weights["lstm"] = lstm_acc / total_acc
 
-                self.logger.debug(f"Rebalanced weights - Linear: {self.weights['linear']:.2f}, LSTM: {self.weights['lstm']:.2f}")
+                self.logger.debug(
+                    f"Rebalanced weights - Linear: {self.weights['linear']:.2f}, LSTM: {self.weights['lstm']:.2f}"
+                )
 
         except Exception as e:
             self.logger.warning(f"Weight rebalancing failed: {e}")
@@ -581,17 +596,17 @@ class EnsembleModel:
             predictions = {}
 
             # Get predictions from each model
-            if self.weights['linear'] > 0:
+            if self.weights["linear"] > 0:
                 try:
-                    linear_pred = self.models['linear'].predict(features)
-                    predictions['linear'] = linear_pred
+                    linear_pred = self.models["linear"].predict(features)
+                    predictions["linear"] = linear_pred
                 except Exception as e:
                     self.logger.warning(f"Linear prediction failed: {e}")
 
-            if self.weights['lstm'] > 0:
+            if self.weights["lstm"] > 0:
                 try:
-                    lstm_pred = self.models['lstm'].predict(features)
-                    predictions['lstm'] = lstm_pred
+                    lstm_pred = self.models["lstm"].predict(features)
+                    predictions["lstm"] = lstm_pred
                 except Exception as e:
                     self.logger.warning(f"LSTM prediction failed: {e}")
 
@@ -625,17 +640,17 @@ class EnsembleModel:
             sequence_predictions = {}
 
             # Get sequence predictions from each model
-            if self.weights['linear'] > 0:
+            if self.weights["linear"] > 0:
                 try:
-                    linear_seq = self.models['linear'].predict_sequence(features, steps)
-                    sequence_predictions['linear'] = linear_seq
+                    linear_seq = self.models["linear"].predict_sequence(features, steps)
+                    sequence_predictions["linear"] = linear_seq
                 except Exception as e:
                     self.logger.warning(f"Linear sequence prediction failed: {e}")
 
-            if self.weights['lstm'] > 0:
+            if self.weights["lstm"] > 0:
                 try:
-                    lstm_seq = self.models['lstm'].predict_sequence(features, steps)
-                    sequence_predictions['lstm'] = lstm_seq
+                    lstm_seq = self.models["lstm"].predict_sequence(features, steps)
+                    sequence_predictions["lstm"] = lstm_seq
                 except Exception as e:
                     self.logger.warning(f"LSTM sequence prediction failed: {e}")
 
@@ -651,7 +666,9 @@ class EnsembleModel:
             self.logger.error(f"Ensemble sequence prediction failed: {e}")
             return [0.001] * steps
 
-    def _combine_predictions(self, predictions: Dict[str, np.ndarray], target_length: int) -> np.ndarray:
+    def _combine_predictions(
+        self, predictions: Dict[str, np.ndarray], target_length: int
+    ) -> np.ndarray:
         """Combine predictions from multiple models using weighted average."""
         if not predictions:
             return np.zeros(target_length)
@@ -661,10 +678,10 @@ class EnsembleModel:
         total_weight = sum(active_weights.values())
 
         if total_weight == 0:
-            active_weights = {k: 1.0/len(predictions) for k in predictions.keys()}
+            active_weights = {k: 1.0 / len(predictions) for k in predictions.keys()}
             total_weight = 1.0
 
-        normalized_weights = {k: v/total_weight for k, v in active_weights.items()}
+        normalized_weights = {k: v / total_weight for k, v in active_weights.items()}
 
         # Initialize ensemble prediction
         ensemble_pred = np.zeros(target_length)
@@ -684,7 +701,9 @@ class EnsembleModel:
 
         return ensemble_pred
 
-    def _combine_sequence_predictions(self, predictions: Dict[str, List[float]], steps: int) -> List[float]:
+    def _combine_sequence_predictions(
+        self, predictions: Dict[str, List[float]], steps: int
+    ) -> List[float]:
         """Combine sequence predictions from multiple models."""
         if not predictions:
             return [0.0] * steps
@@ -694,10 +713,10 @@ class EnsembleModel:
         total_weight = sum(active_weights.values())
 
         if total_weight == 0:
-            active_weights = {k: 1.0/len(predictions) for k in predictions.keys()}
+            active_weights = {k: 1.0 / len(predictions) for k in predictions.keys()}
             total_weight = 1.0
 
-        normalized_weights = {k: v/total_weight for k, v in active_weights.items()}
+        normalized_weights = {k: v / total_weight for k, v in active_weights.items()}
 
         # Combine step by step
         ensemble_sequence = []
@@ -722,9 +741,9 @@ class EnsembleModel:
             Dictionary with model information
         """
         return {
-            'is_trained': self.is_trained,
-            'active_models': [name for name, weight in self.weights.items() if weight > 0],
-            'model_weights': self.weights,
-            'total_models': len(self.models),
-            'trained_models': sum(1 for model in self.models.values() if model.is_trained)
+            "is_trained": self.is_trained,
+            "active_models": [name for name, weight in self.weights.items() if weight > 0],
+            "model_weights": self.weights,
+            "total_models": len(self.models),
+            "trained_models": sum(1 for model in self.models.values() if model.is_trained),
         }

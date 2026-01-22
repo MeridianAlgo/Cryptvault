@@ -5,9 +5,10 @@ Abstract base class for all pattern detectors with common utilities.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict, List
+
 import numpy as np
 
 from ..data.models import PriceDataFrame
@@ -16,6 +17,7 @@ from ..data.models import PriceDataFrame
 @dataclass
 class DetectedPattern:
     """Detected pattern result."""
+
     pattern_type: str
     category: str
     confidence: float
@@ -40,11 +42,7 @@ class BasePatternDetector(ABC):
         self.max_pattern_length = 100
 
     @abstractmethod
-    def detect(
-        self,
-        data: PriceDataFrame,
-        sensitivity: float = 0.5
-    ) -> List[DetectedPattern]:
+    def detect(self, data: PriceDataFrame, sensitivity: float = 0.5) -> List[DetectedPattern]:
         """Detect patterns in price data."""
         pass
 
@@ -53,11 +51,7 @@ class BasePatternDetector(ABC):
         """Get list of pattern types this detector can find."""
         pass
 
-    def _calculate_confidence(
-        self,
-        factors: List[float],
-        weights: List[float] = None
-    ) -> float:
+    def _calculate_confidence(self, factors: List[float], weights: List[float] = None) -> float:
         """Calculate weighted confidence score."""
         if weights is None:
             weights = [1.0] * len(factors)
@@ -70,10 +64,7 @@ class BasePatternDetector(ABC):
 
         return max(0.0, min(1.0, weighted_sum / weight_sum))
 
-    def _filter_overlapping(
-        self,
-        patterns: List[DetectedPattern]
-    ) -> List[DetectedPattern]:
+    def _filter_overlapping(self, patterns: List[DetectedPattern]) -> List[DetectedPattern]:
         """Filter overlapping patterns, keeping highest confidence."""
         if not patterns:
             return patterns

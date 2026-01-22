@@ -18,76 +18,75 @@ Example:
 
 import importlib
 import sys
-from typing import Any, Dict, Optional, List
-
+from typing import Any, Dict, List, Optional
 
 # Mapping of optional dependencies to their features and installation instructions
 OPTIONAL_DEPENDENCIES: Dict[str, Dict[str, Any]] = {
-    'torch': {
-        'feature': 'LSTM neural network predictions',
-        'install': 'pip install cryptvault[ml]',
-        'alternative': 'Use scikit-learn models (included in base installation)',
-        'package_name': 'torch',
+    "torch": {
+        "feature": "LSTM neural network predictions",
+        "install": "pip install cryptvault[ml]",
+        "alternative": "Use scikit-learn models (included in base installation)",
+        "package_name": "torch",
     },
-    'tensorflow': {
-        'feature': 'TensorFlow-based LSTM predictions',
-        'install': 'pip install tensorflow>=2.8.0',
-        'alternative': 'Use PyTorch or scikit-learn models',
-        'package_name': 'tensorflow',
+    "tensorflow": {
+        "feature": "TensorFlow-based LSTM predictions",
+        "install": "pip install tensorflow>=2.8.0",
+        "alternative": "Use PyTorch or scikit-learn models",
+        "package_name": "tensorflow",
     },
-    'plotly': {
-        'feature': 'Interactive web-based charts',
-        'install': 'pip install cryptvault[viz]',
-        'alternative': 'Use matplotlib charts (included in base installation)',
-        'package_name': 'plotly',
+    "plotly": {
+        "feature": "Interactive web-based charts",
+        "install": "pip install cryptvault[viz]",
+        "alternative": "Use matplotlib charts (included in base installation)",
+        "package_name": "plotly",
     },
-    'dash': {
-        'feature': 'Interactive web dashboards',
-        'install': 'pip install cryptvault[viz]',
-        'alternative': 'Use command-line interface or matplotlib charts',
-        'package_name': 'dash',
+    "dash": {
+        "feature": "Interactive web dashboards",
+        "install": "pip install cryptvault[viz]",
+        "alternative": "Use command-line interface or matplotlib charts",
+        "package_name": "dash",
     },
-    'websockets': {
-        'feature': 'Real-time data streaming',
-        'install': 'pip install cryptvault[streaming]',
-        'alternative': 'Use polling with yfinance/ccxt (included in base)',
-        'package_name': 'websockets',
+    "websockets": {
+        "feature": "Real-time data streaming",
+        "install": "pip install cryptvault[streaming]",
+        "alternative": "Use polling with yfinance/ccxt (included in base)",
+        "package_name": "websockets",
     },
-    'numba': {
-        'feature': 'Accelerated numerical computations',
-        'install': 'pip install cryptvault[fast]',
-        'alternative': 'Use standard NumPy operations (slightly slower)',
-        'package_name': 'numba',
+    "numba": {
+        "feature": "Accelerated numerical computations",
+        "install": "pip install cryptvault[fast]",
+        "alternative": "Use standard NumPy operations (slightly slower)",
+        "package_name": "numba",
     },
-    'sqlalchemy': {
-        'feature': 'Database persistence for analysis results',
-        'install': 'pip install cryptvault[db]',
-        'alternative': 'Use in-memory cache (included in base)',
-        'package_name': 'sqlalchemy',
+    "sqlalchemy": {
+        "feature": "Database persistence for analysis results",
+        "install": "pip install cryptvault[db]",
+        "alternative": "Use in-memory cache (included in base)",
+        "package_name": "sqlalchemy",
     },
-    'redis': {
-        'feature': 'High-performance caching with Redis',
-        'install': 'pip install cryptvault[db]',
-        'alternative': 'Use in-memory cache (included in base)',
-        'package_name': 'redis',
+    "redis": {
+        "feature": "High-performance caching with Redis",
+        "install": "pip install cryptvault[db]",
+        "alternative": "Use in-memory cache (included in base)",
+        "package_name": "redis",
     },
-    'openpyxl': {
-        'feature': 'Excel export functionality',
-        'install': 'pip install cryptvault[export]',
-        'alternative': 'Use JSON or CSV export (built-in)',
-        'package_name': 'openpyxl',
+    "openpyxl": {
+        "feature": "Excel export functionality",
+        "install": "pip install cryptvault[export]",
+        "alternative": "Use JSON or CSV export (built-in)",
+        "package_name": "openpyxl",
     },
-    'jinja2': {
-        'feature': 'HTML report generation',
-        'install': 'pip install cryptvault[export]',
-        'alternative': 'Use console output or JSON export',
-        'package_name': 'jinja2',
+    "jinja2": {
+        "feature": "HTML report generation",
+        "install": "pip install cryptvault[export]",
+        "alternative": "Use console output or JSON export",
+        "package_name": "jinja2",
     },
-    'requests': {
-        'feature': 'Webhook notifications',
-        'install': 'pip install cryptvault[notify]',
-        'alternative': 'Use console output',
-        'package_name': 'requests',
+    "requests": {
+        "feature": "Webhook notifications",
+        "install": "pip install cryptvault[notify]",
+        "alternative": "Use console output",
+        "package_name": "requests",
     },
 }
 
@@ -103,11 +102,7 @@ class OptionalDependencyError(ImportError):
     """
 
     def __init__(
-        self,
-        package: str,
-        feature: str,
-        install_cmd: str,
-        alternative: Optional[str] = None
+        self, package: str, feature: str, install_cmd: str, alternative: Optional[str] = None
     ):
         """
         Initialize OptionalDependencyError.
@@ -166,7 +161,7 @@ def require_optional(
     package: str,
     feature: Optional[str] = None,
     install_cmd: Optional[str] = None,
-    alternative: Optional[str] = None
+    alternative: Optional[str] = None,
 ) -> Any:
     """
     Import an optional package or raise a helpful error.
@@ -194,10 +189,10 @@ def require_optional(
     # Get package info from registry if available
     if package in OPTIONAL_DEPENDENCIES:
         info = OPTIONAL_DEPENDENCIES[package]
-        feature = feature or info['feature']
-        install_cmd = install_cmd or info['install']
-        alternative = alternative or info.get('alternative')
-        package_name = info['package_name']
+        feature = feature or info["feature"]
+        install_cmd = install_cmd or info["install"]
+        alternative = alternative or info.get("alternative")
+        package_name = info["package_name"]
     else:
         package_name = package
         feature = feature or f"Feature requiring {package}"
@@ -207,10 +202,7 @@ def require_optional(
         return importlib.import_module(package_name)
     except ImportError as e:
         raise OptionalDependencyError(
-            package=package,
-            feature=feature,
-            install_cmd=install_cmd,
-            alternative=alternative
+            package=package, feature=feature, install_cmd=install_cmd, alternative=alternative
         ) from e
 
 
@@ -229,8 +221,8 @@ def get_available_features() -> Dict[str, bool]:
     """
     features = {}
     for package, info in OPTIONAL_DEPENDENCIES.items():
-        feature_name = info['feature']
-        features[feature_name] = is_available(info['package_name'])
+        feature_name = info["feature"]
+        features[feature_name] = is_available(info["package_name"])
     return features
 
 
@@ -286,13 +278,13 @@ def get_missing_dependencies(feature_group: str) -> List[str]:
         ...     print(f"Missing packages: {', '.join(missing)}")
     """
     feature_groups = {
-        'ml': ['torch'],
-        'viz': ['plotly', 'dash'],
-        'streaming': ['websockets'],
-        'fast': ['numba'],
-        'db': ['sqlalchemy', 'redis'],
-        'export': ['openpyxl', 'jinja2'],
-        'notify': ['requests'],
+        "ml": ["torch"],
+        "viz": ["plotly", "dash"],
+        "streaming": ["websockets"],
+        "fast": ["numba"],
+        "db": ["sqlalchemy", "redis"],
+        "export": ["openpyxl", "jinja2"],
+        "notify": ["requests"],
     }
 
     packages = feature_groups.get(feature_group, [])
@@ -354,6 +346,6 @@ def check_feature_requirements(feature: str) -> bool:
         ...     print("Install torch for LSTM predictions")
     """
     for package, info in OPTIONAL_DEPENDENCIES.items():
-        if info['feature'] == feature:
-            return is_available(info['package_name'])
+        if info["feature"] == feature:
+            return is_available(info["package_name"])
     return False

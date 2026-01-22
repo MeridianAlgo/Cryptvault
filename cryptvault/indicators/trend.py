@@ -19,17 +19,15 @@ Example:
     >>> ema = calculate_ema(prices, period=3)
 """
 
-import numpy as np
-from typing import List, Optional, Union
 import logging
+from typing import List, Optional, Union
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_sma(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_sma(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Simple Moving Average.
 
@@ -59,19 +57,16 @@ def calculate_sma(
 
     # Use convolution for efficient calculation
     weights = np.ones(period) / period
-    sma = np.convolve(prices, weights, mode='valid')
+    sma = np.convolve(prices, weights, mode="valid")
 
     # Pad with NaN for initial values
     result = np.full(len(prices), np.nan)
-    result[period-1:] = sma
+    result[period - 1 :] = sma
 
     return result
 
 
-def calculate_ema(
-    prices: Union[List[float], np.ndarray],
-    period: int = 12
-) -> np.ndarray:
+def calculate_ema(prices: Union[List[float], np.ndarray], period: int = 12) -> np.ndarray:
     """
     Calculate Exponential Moving Average.
 
@@ -103,19 +98,16 @@ def calculate_ema(
 
     # Initialize with SMA
     ema = np.full(len(prices), np.nan)
-    ema[period-1] = np.mean(prices[:period])
+    ema[period - 1] = np.mean(prices[:period])
 
     # Calculate EMA iteratively
     for i in range(period, len(prices)):
-        ema[i] = (prices[i] - ema[i-1]) * multiplier + ema[i-1]
+        ema[i] = (prices[i] - ema[i - 1]) * multiplier + ema[i - 1]
 
     return ema
 
 
-def calculate_wma(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_wma(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Weighted Moving Average.
 
@@ -144,16 +136,13 @@ def calculate_wma(
     wma = np.full(len(prices), np.nan)
 
     for i in range(period - 1, len(prices)):
-        window = prices[i - period + 1:i + 1]
+        window = prices[i - period + 1 : i + 1]
         wma[i] = np.dot(window, weights) / weight_sum
 
     return wma
 
 
-def calculate_dema(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_dema(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Double Exponential Moving Average.
 
@@ -178,15 +167,14 @@ def calculate_dema(
     valid_start = period * 2 - 2
 
     if len(ema2) > 0 and valid_start < len(prices):
-        dema[valid_start:valid_start + len(ema2)] = 2 * ema1[valid_start:valid_start + len(ema2)] - ema2
+        dema[valid_start : valid_start + len(ema2)] = (
+            2 * ema1[valid_start : valid_start + len(ema2)] - ema2
+        )
 
     return dema
 
 
-def calculate_tema(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_tema(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Triple Exponential Moving Average.
 
@@ -212,19 +200,16 @@ def calculate_tema(
     valid_start = period * 3 - 3
 
     if len(ema3) > 0 and valid_start < len(prices):
-        tema[valid_start:valid_start + len(ema3)] = (
-            3 * ema1[valid_start:valid_start + len(ema3)] -
-            3 * ema2[valid_start:valid_start + len(ema3)] +
-            ema3
+        tema[valid_start : valid_start + len(ema3)] = (
+            3 * ema1[valid_start : valid_start + len(ema3)]
+            - 3 * ema2[valid_start : valid_start + len(ema3)]
+            + ema3
         )
 
     return tema
 
 
-def calculate_smma(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_smma(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Smoothed Moving Average (also known as SMMA or RMA).
 
@@ -247,18 +232,15 @@ def calculate_smma(
         return np.full(len(prices), np.nan)
 
     smma = np.full(len(prices), np.nan)
-    smma[period-1] = np.mean(prices[:period])
+    smma[period - 1] = np.mean(prices[:period])
 
     for i in range(period, len(prices)):
-        smma[i] = (smma[i-1] * (period - 1) + prices[i]) / period
+        smma[i] = (smma[i - 1] * (period - 1) + prices[i]) / period
 
     return smma
 
 
-def calculate_hma(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_hma(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Hull Moving Average.
 
@@ -291,7 +273,7 @@ def calculate_hma(
     result = np.full(len(prices), np.nan)
     valid_start = period + sqrt_period - 2
     if valid_start < len(prices):
-        result[valid_start:valid_start + len(hma)] = hma
+        result[valid_start : valid_start + len(hma)] = hma
 
     return result
 
@@ -299,7 +281,7 @@ def calculate_hma(
 def calculate_vwma(
     prices: Union[List[float], np.ndarray],
     volumes: Union[List[float], np.ndarray],
-    period: int = 20
+    period: int = 20,
 ) -> np.ndarray:
     """
     Calculate Volume Weighted Moving Average.
@@ -330,8 +312,8 @@ def calculate_vwma(
     vwma = np.full(len(prices), np.nan)
 
     for i in range(period - 1, len(prices)):
-        price_window = prices[i - period + 1:i + 1]
-        volume_window = volumes[i - period + 1:i + 1]
+        price_window = prices[i - period + 1 : i + 1]
+        volume_window = volumes[i - period + 1 : i + 1]
 
         if volume_window.sum() > 0:
             vwma[i] = np.dot(price_window, volume_window) / volume_window.sum()
@@ -339,10 +321,7 @@ def calculate_vwma(
     return vwma
 
 
-def calculate_zlema(
-    prices: Union[List[float], np.ndarray],
-    period: int = 20
-) -> np.ndarray:
+def calculate_zlema(prices: Union[List[float], np.ndarray], period: int = 20) -> np.ndarray:
     """
     Calculate Zero Lag Exponential Moving Average.
 
@@ -375,6 +354,6 @@ def calculate_zlema(
 
     # Align result
     result = np.full(len(prices), np.nan)
-    result[lag + period - 1:lag + period - 1 + len(zlema)] = zlema
+    result[lag + period - 1 : lag + period - 1 + len(zlema)] = zlema
 
     return result

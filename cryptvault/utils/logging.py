@@ -19,17 +19,16 @@ Example:
     >>> logger.info("Starting analysis", extra={'symbol': 'BTC', 'days': 60})
 """
 
+import json
 import logging
 import logging.handlers
-import sys
 import os
-import json
+import sys
 import traceback
-from pathlib import Path
-from typing import Optional, Dict, Any
-from datetime import datetime
 from contextlib import contextmanager
-
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 # Global logger registry
 _loggers: Dict[str, logging.Logger] = {}
@@ -65,27 +64,45 @@ class StructuredFormatter(logging.Formatter):
             JSON-formatted log string
         """
         log_data = {
-            'timestamp': datetime.utcfromtimestamp(record.created).isoformat() + 'Z',
-            'level': record.levelname,
-            'logger': record.name,
-            'message': record.getMessage(),
+            "timestamp": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
         }
 
         # Add exception info if present
         if record.exc_info:
-            log_data['exception'] = {
-                'type': record.exc_info[0].__name__,
-                'message': str(record.exc_info[1]),
-                'traceback': traceback.format_exception(*record.exc_info)
+            log_data["exception"] = {
+                "type": record.exc_info[0].__name__,
+                "message": str(record.exc_info[1]),
+                "traceback": traceback.format_exception(*record.exc_info),
             }
 
         # Add extra fields
         for key, value in record.__dict__.items():
-            if key not in ['name', 'msg', 'args', 'created', 'filename', 'funcName',
-                          'levelname', 'levelno', 'lineno', 'module', 'msecs',
-                          'message', 'pathname', 'process', 'processName',
-                          'relativeCreated', 'thread', 'threadName', 'exc_info',
-                          'exc_text', 'stack_info']:
+            if key not in [
+                "name",
+                "msg",
+                "args",
+                "created",
+                "filename",
+                "funcName",
+                "levelname",
+                "levelno",
+                "lineno",
+                "module",
+                "msecs",
+                "message",
+                "pathname",
+                "process",
+                "processName",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+            ]:
                 log_data[key] = value
 
         return json.dumps(log_data)
@@ -105,12 +122,12 @@ class ColoredFormatter(logging.Formatter):
 
     # ANSI color codes
     COLORS = {
-        'DEBUG': '\033[36m',      # Cyan
-        'INFO': '\033[32m',       # Green
-        'WARNING': '\033[33m',    # Yellow
-        'ERROR': '\033[31m',      # Red
-        'CRITICAL': '\033[1;31m', # Bold Red
-        'RESET': '\033[0m',       # Reset
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[1;31m",  # Bold Red
+        "RESET": "\033[0m",  # Reset
     }
 
     def format(self, record: logging.LogRecord) -> str:
@@ -186,13 +203,13 @@ _context_filter = ContextFilter()
 
 
 def setup_logging(
-    level: str = 'INFO',
+    level: str = "INFO",
     log_file: Optional[str] = None,
     console: bool = True,
     structured: bool = False,
     rotation: bool = True,
     max_bytes: int = 10485760,  # 10 MB
-    backup_count: int = 5
+    backup_count: int = 5,
 ) -> None:
     """
     Set up logging configuration for CryptVault.
@@ -239,8 +256,7 @@ def setup_logging(
             console_formatter = StructuredFormatter()
         else:
             console_formatter = ColoredFormatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
             )
 
         console_handler.setFormatter(console_formatter)
@@ -251,9 +267,7 @@ def setup_logging(
     if log_file:
         if rotation:
             file_handler = logging.handlers.RotatingFileHandler(
-                log_file,
-                maxBytes=max_bytes,
-                backupCount=backup_count
+                log_file, maxBytes=max_bytes, backupCount=backup_count
             )
         else:
             file_handler = logging.FileHandler(log_file)
@@ -264,8 +278,7 @@ def setup_logging(
             file_formatter = StructuredFormatter()
         else:
             file_formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
             )
 
         file_handler.setFormatter(file_formatter)
@@ -278,12 +291,12 @@ def setup_logging(
     root_logger.info(
         "Logging configured",
         extra={
-            'level': level,
-            'console': console,
-            'file': log_file,
-            'structured': structured,
-            'rotation': rotation
-        }
+            "level": level,
+            "console": console,
+            "file": log_file,
+            "structured": structured,
+            "rotation": rotation,
+        },
     )
 
 
@@ -328,12 +341,7 @@ def log_context(**kwargs: Any):
         _context_filter.clear_context()
 
 
-def log_performance(
-    logger: logging.Logger,
-    operation: str,
-    duration: float,
-    **kwargs: Any
-) -> None:
+def log_performance(logger: logging.Logger, operation: str, duration: float, **kwargs: Any) -> None:
     """
     Log performance metrics.
 
@@ -353,19 +361,16 @@ def log_performance(
     logger.info(
         f"Performance: {operation}",
         extra={
-            'operation': operation,
-            'duration_seconds': duration,
-            'duration_ms': duration * 1000,
-            **kwargs
-        }
+            "operation": operation,
+            "duration_seconds": duration,
+            "duration_ms": duration * 1000,
+            **kwargs,
+        },
     )
 
 
 def log_error_with_context(
-    logger: logging.Logger,
-    error: Exception,
-    message: str,
-    **kwargs: Any
+    logger: logging.Logger, error: Exception, message: str, **kwargs: Any
 ) -> None:
     """
     Log error with full context and stack trace.
@@ -389,11 +394,7 @@ def log_error_with_context(
     logger.error(
         message,
         exc_info=True,
-        extra={
-            'error_type': type(error).__name__,
-            'error_message': str(error),
-            **kwargs
-        }
+        extra={"error_type": type(error).__name__, "error_message": str(error), **kwargs},
     )
 
 
@@ -416,7 +417,7 @@ def configure_from_config(config: Any) -> None:
         structured=False,  # Can be added to config if needed
         rotation=True,
         max_bytes=config.logging.file_max_bytes,
-        backup_count=config.logging.file_backup_count
+        backup_count=config.logging.file_backup_count,
     )
 
 

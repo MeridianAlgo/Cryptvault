@@ -1,9 +1,10 @@
 """Linear models for cryptocurrency price prediction."""
 
-import numpy as np
-from typing import List, Tuple, Optional
 import logging
 from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
+
+import numpy as np
 
 from ...data.models import PriceDataFrame
 
@@ -75,12 +76,14 @@ class LinearPredictor:
                 # Try to adapt features to match expected dimension
                 if features.shape[1] > self.feature_count:
                     # Take first N features
-                    features = features[:, :self.feature_count]
+                    features = features[:, : self.feature_count]
                 elif features.shape[1] < self.feature_count:
                     # Pad with zeros
                     padding = np.zeros((features.shape[0], self.feature_count - features.shape[1]))
                     features = np.hstack([features, padding])
-                self.logger.warning(f"Feature dimension mismatch: expected {self.feature_count}, got {features.shape[1]}. Adjusted.")
+                self.logger.warning(
+                    f"Feature dimension mismatch: expected {self.feature_count}, got {features.shape[1]}. Adjusted."
+                )
 
             # Linear prediction: y = X * w + b
             predictions = np.dot(features, self.weights) + self.bias
@@ -203,23 +206,23 @@ class LinearPredictor:
             directional_accuracy = np.mean(pred_direction == true_direction)
 
             return {
-                'mse': mse,
-                'rmse': rmse,
-                'mae': mae,
-                'r2': r2,
-                'directional_accuracy': directional_accuracy,
-                'n_samples': len(targets)
+                "mse": mse,
+                "rmse": rmse,
+                "mae": mae,
+                "r2": r2,
+                "directional_accuracy": directional_accuracy,
+                "n_samples": len(targets),
             }
 
         except Exception as e:
             self.logger.error(f"Model evaluation failed: {e}")
             return {
-                'mse': float('inf'),
-                'rmse': float('inf'),
-                'mae': float('inf'),
-                'r2': 0.0,
-                'directional_accuracy': 0.5,
-                'n_samples': 0
+                "mse": float("inf"),
+                "rmse": float("inf"),
+                "mae": float("inf"),
+                "r2": 0.0,
+                "directional_accuracy": 0.5,
+                "n_samples": 0,
             }
 
 
@@ -267,7 +270,7 @@ class ARIMAPredictor:
 
             # Calculate residuals and fit MA parameters
             ar_predictions = self._apply_ar_model(diff_series)
-            self.residuals = np.array(diff_series[self.p:]) - ar_predictions
+            self.residuals = np.array(diff_series[self.p :]) - ar_predictions
             self.ma_params = self._fit_ma_parameters(self.residuals)
 
             self.is_trained = True
@@ -297,14 +300,14 @@ class ARIMAPredictor:
             for _ in range(steps):
                 # Simple AR forecast (simplified implementation)
                 if len(self.residuals) >= self.p:
-                    ar_forecast = np.dot(self.ar_params, self.residuals[-self.p:])
+                    ar_forecast = np.dot(self.ar_params, self.residuals[-self.p :])
                 else:
                     ar_forecast = 0.0
 
                 # Add MA component (simplified)
                 ma_forecast = 0.0
                 if len(self.residuals) >= self.q and self.ma_params is not None:
-                    ma_forecast = np.dot(self.ma_params, self.residuals[-self.q:])
+                    ma_forecast = np.dot(self.ma_params, self.residuals[-self.q :])
 
                 forecast = ar_forecast + ma_forecast
                 forecasts.append(forecast)
@@ -323,7 +326,7 @@ class ARIMAPredictor:
         diff_series = series.copy()
 
         for _ in range(d):
-            diff_series = [diff_series[i] - diff_series[i-1] for i in range(1, len(diff_series))]
+            diff_series = [diff_series[i] - diff_series[i - 1] for i in range(1, len(diff_series))]
 
         return diff_series
 
@@ -337,7 +340,7 @@ class ARIMAPredictor:
         y = []
 
         for i in range(self.p, len(series)):
-            X.append(series[i-self.p:i])
+            X.append(series[i - self.p : i])
             y.append(series[i])
 
         X = np.array(X)
@@ -358,7 +361,7 @@ class ARIMAPredictor:
         predictions = []
 
         for i in range(self.p, len(series)):
-            pred = np.dot(self.ar_params, series[i-self.p:i])
+            pred = np.dot(self.ar_params, series[i - self.p : i])
             predictions.append(pred)
 
         return np.array(predictions)

@@ -87,6 +87,7 @@ class PatternType(Enum):
 
 class PatternCategory(Enum):
     """Pattern categories for classification."""
+
     BULLISH_CONTINUATION = "Bullish Continuation"
     BEARISH_CONTINUATION = "Bearish Continuation"
     BULLISH_REVERSAL = "Bullish Reversal"
@@ -100,6 +101,7 @@ class PatternCategory(Enum):
 @dataclass
 class VolumeProfile:
     """Volume analysis for pattern validation."""
+
     avg_volume: float
     volume_trend: str  # "increasing", "decreasing", "stable"
     volume_confirmation: bool
@@ -109,6 +111,7 @@ class VolumeProfile:
 @dataclass
 class DetectedPattern:
     """Represents a detected chart pattern with all relevant information."""
+
     pattern_type: PatternType
     category: PatternCategory
     confidence: float  # 0.0 to 1.0
@@ -129,22 +132,19 @@ class DetectedPattern:
         """Check if pattern is bullish."""
         return self.category in [
             PatternCategory.BULLISH_CONTINUATION,
-            PatternCategory.BULLISH_REVERSAL
+            PatternCategory.BULLISH_REVERSAL,
         ]
 
     def is_bearish(self) -> bool:
         """Check if pattern is bearish."""
         return self.category in [
             PatternCategory.BEARISH_CONTINUATION,
-            PatternCategory.BEARISH_REVERSAL
+            PatternCategory.BEARISH_REVERSAL,
         ]
 
     def is_reversal(self) -> bool:
         """Check if pattern is a reversal pattern."""
-        return self.category in [
-            PatternCategory.BULLISH_REVERSAL,
-            PatternCategory.BEARISH_REVERSAL
-        ]
+        return self.category in [PatternCategory.BULLISH_REVERSAL, PatternCategory.BEARISH_REVERSAL]
 
 
 # Pattern type to category mapping
@@ -157,7 +157,6 @@ PATTERN_CATEGORIES = {
     PatternType.RISING_CHANNEL: PatternCategory.BULLISH_CONTINUATION,
     PatternType.RISING_WEDGE_CONTINUATION: PatternCategory.BULLISH_CONTINUATION,
     PatternType.RECTANGLE_BULLISH: PatternCategory.BULLISH_CONTINUATION,
-
     # Bearish Continuation
     PatternType.DESCENDING_TRIANGLE: PatternCategory.BEARISH_CONTINUATION,
     PatternType.BEAR_FLAG: PatternCategory.BEARISH_CONTINUATION,
@@ -168,7 +167,6 @@ PATTERN_CATEGORIES = {
     PatternType.RECTANGLE_BEARISH: PatternCategory.BEARISH_CONTINUATION,
     PatternType.RISING_CHANNEL: PatternCategory.BULLISH_CONTINUATION,
     PatternType.FALLING_CHANNEL: PatternCategory.BEARISH_CONTINUATION,
-
     # Bullish Reversal
     PatternType.DOUBLE_BOTTOM: PatternCategory.BULLISH_REVERSAL,
     PatternType.TRIPLE_BOTTOM: PatternCategory.BULLISH_REVERSAL,
@@ -177,7 +175,6 @@ PATTERN_CATEGORIES = {
     PatternType.HAMMER: PatternCategory.BULLISH_REVERSAL,
     PatternType.MORNING_STAR: PatternCategory.BULLISH_REVERSAL,
     PatternType.BULLISH_ENGULFING: PatternCategory.BULLISH_REVERSAL,
-
     # Bearish Reversal
     PatternType.DOUBLE_TOP: PatternCategory.BEARISH_REVERSAL,
     PatternType.TRIPLE_TOP: PatternCategory.BEARISH_REVERSAL,
@@ -186,14 +183,12 @@ PATTERN_CATEGORIES = {
     PatternType.SHOOTING_STAR: PatternCategory.BEARISH_REVERSAL,
     PatternType.EVENING_STAR: PatternCategory.BEARISH_REVERSAL,
     PatternType.BEARISH_ENGULFING: PatternCategory.BEARISH_REVERSAL,
-
     # Bilateral/Neutral
     PatternType.SYMMETRICAL_TRIANGLE: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.DIAMOND: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.RECTANGLE_NEUTRAL: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.EXPANDING_TRIANGLE: PatternCategory.BILATERAL_NEUTRAL,
     PatternType.PENNANT_NEUTRAL: PatternCategory.BILATERAL_NEUTRAL,
-
     # Harmonic Patterns
     PatternType.GARTLEY: PatternCategory.HARMONIC_PATTERN,
     PatternType.BUTTERFLY: PatternCategory.HARMONIC_PATTERN,
@@ -201,7 +196,6 @@ PATTERN_CATEGORIES = {
     PatternType.CRAB: PatternCategory.HARMONIC_PATTERN,
     PatternType.ABCD: PatternCategory.HARMONIC_PATTERN,
     PatternType.CYPHER: PatternCategory.HARMONIC_PATTERN,
-
     # Candlestick Patterns
     PatternType.DOJI: PatternCategory.CANDLESTICK_PATTERN,
     PatternType.SPINNING_TOP: PatternCategory.CANDLESTICK_PATTERN,
@@ -223,7 +217,6 @@ PATTERN_CATEGORIES = {
     PatternType.TWEEZER_BOTTOMS: PatternCategory.CANDLESTICK_PATTERN,
     PatternType.RISING_THREE_METHODS: PatternCategory.CANDLESTICK_PATTERN,
     PatternType.FALLING_THREE_METHODS: PatternCategory.CANDLESTICK_PATTERN,
-
     # Divergence Patterns
     PatternType.BULLISH_DIVERGENCE: PatternCategory.DIVERGENCE_PATTERN,
     PatternType.BEARISH_DIVERGENCE: PatternCategory.DIVERGENCE_PATTERN,

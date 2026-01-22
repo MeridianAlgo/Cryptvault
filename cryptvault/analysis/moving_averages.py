@@ -1,7 +1,7 @@
 """Moving average calculations for technical analysis."""
 
-from typing import List, Optional
 import math
+from typing import List, Optional
 
 
 class MovingAverages:
@@ -34,7 +34,7 @@ class MovingAverages:
             if i < period - 1:
                 sma_values.append(None)
             else:
-                window = values[i - period + 1:i + 1]
+                window = values[i - period + 1 : i + 1]
                 sma = sum(window) / period
                 sma_values.append(sma)
 
@@ -100,7 +100,7 @@ class MovingAverages:
             if i < period - 1:
                 wma_values.append(None)
             else:
-                window = values[i - period + 1:i + 1]
+                window = values[i - period + 1 : i + 1]
 
                 # Calculate weighted sum
                 weighted_sum = 0
@@ -162,7 +162,7 @@ class MovingAverages:
                 continue
 
             # Get window of valid raw HMA values
-            window_indices = valid_indices[i - sqrt_period + 1:i + 1]
+            window_indices = valid_indices[i - sqrt_period + 1 : i + 1]
             window_values = [raw_hma[idx] for idx in window_indices]
 
             # Calculate weighted average
@@ -176,8 +176,9 @@ class MovingAverages:
 
         return hma_values
 
-    def adaptive_moving_average(self, values: List[float], period: int,
-                              fast_sc: float = 2.0, slow_sc: float = 30.0) -> List[Optional[float]]:
+    def adaptive_moving_average(
+        self, values: List[float], period: int, fast_sc: float = 2.0, slow_sc: float = 30.0
+    ) -> List[Optional[float]]:
         """
         Calculate Adaptive Moving Average (AMA) - Kaufman's Adaptive Moving Average.
         Adjusts smoothing based on market volatility.
@@ -211,8 +212,7 @@ class MovingAverages:
             direction = abs(values[i] - values[i - period])
 
             # Calculate volatility (sum of absolute changes)
-            volatility = sum(abs(values[j] - values[j - 1])
-                           for j in range(i - period + 1, i + 1))
+            volatility = sum(abs(values[j] - values[j - 1]) for j in range(i - period + 1, i + 1))
 
             # Calculate efficiency ratio
             if volatility == 0:
@@ -271,8 +271,9 @@ class MovingAverages:
 
         return tma_values
 
-    def get_ma_crossover_signals(self, fast_ma: List[Optional[float]],
-                                slow_ma: List[Optional[float]]) -> List[Optional[str]]:
+    def get_ma_crossover_signals(
+        self, fast_ma: List[Optional[float]], slow_ma: List[Optional[float]]
+    ) -> List[Optional[str]]:
         """
         Detect moving average crossover signals.
 
@@ -291,17 +292,17 @@ class MovingAverages:
         for i in range(1, len(fast_ma)):
             current_fast = fast_ma[i]
             current_slow = slow_ma[i]
-            prev_fast = fast_ma[i-1]
-            prev_slow = slow_ma[i-1]
+            prev_fast = fast_ma[i - 1]
+            prev_slow = slow_ma[i - 1]
 
             # Check if we have valid values for comparison
             if all(val is not None for val in [current_fast, current_slow, prev_fast, prev_slow]):
                 # Bullish crossover: fast MA crosses above slow MA
                 if prev_fast <= prev_slow and current_fast > current_slow:
-                    signals.append('bullish_cross')
+                    signals.append("bullish_cross")
                 # Bearish crossover: fast MA crosses below slow MA
                 elif prev_fast >= prev_slow and current_fast < current_slow:
-                    signals.append('bearish_cross')
+                    signals.append("bearish_cross")
                 else:
                     signals.append(None)
             else:

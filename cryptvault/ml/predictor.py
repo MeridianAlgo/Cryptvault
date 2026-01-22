@@ -18,16 +18,17 @@ Confidence Scores:
 - 0.8-1.0: Very high confidence (rare, very strong signal)
 """
 
-import numpy as np
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 from ..data.models import PriceDataFrame
 from ..exceptions import MLPredictionError, ValidationError
-from .features import TechnicalFeatureExtractor, PatternFeatureExtractor, TimeFeatureExtractor
-from .models import EnsembleModel
 from .cache import PredictionCache
+from .features import PatternFeatureExtractor, TechnicalFeatureExtractor, TimeFeatureExtractor
+from .models import EnsembleModel
 
 
 class MLPredictor:
@@ -73,10 +74,7 @@ class MLPredictor:
         self.logger.info("ML Predictor initialized")
 
     def predict(
-        self,
-        data: PriceDataFrame,
-        patterns: Optional[List] = None,
-        horizon: int = 7
+        self, data: PriceDataFrame, patterns: Optional[List] = None, horizon: int = 7
     ) -> Dict[str, Any]:
         """
         Generate comprehensive ML predictions.
@@ -141,7 +139,9 @@ class MLPredictor:
             # Cache result
             self.cache.set(cache_key, result, ttl=300)  # 5 minute cache
 
-            self.logger.info(f"Generated prediction for {data.symbol}: {result['trend_forecast']['trend_7d']}")
+            self.logger.info(
+                f"Generated prediction for {data.symbol}: {result['trend_forecast']['trend_7d']}"
+            )
             return result
 
         except ValidationError as e:
@@ -170,11 +170,11 @@ class MLPredictor:
         model_summary = self.model.get_model_summary()
 
         return {
-            'ensemble_accuracy': 0.65,  # Baseline accuracy
-            'trained_models': model_summary.get('trained_models', 0),
-            'total_models': model_summary.get('total_models', 2),
-            'training_samples': self.training_data_size,
-            'is_trained': self.is_trained
+            "ensemble_accuracy": 0.65,  # Baseline accuracy
+            "trained_models": model_summary.get("trained_models", 0),
+            "total_models": model_summary.get("total_models", 2),
+            "training_samples": self.training_data_size,
+            "is_trained": self.is_trained,
         }
 
     def _validate_inputs(self, data: PriceDataFrame, horizon: int) -> None:
@@ -254,10 +254,7 @@ class MLPredictor:
             # We need at least 30 points to extract meaningful features
             for i in range(30, len(data)):
                 # Create a slice of data up to point i
-                data_slice = PriceDataFrame(
-                    symbol=data.symbol,
-                    data=data.data[:i]
-                )
+                data_slice = PriceDataFrame(symbol=data.symbol, data=data.data[:i])
 
                 # Extract features using the SAME method as prediction
                 try:
@@ -266,7 +263,7 @@ class MLPredictor:
 
                     # Target is the next day's return
                     if i < len(data):
-                        current_price = data.data[i-1].close
+                        current_price = data.data[i - 1].close
                         next_price = data.data[i].close
                         target_return = (next_price - current_price) / current_price
                         targets.append(target_return)
@@ -282,7 +279,9 @@ class MLPredictor:
             feature_matrix = np.array(feature_matrix)
             targets = np.array(targets)
 
-            self.logger.info(f"Training with {feature_matrix.shape[0]} samples, {feature_matrix.shape[1]} features")
+            self.logger.info(
+                f"Training with {feature_matrix.shape[0]} samples, {feature_matrix.shape[1]} features"
+            )
 
             # Train the model
             success = self.model.train(feature_matrix, targets)
@@ -290,14 +289,18 @@ class MLPredictor:
             if success:
                 self.is_trained = True
                 self.training_data_size = len(feature_matrix)
-                self.logger.info(f"Model trained successfully on {len(feature_matrix)} samples with {feature_matrix.shape[1]} features")
+                self.logger.info(
+                    f"Model trained successfully on {len(feature_matrix)} samples with {feature_matrix.shape[1]} features"
+                )
             else:
                 self.logger.warning("Model training failed")
 
         except Exception as e:
             self.logger.error(f"Model training failed: {e}")
 
-    def _generate_predictions(self, data: PriceDataFrame, features: np.ndarray, horizon: int) -> Dict[str, Any]:
+    def _generate_predictions(
+        self, data: PriceDataFrame, features: np.ndarray, horizon: int
+    ) -> Dict[str, Any]:
         """
         Generate predictions using the trained model.
 
@@ -336,7 +339,7 @@ class MLPredictor:
                     predicted_trend = (predicted_prices[-1] - current_price) / current_price
 
                     # Combine with recent trend
-                    combined_trend = (predicted_trend * 0.7 + recent_trend * 0.3)
+                    combined_trend = predicted_trend * 0.7 + recent_trend * 0.3
 
                 except Exception as e:
                     self.logger.warning(f"Model prediction failed, using trend analysis: {e}")
@@ -348,34 +351,34 @@ class MLPredictor:
 
             # Determine trend direction and confidence
             if combined_trend > 0.02:
-                trend = 'bullish'
+                trend = "bullish"
                 confidence = min(0.85, 0.50 + abs(combined_trend) * 2)
             elif combined_trend < -0.02:
-                trend = 'bearish'
+                trend = "bearish"
                 confidence = min(0.85, 0.50 + abs(combined_trend) * 2)
             else:
-                trend = 'sideways'
+                trend = "sideways"
                 confidence = 0.50
 
             # Build result
             result = {
-                'trend_forecast': {
-                    'trend_7d': trend,
-                    'trend_strength': f"{confidence * 100:.1f}%",
-                    'expected_change': f"{combined_trend * 100:+.2f}%"
+                "trend_forecast": {
+                    "trend_7d": trend,
+                    "trend_strength": f"{confidence * 100:.1f}%",
+                    "expected_change": f"{combined_trend * 100:+.2f}%",
                 },
-                'ensemble_confidence': confidence,
-                'features_extracted': features.shape[1],
-                'prediction_timestamp': datetime.now().isoformat(),
-                'model_performance': self.get_model_performance()
+                "ensemble_confidence": confidence,
+                "features_extracted": features.shape[1],
+                "prediction_timestamp": datetime.now().isoformat(),
+                "model_performance": self.get_model_performance(),
             }
 
             # Add price predictions if available
             if predicted_prices:
-                result['price_predictions'] = {
-                    'prices': [round(p, 2) for p in predicted_prices],
-                    'horizon_days': horizon,
-                    'current_price': round(current_price, 2)
+                result["price_predictions"] = {
+                    "prices": [round(p, 2) for p in predicted_prices],
+                    "horizon_days": horizon,
+                    "current_price": round(current_price, 2),
                 }
 
             return result
@@ -394,16 +397,16 @@ class MLPredictor:
         Raises:
             ValidationError: If result is invalid
         """
-        required_keys = ['trend_forecast', 'ensemble_confidence', 'features_extracted']
+        required_keys = ["trend_forecast", "ensemble_confidence", "features_extracted"]
 
         for key in required_keys:
             if key not in result:
                 raise ValidationError(f"Missing required key in prediction result: {key}")
 
-        if not isinstance(result['trend_forecast'], dict):
+        if not isinstance(result["trend_forecast"], dict):
             raise ValidationError("trend_forecast must be a dictionary")
 
-        if not 0 <= result['ensemble_confidence'] <= 1:
+        if not 0 <= result["ensemble_confidence"] <= 1:
             raise ValidationError(f"Invalid confidence: {result['ensemble_confidence']}")
 
     def _generate_cache_key(self, data: PriceDataFrame, horizon: int) -> str:
@@ -424,21 +427,21 @@ class MLPredictor:
         self.logger.warning("Generating fallback prediction")
 
         return {
-            'trend_forecast': {
-                'trend_7d': 'sideways',
-                'trend_strength': '50.0%',
-                'expected_change': '+0.00%'
+            "trend_forecast": {
+                "trend_7d": "sideways",
+                "trend_strength": "50.0%",
+                "expected_change": "+0.00%",
             },
-            'ensemble_confidence': 0.40,  # Low confidence for fallback
-            'features_extracted': 0,
-            'prediction_timestamp': datetime.now().isoformat(),
-            'model_performance': {
-                'ensemble_accuracy': 0.50,
-                'trained_models': 0,
-                'total_models': 2,
-                'is_trained': False
+            "ensemble_confidence": 0.40,  # Low confidence for fallback
+            "features_extracted": 0,
+            "prediction_timestamp": datetime.now().isoformat(),
+            "model_performance": {
+                "ensemble_accuracy": 0.50,
+                "trained_models": 0,
+                "total_models": 2,
+                "is_trained": False,
             },
-            'warning': 'Fallback prediction due to error'
+            "warning": "Fallback prediction due to error",
         }
 
     def get_prediction_accuracy_report(self, days: int = 30) -> Dict[str, Any]:
@@ -453,12 +456,12 @@ class MLPredictor:
         """
         # This is a placeholder implementation since we don't have historical prediction storage yet
         # In a real implementation, this would query a database of past predictions
-        
+
         return {
-            'overall_accuracy': 0.0,
-            'total_predictions': 0,
-            'accurate_predictions': 0,
-            'average_error': 0.0,
-            'accuracy_by_symbol': {},
-            'recent_predictions': []
+            "overall_accuracy": 0.0,
+            "total_predictions": 0,
+            "accurate_predictions": 0,
+            "average_error": 0.0,
+            "accuracy_by_symbol": {},
+            "recent_predictions": [],
         }

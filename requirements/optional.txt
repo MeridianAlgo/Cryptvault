@@ -6,6 +6,27 @@
 -r base.txt
 
 # ============================================================================
+# Advanced Machine Learning Models
+# ============================================================================
+# Feature: State-of-the-art gradient boosting models
+# Install: pip install cryptvault[advanced-ml]
+
+# XGBoost - Extreme Gradient Boosting
+# Used for: High-performance gradient boosting
+# Version constraint: >=1.7.0 for modern features
+xgboost>=1.7.0,<3.0.0
+
+# LightGBM - Light Gradient Boosting Machine
+# Used for: Fast gradient boosting with lower memory usage
+# Version constraint: >=3.3.0 for modern features
+lightgbm>=3.3.0,<5.0.0
+
+# CatBoost - Gradient Boosting with Categorical Features
+# Used for: Robust gradient boosting with automatic categorical handling
+# Version constraint: >=1.1.0 for modern features
+catboost>=1.1.0,<2.0.0
+
+# ============================================================================
 # Deep Learning (LSTM Neural Networks)
 # ============================================================================
 # Feature: Advanced ML predictions using LSTM models

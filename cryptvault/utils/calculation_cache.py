@@ -17,13 +17,14 @@ Example:
     ...     return complex_computation(data)
 """
 
-import hashlib
-import time
 import functools
-import numpy as np
-from typing import Any, Callable, Dict, Optional, Tuple
-from collections import OrderedDict
+import hashlib
 import logging
+import time
+from collections import OrderedDict
+from typing import Any, Callable, Dict, Optional, Tuple
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -122,12 +123,12 @@ class CalculationCache:
         hit_rate = self._hits / total_requests if total_requests > 0 else 0.0
 
         return {
-            'size': len(self._cache),
-            'max_size': self.max_size,
-            'hits': self._hits,
-            'misses': self._misses,
-            'hit_rate': hit_rate,
-            'total_requests': total_requests
+            "size": len(self._cache),
+            "max_size": self.max_size,
+            "hits": self._hits,
+            "misses": self._misses,
+            "hit_rate": hit_rate,
+            "total_requests": total_requests,
         }
 
 
@@ -160,11 +161,15 @@ def generate_cache_key(*args, **kwargs) -> str:
     for arg in args:
         if isinstance(arg, np.ndarray):
             # Hash array data
-            key_parts.append(hashlib.md5(arg.tobytes(), usedforsecurity=False).hexdigest()[:16])  # nosec B324 - Used for cache key only
+            key_parts.append(
+                hashlib.md5(arg.tobytes(), usedforsecurity=False).hexdigest()[:16]
+            )  # nosec B324 - Used for cache key only
         elif isinstance(arg, (list, tuple)):
             # Convert to array and hash
             arr = np.array(arg)
-            key_parts.append(hashlib.md5(arr.tobytes(), usedforsecurity=False).hexdigest()[:16])  # nosec B324 - Used for cache key only
+            key_parts.append(
+                hashlib.md5(arr.tobytes(), usedforsecurity=False).hexdigest()[:16]
+            )  # nosec B324 - Used for cache key only
         else:
             # Use string representation
             key_parts.append(str(arg))
@@ -172,17 +177,23 @@ def generate_cache_key(*args, **kwargs) -> str:
     # Process keyword arguments
     for k, v in sorted(kwargs.items()):
         if isinstance(v, np.ndarray):
-            key_parts.append(f"{k}={hashlib.md5(v.tobytes(), usedforsecurity=False).hexdigest()[:16]}")  # nosec B324 - Used for cache key only
+            key_parts.append(
+                f"{k}={hashlib.md5(v.tobytes(), usedforsecurity=False).hexdigest()[:16]}"
+            )  # nosec B324 - Used for cache key only
         elif isinstance(v, (list, tuple)):
             arr = np.array(v)
-            key_parts.append(f"{k}={hashlib.md5(arr.tobytes(), usedforsecurity=False).hexdigest()[:16]}")  # nosec B324 - Used for cache key only
+            key_parts.append(
+                f"{k}={hashlib.md5(arr.tobytes(), usedforsecurity=False).hexdigest()[:16]}"
+            )  # nosec B324 - Used for cache key only
         else:
             key_parts.append(f"{k}={v}")
 
     return "|".join(key_parts)
 
 
-def cached_calculation(ttl: Optional[int] = None, cache_instance: Optional[CalculationCache] = None):
+def cached_calculation(
+    ttl: Optional[int] = None, cache_instance: Optional[CalculationCache] = None
+):
     """
     Decorator to cache expensive calculation results.
 
@@ -252,6 +263,7 @@ def memoize_last_n(n: int = 10):
         ... def get_data(symbol):
         ...     return fetch_data(symbol)
     """
+
     def decorator(func: Callable) -> Callable:
         cache = OrderedDict()
 

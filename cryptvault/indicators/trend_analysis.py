@@ -1,12 +1,13 @@
 """Trend analysis utilities."""
 
-from typing import List, Optional
 from dataclasses import dataclass
+from typing import List, Optional
 
 
 @dataclass
 class PeakTrough:
     """Represents a peak or trough in price data."""
+
     index: int
     value: float
     type: str  # 'peak' or 'trough'
@@ -46,8 +47,8 @@ class TrendAnalysis:
                     is_trough = False
 
             if is_peak:
-                peaks_troughs.append(PeakTrough(index=i, value=data[i], type='peak'))
+                peaks_troughs.append(PeakTrough(index=i, value=data[i], type="peak"))
             elif is_trough:
-                peaks_troughs.append(PeakTrough(index=i, value=data[i], type='trough'))
+                peaks_troughs.append(PeakTrough(index=i, value=data[i], type="trough"))
 
         return peaks_troughs

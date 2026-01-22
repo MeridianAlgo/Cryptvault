@@ -17,7 +17,7 @@ class MovingAverages:
         sma_values = [None] * (period - 1)
 
         for i in range(period - 1, len(prices)):
-            sma = sum(prices[i - period + 1:i + 1]) / period
+            sma = sum(prices[i - period + 1 : i + 1]) / period
             sma_values.append(sma)
 
         return sma_values
@@ -55,7 +55,7 @@ class MovingAverages:
         weight_sum = sum(weights)
 
         for i in range(period - 1, len(prices)):
-            window = prices[i - period + 1:i + 1]
+            window = prices[i - period + 1 : i + 1]
             wma = sum(w * p for w, p in zip(weights, window)) / weight_sum
             wma_values.append(wma)
 

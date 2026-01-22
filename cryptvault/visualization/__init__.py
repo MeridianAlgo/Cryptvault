@@ -2,6 +2,4 @@
 
 from .terminal_chart import TerminalChart
 
-__all__ = [
-    "TerminalChart"
-]
+__all__ = ["TerminalChart"]

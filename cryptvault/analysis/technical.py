@@ -1,7 +1,8 @@
 """Technical indicators implementation for RSI, MACD, and other indicators."""
 
-from typing import List, Dict
 import math
+from typing import Dict, List
+
 from ..data.models import PriceDataFrame
 
 
@@ -26,12 +27,14 @@ class TechnicalIndicators:
         closes = data.get_closes()
 
         if len(closes) < period + 1:
-            raise ValueError(f"Insufficient data for RSI calculation. Need at least {period + 1} points, got {len(closes)}")
+            raise ValueError(
+                f"Insufficient data for RSI calculation. Need at least {period + 1} points, got {len(closes)}"
+            )
 
         # Calculate price changes
         price_changes = []
         for i in range(1, len(closes)):
-            price_changes.append(closes[i] - closes[i-1])
+            price_changes.append(closes[i] - closes[i - 1])
 
         # Separate gains and losses
         gains = [max(change, 0) for change in price_changes]
@@ -71,8 +74,13 @@ class TechnicalIndicators:
 
         return result
 
-    def calculate_macd(self, data: PriceDataFrame, fast_period: int = 12,
-                      slow_period: int = 26, signal_period: int = 9) -> Dict[str, List[float]]:
+    def calculate_macd(
+        self,
+        data: PriceDataFrame,
+        fast_period: int = 12,
+        slow_period: int = 26,
+        signal_period: int = 9,
+    ) -> Dict[str, List[float]]:
         """
         Calculate MACD (Moving Average Convergence Divergence).
 
@@ -88,7 +96,9 @@ class TechnicalIndicators:
         closes = data.get_closes()
 
         if len(closes) < slow_period:
-            raise ValueError(f"Insufficient data for MACD calculation. Need at least {slow_period} points, got {len(closes)}")
+            raise ValueError(
+                f"Insufficient data for MACD calculation. Need at least {slow_period} points, got {len(closes)}"
+            )
 
         # Calculate EMAs
         fast_ema = self._calculate_ema(closes, fast_period)
@@ -127,11 +137,7 @@ class TechnicalIndicators:
                 else:
                     histogram.append(None)
 
-        return {
-            'macd': macd_line,
-            'signal': signal_line,
-            'histogram': histogram
-        }
+        return {"macd": macd_line, "signal": signal_line, "histogram": histogram}
 
     def _calculate_ema(self, values: List[float], period: int) -> List[float]:
         """
@@ -163,8 +169,9 @@ class TechnicalIndicators:
 
         return ema_values
 
-    def calculate_bollinger_bands(self, data: PriceDataFrame, period: int = 20,
-                                 std_dev: float = 2.0) -> Dict[str, List[float]]:
+    def calculate_bollinger_bands(
+        self, data: PriceDataFrame, period: int = 20, std_dev: float = 2.0
+    ) -> Dict[str, List[float]]:
         """
         Calculate Bollinger Bands.
 
@@ -179,7 +186,9 @@ class TechnicalIndicators:
         closes = data.get_closes()
 
         if len(closes) < period:
-            raise ValueError(f"Insufficient data for Bollinger Bands. Need at least {period} points, got {len(closes)}")
+            raise ValueError(
+                f"Insufficient data for Bollinger Bands. Need at least {period} points, got {len(closes)}"
+            )
 
         upper_band = []
         middle_band = []
@@ -192,7 +201,7 @@ class TechnicalIndicators:
                 lower_band.append(None)
             else:
                 # Calculate SMA (middle band)
-                window = closes[i - period + 1:i + 1]
+                window = closes[i - period + 1 : i + 1]
                 sma = sum(window) / period
 
                 # Calculate standard deviation
@@ -207,14 +216,11 @@ class TechnicalIndicators:
                 middle_band.append(sma)
                 lower_band.append(lower)
 
-        return {
-            'upper': upper_band,
-            'middle': middle_band,
-            'lower': lower_band
-        }
+        return {"upper": upper_band, "middle": middle_band, "lower": lower_band}
 
-    def calculate_stochastic(self, data: PriceDataFrame, k_period: int = 14,
-                           d_period: int = 3) -> Dict[str, List[float]]:
+    def calculate_stochastic(
+        self, data: PriceDataFrame, k_period: int = 14, d_period: int = 3
+    ) -> Dict[str, List[float]]:
         """
         Calculate Stochastic Oscillator.
 
@@ -231,7 +237,9 @@ class TechnicalIndicators:
         closes = data.get_closes()
 
         if len(closes) < k_period:
-            raise ValueError(f"Insufficient data for Stochastic. Need at least {k_period} points, got {len(closes)}")
+            raise ValueError(
+                f"Insufficient data for Stochastic. Need at least {k_period} points, got {len(closes)}"
+            )
 
         k_values = []
 
@@ -240,8 +248,8 @@ class TechnicalIndicators:
                 k_values.append(None)
             else:
                 # Get highest high and lowest low in the period
-                period_highs = highs[i - k_period + 1:i + 1]
-                period_lows = lows[i - k_period + 1:i + 1]
+                period_highs = highs[i - k_period + 1 : i + 1]
+                period_lows = lows[i - k_period + 1 : i + 1]
 
                 highest_high = max(period_highs)
                 lowest_low = min(period_lows)
@@ -261,19 +269,18 @@ class TechnicalIndicators:
                 d_values.append(None)
             else:
                 # Get valid %K values for %D calculation
-                k_window = [k for k in k_values[i - d_period + 1:i + 1] if k is not None]
+                k_window = [k for k in k_values[i - d_period + 1 : i + 1] if k is not None]
                 if len(k_window) == d_period:
                     d = sum(k_window) / d_period
                     d_values.append(d)
                 else:
                     d_values.append(None)
 
-        return {
-            'k': k_values,
-            'd': d_values
-        }
+        return {"k": k_values, "d": d_values}
 
-    def find_peaks_and_troughs(self, values: List[float], min_distance: int = 5) -> Dict[str, List[int]]:
+    def find_peaks_and_troughs(
+        self, values: List[float], min_distance: int = 5
+    ) -> Dict[str, List[int]]:
         """
         Find peaks and troughs in a series of values.
 
@@ -285,7 +292,7 @@ class TechnicalIndicators:
             Dictionary with 'peaks' and 'troughs' index lists
         """
         if len(values) < 3:
-            return {'peaks': [], 'troughs': []}
+            return {"peaks": [], "troughs": []}
 
         peaks = []
         troughs = []
@@ -295,22 +302,30 @@ class TechnicalIndicators:
                 continue
 
             # Check for peak
-            if (values[i-1] is not None and values[i+1] is not None and
-                values[i] > values[i-1] and values[i] > values[i+1]):
+            if (
+                values[i - 1] is not None
+                and values[i + 1] is not None
+                and values[i] > values[i - 1]
+                and values[i] > values[i + 1]
+            ):
 
                 # Check minimum distance from last peak
                 if not peaks or i - peaks[-1] >= min_distance:
                     peaks.append(i)
 
             # Check for trough
-            if (values[i-1] is not None and values[i+1] is not None and
-                values[i] < values[i-1] and values[i] < values[i+1]):
+            if (
+                values[i - 1] is not None
+                and values[i + 1] is not None
+                and values[i] < values[i - 1]
+                and values[i] < values[i + 1]
+            ):
 
                 # Check minimum distance from last trough
                 if not troughs or i - troughs[-1] >= min_distance:
                     troughs.append(i)
 
-        return {'peaks': peaks, 'troughs': troughs}
+        return {"peaks": peaks, "troughs": troughs}
 
     def calculate_atr(self, data: PriceDataFrame, period: int = 14) -> List[float]:
         """
@@ -328,15 +343,17 @@ class TechnicalIndicators:
         closes = data.get_closes()
 
         if len(closes) < period + 1:
-            raise ValueError(f"Insufficient data for ATR. Need at least {period + 1} points, got {len(closes)}")
+            raise ValueError(
+                f"Insufficient data for ATR. Need at least {period + 1} points, got {len(closes)}"
+            )
 
         true_ranges = []
 
         for i in range(1, len(closes)):
             # True Range = max(high-low, |high-prev_close|, |low-prev_close|)
             hl = highs[i] - lows[i]
-            hc = abs(highs[i] - closes[i-1])
-            lc = abs(lows[i] - closes[i-1])
+            hc = abs(highs[i] - closes[i - 1])
+            lc = abs(lows[i] - closes[i - 1])
 
             tr = max(hl, hc, lc)
             true_ranges.append(tr)

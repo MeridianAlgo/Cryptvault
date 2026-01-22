@@ -16,37 +16,37 @@ Example:
     ...     print(f"Found {result['patterns_found']} patterns")
 """
 
-from typing import List, Dict, Optional, Any, Tuple
-import time
 import logging
-from datetime import datetime
+import time
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..data.models.models import PriceDataFrame
-from ..data.models.parsers import CSVParser, JSONParser
-from ..data.models.package_fetcher import PackageDataFetcher
-from ..data.models.validator import DataValidator
-from ..patterns.geometric import GeometricPatternAnalyzer
-from ..patterns.reversal import ReversalPatternDetector
-from ..patterns.advanced import AdvancedPatternAnalyzer
-from ..patterns.divergence import DivergenceAnalyzer
-from ..patterns.candlestick import CandlestickPatternAnalyzer
-from ..patterns.types import DetectedPattern, PatternCategory
-from ..visualization.terminal_chart import TerminalChart
 from ..analysis.technical import TechnicalIndicators
 from ..config.manager import ConfigManager
-from ..ml.predictor import MLPredictor
+from ..data.models.models import PriceDataFrame
+from ..data.models.package_fetcher import PackageDataFetcher
+from ..data.models.parsers import CSVParser, JSONParser
+from ..data.models.validator import DataValidator
 from ..exceptions import (
+    AnalysisError,
     CryptVaultError,
     DataFetchError,
-    ValidationError,
-    AnalysisError,
-    PatternDetectionError,
-    MLPredictionError,
     IndicatorCalculationError,
     InsufficientDataError,
-    InvalidTickerError
+    InvalidTickerError,
+    MLPredictionError,
+    PatternDetectionError,
+    ValidationError,
 )
+from ..ml.predictor import MLPredictor
+from ..patterns.advanced import AdvancedPatternAnalyzer
+from ..patterns.candlestick import CandlestickPatternAnalyzer
+from ..patterns.divergence import DivergenceAnalyzer
+from ..patterns.geometric import GeometricPatternAnalyzer
+from ..patterns.reversal import ReversalPatternDetector
+from ..patterns.types import DetectedPattern, PatternCategory
+from ..visualization.terminal_chart import TerminalChart
 
 
 @dataclass
@@ -71,6 +71,7 @@ class AnalysisResult:
         warnings: List of warnings
         data_summary: Summary of input data
     """
+
     success: bool
     symbol: str
     patterns: List[Dict[str, Any]] = field(default_factory=list)
@@ -90,22 +91,22 @@ class AnalysisResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary format."""
         return {
-            'success': self.success,
-            'symbol': self.symbol,
-            'patterns_found': len(self.patterns),
-            'patterns': self.patterns,
-            'pattern_summary': self.pattern_summary,
-            'technical_indicators': self.technical_indicators,
-            'ml_predictions': self.ml_predictions,
-            'ticker_info': self.ticker_info,
-            'chart': self.chart,
-            'recommendations': self.recommendations,
-            'analysis_time_seconds': self.analysis_time,
-            'analysis_timestamp': self.analysis_timestamp,
-            'configuration_used': self.configuration_used,
-            'errors': self.errors,
-            'warnings': self.warnings,
-            'data_summary': self.data_summary
+            "success": self.success,
+            "symbol": self.symbol,
+            "patterns_found": len(self.patterns),
+            "patterns": self.patterns,
+            "pattern_summary": self.pattern_summary,
+            "technical_indicators": self.technical_indicators,
+            "ml_predictions": self.ml_predictions,
+            "ticker_info": self.ticker_info,
+            "chart": self.chart,
+            "recommendations": self.recommendations,
+            "analysis_time_seconds": self.analysis_time,
+            "analysis_timestamp": self.analysis_timestamp,
+            "configuration_used": self.configuration_used,
+            "errors": self.errors,
+            "warnings": self.warnings,
+            "data_summary": self.data_summary,
         }
 
 
@@ -159,8 +160,8 @@ class PatternAnalyzer:
             self.logger.error(f"Failed to initialize data components: {e}")
             raise AnalysisError(
                 "Failed to initialize data handling components",
-                details={'error': str(e)},
-                original_error=e
+                details={"error": str(e)},
+                original_error=e,
             )
 
         # Pattern detection components
@@ -175,8 +176,8 @@ class PatternAnalyzer:
             self.logger.error(f"Failed to initialize pattern detectors: {e}")
             raise AnalysisError(
                 "Failed to initialize pattern detection components",
-                details={'error': str(e)},
-                original_error=e
+                details={"error": str(e)},
+                original_error=e,
             )
 
         # Technical indicators
@@ -187,8 +188,8 @@ class PatternAnalyzer:
             self.logger.error(f"Failed to initialize technical indicators: {e}")
             raise AnalysisError(
                 "Failed to initialize technical indicators",
-                details={'error': str(e)},
-                original_error=e
+                details={"error": str(e)},
+                original_error=e,
             )
 
         # ML Predictor (optional - failure is non-fatal)
@@ -204,7 +205,7 @@ class PatternAnalyzer:
             self.chart_renderer = TerminalChart(
                 width=self.config.display.chart_width,
                 height=self.config.display.chart_height,
-                enable_colors=self.config.display.enable_colors
+                enable_colors=self.config.display.enable_colors,
             )
             self.logger.debug("Chart renderer initialized")
         except Exception as e:
@@ -212,11 +213,7 @@ class PatternAnalyzer:
             self.chart_renderer = None
 
     def analyze_ticker(
-        self,
-        ticker: str,
-        days: int = 60,
-        interval: str = '1d',
-        sensitivity: Optional[float] = None
+        self, ticker: str, days: int = 60, interval: str = "1d", sensitivity: Optional[float] = None
     ) -> AnalysisResult:
         """
         Analyze cryptocurrency by ticker symbol with real-time data fetching.
@@ -251,9 +248,7 @@ class PatternAnalyzer:
 
         # Create result object
         result = AnalysisResult(
-            success=False,
-            symbol=ticker.upper(),
-            analysis_timestamp=datetime.now()
+            success=False, symbol=ticker.upper(), analysis_timestamp=datetime.now()
         )
 
         try:
@@ -285,11 +280,8 @@ class PatternAnalyzer:
 
         return result
 
-
     def analyze_from_csv(
-        self,
-        csv_data: str,
-        sensitivity: Optional[float] = None
+        self, csv_data: str, sensitivity: Optional[float] = None
     ) -> AnalysisResult:
         """
         Analyze patterns from CSV data.
@@ -309,11 +301,7 @@ class PatternAnalyzer:
         start_time = time.time()
         self.logger.info("Starting analysis from CSV data")
 
-        result = AnalysisResult(
-            success=False,
-            symbol="CSV_DATA",
-            analysis_timestamp=datetime.now()
-        )
+        result = AnalysisResult(success=False, symbol="CSV_DATA", analysis_timestamp=datetime.now())
 
         try:
             # Parse CSV data
@@ -322,14 +310,14 @@ class PatternAnalyzer:
 
             # Validate data
             validation_result = self.validator.validate_price_dataframe(data_frame)
-            if not validation_result['is_valid']:
+            if not validation_result["is_valid"]:
                 result.errors.append("Data validation failed")
-                result.errors.extend(validation_result['errors'])
-                result.warnings.extend(validation_result.get('suggestions', []))
+                result.errors.extend(validation_result["errors"])
+                result.warnings.extend(validation_result.get("suggestions", []))
                 result.analysis_time = time.time() - start_time
                 return result
 
-            result.data_summary = validation_result['statistics']
+            result.data_summary = validation_result["statistics"]
 
             # Perform analysis
             self._perform_comprehensive_analysis(data_frame, sensitivity, result)
@@ -344,9 +332,7 @@ class PatternAnalyzer:
         return result
 
     def analyze_from_json(
-        self,
-        json_data: str,
-        sensitivity: Optional[float] = None
+        self, json_data: str, sensitivity: Optional[float] = None
     ) -> AnalysisResult:
         """
         Analyze patterns from JSON data.
@@ -366,9 +352,7 @@ class PatternAnalyzer:
         self.logger.info("Starting analysis from JSON data")
 
         result = AnalysisResult(
-            success=False,
-            symbol="JSON_DATA",
-            analysis_timestamp=datetime.now()
+            success=False, symbol="JSON_DATA", analysis_timestamp=datetime.now()
         )
 
         try:
@@ -378,14 +362,14 @@ class PatternAnalyzer:
 
             # Validate data
             validation_result = self.validator.validate_price_dataframe(data_frame)
-            if not validation_result['is_valid']:
+            if not validation_result["is_valid"]:
                 result.errors.append("Data validation failed")
-                result.errors.extend(validation_result['errors'])
-                result.warnings.extend(validation_result.get('suggestions', []))
+                result.errors.extend(validation_result["errors"])
+                result.warnings.extend(validation_result.get("suggestions", []))
                 result.analysis_time = time.time() - start_time
                 return result
 
-            result.data_summary = validation_result['statistics']
+            result.data_summary = validation_result["statistics"]
 
             # Perform analysis
             self._perform_comprehensive_analysis(data_frame, sensitivity, result)
@@ -400,9 +384,7 @@ class PatternAnalyzer:
         return result
 
     def analyze_dataframe(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: Optional[float] = None
+        self, data_frame: PriceDataFrame, sensitivity: Optional[float] = None
     ) -> AnalysisResult:
         """
         Analyze patterns from PriceDataFrame.
@@ -424,20 +406,20 @@ class PatternAnalyzer:
         result = AnalysisResult(
             success=False,
             symbol=data_frame.symbol or "DATAFRAME",
-            analysis_timestamp=datetime.now()
+            analysis_timestamp=datetime.now(),
         )
 
         try:
             # Validate data
             validation_result = self.validator.validate_price_dataframe(data_frame)
-            if not validation_result['is_valid']:
+            if not validation_result["is_valid"]:
                 result.errors.append("Data validation failed")
-                result.errors.extend(validation_result['errors'])
-                result.warnings.extend(validation_result.get('suggestions', []))
+                result.errors.extend(validation_result["errors"])
+                result.warnings.extend(validation_result.get("suggestions", []))
                 result.analysis_time = time.time() - start_time
                 return result
 
-            result.data_summary = validation_result['statistics']
+            result.data_summary = validation_result["statistics"]
 
             # Perform analysis
             self._perform_comprehensive_analysis(data_frame, sensitivity, result)
@@ -451,10 +433,7 @@ class PatternAnalyzer:
         return result
 
     def _fetch_and_validate_data(
-        self,
-        ticker: str,
-        days: int,
-        interval: str
+        self, ticker: str, days: int, interval: str
     ) -> Tuple[Optional[PriceDataFrame], List[str]]:
         """
         Fetch and validate data with comprehensive error handling.
@@ -475,7 +454,9 @@ class PatternAnalyzer:
                 error_msg = f"Ticker '{ticker}' is not supported or not found"
                 self.logger.error(error_msg)
                 errors.append(error_msg)
-                errors.append(f"Try one of: {', '.join(self.data_fetcher.get_supported_tickers()[:10])}")
+                errors.append(
+                    f"Try one of: {', '.join(self.data_fetcher.get_supported_tickers()[:10])}"
+                )
                 return None, errors
 
             # Fetch historical data
@@ -491,10 +472,10 @@ class PatternAnalyzer:
 
             # Validate data
             validation_result = self.validator.validate_price_dataframe(data_frame)
-            if not validation_result['is_valid']:
+            if not validation_result["is_valid"]:
                 self.logger.error("Data validation failed")
                 errors.append("Data validation failed")
-                errors.extend(validation_result['errors'])
+                errors.extend(validation_result["errors"])
                 return None, errors
 
             # Check data size constraints
@@ -514,9 +495,9 @@ class PatternAnalyzer:
                     f"{self.config.analysis.max_data_points} points"
                 )
                 data_frame = PriceDataFrame(
-                    data=data_frame.data[-self.config.analysis.max_data_points:],
+                    data=data_frame.data[-self.config.analysis.max_data_points :],
                     symbol=data_frame.symbol,
-                    timeframe=data_frame.timeframe
+                    timeframe=data_frame.timeframe,
                 )
 
             self.logger.info(f"Successfully fetched and validated {len(data_frame)} data points")
@@ -528,10 +509,7 @@ class PatternAnalyzer:
             return None, errors
 
     def _perform_comprehensive_analysis(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: Optional[float],
-        result: AnalysisResult
+        self, data_frame: PriceDataFrame, sensitivity: Optional[float], result: AnalysisResult
     ) -> None:
         """
         Perform comprehensive analysis with graceful degradation.
@@ -553,19 +531,19 @@ class PatternAnalyzer:
 
         # Store configuration used
         result.configuration_used = {
-            'sensitivity_level': self.config.sensitivity.level.value,
-            'patterns_enabled': len(self.config.patterns.get_enabled_patterns()),
-            'colors_enabled': self.config.display.enable_colors,
-            'min_confidence': self.config.sensitivity.get_min_confidence('geometric')
+            "sensitivity_level": self.config.sensitivity.level.value,
+            "patterns_enabled": len(self.config.patterns.get_enabled_patterns()),
+            "colors_enabled": self.config.display.enable_colors,
+            "min_confidence": self.config.sensitivity.get_min_confidence("geometric"),
         }
 
         # Store data summary
         result.data_summary = {
-            'total_points': len(data_frame),
-            'symbol': data_frame.symbol,
-            'timeframe': data_frame.timeframe,
-            'start_time': data_frame.data[0].timestamp if data_frame.data else None,
-            'end_time': data_frame.data[-1].timestamp if data_frame.data else None
+            "total_points": len(data_frame),
+            "symbol": data_frame.symbol,
+            "timeframe": data_frame.timeframe,
+            "start_time": data_frame.data[0].timestamp if data_frame.data else None,
+            "end_time": data_frame.data[-1].timestamp if data_frame.data else None,
         }
 
         # Component 1: Pattern Detection (with graceful degradation)
@@ -587,10 +565,7 @@ class PatternAnalyzer:
         self._add_ticker_info(data_frame, result)
 
     def _detect_patterns_with_error_handling(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float,
-        result: AnalysisResult
+        self, data_frame: PriceDataFrame, sensitivity: float, result: AnalysisResult
     ) -> List[DetectedPattern]:
         """
         Detect patterns with comprehensive error handling.
@@ -656,7 +631,9 @@ class PatternAnalyzer:
             result.patterns = self._format_patterns_for_output(filtered_patterns)
             result.pattern_summary = self._create_pattern_summary(filtered_patterns)
 
-            self.logger.info(f"Pattern detection completed. Found {len(filtered_patterns)} patterns")
+            self.logger.info(
+                f"Pattern detection completed. Found {len(filtered_patterns)} patterns"
+            )
 
             return filtered_patterns
 
@@ -666,22 +643,21 @@ class PatternAnalyzer:
             result.warnings.append("Pattern detection partially failed, results may be incomplete")
             return []
 
-
     def _detect_geometric_patterns(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float
+        self, data_frame: PriceDataFrame, sensitivity: float
     ) -> Tuple[List[DetectedPattern], List[str]]:
         """Detect geometric patterns with error handling."""
         patterns = []
         errors = []
 
         try:
-            geometric_sensitivity = self.config.sensitivity.get_pattern_sensitivity('geometric')
+            geometric_sensitivity = self.config.sensitivity.get_pattern_sensitivity("geometric")
 
             # Triangles
-            if any(self.config.patterns.is_pattern_enabled(p) for p in
-                   ['ascending_triangle', 'descending_triangle', 'symmetrical_triangle']):
+            if any(
+                self.config.patterns.is_pattern_enabled(p)
+                for p in ["ascending_triangle", "descending_triangle", "symmetrical_triangle"]
+            ):
                 try:
                     triangles = self.geometric_analyzer.detect_triangle_patterns(
                         data_frame, geometric_sensitivity
@@ -692,7 +668,7 @@ class PatternAnalyzer:
                     errors.append(f"Triangle detection failed: {str(e)}")
 
             # Flags
-            if any(self.config.patterns.is_pattern_enabled(p) for p in ['bull_flag', 'bear_flag']):
+            if any(self.config.patterns.is_pattern_enabled(p) for p in ["bull_flag", "bear_flag"]):
                 try:
                     flags = self.geometric_analyzer.detect_flag_patterns(
                         data_frame, geometric_sensitivity
@@ -703,7 +679,7 @@ class PatternAnalyzer:
                     errors.append(f"Flag detection failed: {str(e)}")
 
             # Cup and Handle
-            if self.config.patterns.is_pattern_enabled('cup_and_handle'):
+            if self.config.patterns.is_pattern_enabled("cup_and_handle"):
                 try:
                     cups = self.geometric_analyzer.detect_cup_and_handle(
                         data_frame, geometric_sensitivity
@@ -714,8 +690,10 @@ class PatternAnalyzer:
                     errors.append(f"Cup and handle detection failed: {str(e)}")
 
             # Wedges
-            if any(self.config.patterns.is_pattern_enabled(p) for p in
-                   ['rising_wedge', 'falling_wedge']):
+            if any(
+                self.config.patterns.is_pattern_enabled(p)
+                for p in ["rising_wedge", "falling_wedge"]
+            ):
                 try:
                     wedges = self.geometric_analyzer.detect_wedge_patterns(
                         data_frame, geometric_sensitivity
@@ -726,7 +704,7 @@ class PatternAnalyzer:
                     errors.append(f"Wedge detection failed: {str(e)}")
 
             # Rectangles
-            if any(self.config.patterns.is_pattern_enabled(p) for p in ['rectangle', 'channel']):
+            if any(self.config.patterns.is_pattern_enabled(p) for p in ["rectangle", "channel"]):
                 try:
                     rectangles = self.geometric_analyzer.detect_rectangle_patterns(
                         data_frame, geometric_sensitivity
@@ -743,20 +721,20 @@ class PatternAnalyzer:
         return patterns, errors
 
     def _detect_reversal_patterns(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float
+        self, data_frame: PriceDataFrame, sensitivity: float
     ) -> Tuple[List[DetectedPattern], List[str]]:
         """Detect reversal patterns with error handling."""
         patterns = []
         errors = []
 
         try:
-            reversal_sensitivity = self.config.sensitivity.get_pattern_sensitivity('reversal')
+            reversal_sensitivity = self.config.sensitivity.get_pattern_sensitivity("reversal")
 
             # Double/Triple patterns
-            if any(self.config.patterns.is_pattern_enabled(p) for p in
-                   ['double_top', 'double_bottom', 'triple_top', 'triple_bottom']):
+            if any(
+                self.config.patterns.is_pattern_enabled(p)
+                for p in ["double_top", "double_bottom", "triple_top", "triple_bottom"]
+            ):
                 try:
                     double_triple = self.reversal_analyzer.detect_double_triple_patterns(
                         data_frame, reversal_sensitivity
@@ -767,7 +745,7 @@ class PatternAnalyzer:
                     errors.append(f"Double/triple pattern detection failed: {str(e)}")
 
             # Head and Shoulders
-            if self.config.patterns.is_pattern_enabled('head_shoulders'):
+            if self.config.patterns.is_pattern_enabled("head_shoulders"):
                 try:
                     head_shoulders = self.reversal_analyzer.detect_head_and_shoulders_patterns(
                         data_frame, reversal_sensitivity
@@ -784,9 +762,7 @@ class PatternAnalyzer:
         return patterns, errors
 
     def _detect_advanced_patterns(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float
+        self, data_frame: PriceDataFrame, sensitivity: float
     ) -> Tuple[List[DetectedPattern], List[str]]:
         """Detect advanced patterns with error handling."""
         patterns = []
@@ -794,7 +770,7 @@ class PatternAnalyzer:
 
         try:
             # Diamond patterns
-            if self.config.patterns.is_pattern_enabled('diamond'):
+            if self.config.patterns.is_pattern_enabled("diamond"):
                 try:
                     diamonds = self.advanced_analyzer.detect_diamond_patterns(
                         data_frame, sensitivity
@@ -805,7 +781,7 @@ class PatternAnalyzer:
                     errors.append(f"Diamond detection failed: {str(e)}")
 
             # Expanding triangles
-            if self.config.patterns.is_pattern_enabled('expanding_triangle'):
+            if self.config.patterns.is_pattern_enabled("expanding_triangle"):
                 try:
                     expanding = self.advanced_analyzer.detect_expanding_triangle_patterns(
                         data_frame, sensitivity
@@ -822,19 +798,19 @@ class PatternAnalyzer:
         return patterns, errors
 
     def _detect_harmonic_patterns(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float
+        self, data_frame: PriceDataFrame, sensitivity: float
     ) -> Tuple[List[DetectedPattern], List[str]]:
         """Detect harmonic patterns with error handling."""
         patterns = []
         errors = []
 
         try:
-            harmonic_sensitivity = self.config.sensitivity.get_pattern_sensitivity('harmonic')
+            harmonic_sensitivity = self.config.sensitivity.get_pattern_sensitivity("harmonic")
 
-            if any(self.config.patterns.is_pattern_enabled(p) for p in
-                   ['gartley', 'butterfly', 'bat', 'crab', 'abcd', 'cypher']):
+            if any(
+                self.config.patterns.is_pattern_enabled(p)
+                for p in ["gartley", "butterfly", "bat", "crab", "abcd", "cypher"]
+            ):
                 try:
                     harmonics = self.advanced_analyzer.detect_harmonic_patterns(
                         data_frame, harmonic_sensitivity
@@ -851,16 +827,14 @@ class PatternAnalyzer:
         return patterns, errors
 
     def _detect_candlestick_patterns(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float
+        self, data_frame: PriceDataFrame, sensitivity: float
     ) -> Tuple[List[DetectedPattern], List[str]]:
         """Detect candlestick patterns with error handling."""
         patterns = []
         errors = []
 
         try:
-            candlestick_sensitivity = self.config.sensitivity.get_pattern_sensitivity('candlestick')
+            candlestick_sensitivity = self.config.sensitivity.get_pattern_sensitivity("candlestick")
 
             # Single candlestick patterns
             try:
@@ -889,19 +863,19 @@ class PatternAnalyzer:
         return patterns, errors
 
     def _detect_divergence_patterns(
-        self,
-        data_frame: PriceDataFrame,
-        sensitivity: float
+        self, data_frame: PriceDataFrame, sensitivity: float
     ) -> Tuple[List[DetectedPattern], List[str]]:
         """Detect divergence patterns with error handling."""
         patterns = []
         errors = []
 
         try:
-            divergence_sensitivity = self.config.sensitivity.get_pattern_sensitivity('divergence')
+            divergence_sensitivity = self.config.sensitivity.get_pattern_sensitivity("divergence")
 
-            if any(self.config.patterns.is_pattern_enabled(p) for p in
-                   ['bullish_divergence', 'bearish_divergence', 'hidden_divergence']):
+            if any(
+                self.config.patterns.is_pattern_enabled(p)
+                for p in ["bullish_divergence", "bearish_divergence", "hidden_divergence"]
+            ):
                 try:
                     divergences = self.divergence_analyzer.detect_price_indicator_divergence(
                         data_frame, divergence_sensitivity
@@ -918,9 +892,7 @@ class PatternAnalyzer:
         return patterns, errors
 
     def _calculate_indicators_with_error_handling(
-        self,
-        data_frame: PriceDataFrame,
-        result: AnalysisResult
+        self, data_frame: PriceDataFrame, result: AnalysisResult
     ) -> None:
         """Calculate technical indicators with error handling."""
         try:
@@ -931,10 +903,10 @@ class PatternAnalyzer:
             try:
                 rsi = self.technical_indicators.calculate_rsi(data_frame)
                 current_rsi = next((val for val in reversed(rsi) if val is not None), None)
-                indicators['rsi'] = {
-                    'current': current_rsi,
-                    'overbought': current_rsi and current_rsi > 70,
-                    'oversold': current_rsi and current_rsi < 30
+                indicators["rsi"] = {
+                    "current": current_rsi,
+                    "overbought": current_rsi and current_rsi > 70,
+                    "oversold": current_rsi and current_rsi < 30,
                 }
             except Exception as e:
                 self.logger.warning(f"RSI calculation failed: {e}")
@@ -943,13 +915,19 @@ class PatternAnalyzer:
             # MACD
             try:
                 macd = self.technical_indicators.calculate_macd(data_frame)
-                current_macd = next((val for val in reversed(macd['macd']) if val is not None), None)
-                current_signal = next((val for val in reversed(macd['signal']) if val is not None), None)
+                current_macd = next(
+                    (val for val in reversed(macd["macd"]) if val is not None), None
+                )
+                current_signal = next(
+                    (val for val in reversed(macd["signal"]) if val is not None), None
+                )
 
-                indicators['macd'] = {
-                    'current_macd': current_macd,
-                    'current_signal': current_signal,
-                    'bullish_crossover': current_macd and current_signal and current_macd > current_signal
+                indicators["macd"] = {
+                    "current_macd": current_macd,
+                    "current_signal": current_signal,
+                    "bullish_crossover": current_macd
+                    and current_signal
+                    and current_macd > current_signal,
                 }
             except Exception as e:
                 self.logger.warning(f"MACD calculation failed: {e}")
@@ -964,10 +942,7 @@ class PatternAnalyzer:
             result.warnings.append("Technical indicators unavailable")
 
     def _generate_ml_predictions_with_error_handling(
-        self,
-        data_frame: PriceDataFrame,
-        patterns: List[DetectedPattern],
-        result: AnalysisResult
+        self, data_frame: PriceDataFrame, patterns: List[DetectedPattern], result: AnalysisResult
     ) -> None:
         """Generate ML predictions with error handling."""
         if not self.ml_predictor:
@@ -987,10 +962,7 @@ class PatternAnalyzer:
             result.ml_predictions = None
 
     def _generate_chart_with_error_handling(
-        self,
-        data_frame: PriceDataFrame,
-        patterns: List[DetectedPattern],
-        result: AnalysisResult
+        self, data_frame: PriceDataFrame, patterns: List[DetectedPattern], result: AnalysisResult
     ) -> None:
         """Generate chart visualization with error handling."""
         if not self.chart_renderer:
@@ -1007,7 +979,6 @@ class PatternAnalyzer:
             self.logger.warning(f"Chart generation failed: {e}")
             result.warnings.append("Chart visualization unavailable due to error")
             result.chart = None
-
 
     def _filter_patterns(self, patterns: List[DetectedPattern]) -> List[DetectedPattern]:
         """
@@ -1038,13 +1009,17 @@ class PatternAnalyzer:
 
             # Check pattern duration constraints
             duration_candles = pattern.end_index - pattern.start_index + 1
-            if (duration_candles < self.config.sensitivity.min_pattern_duration or
-                duration_candles > self.config.sensitivity.max_pattern_duration):
+            if (
+                duration_candles < self.config.sensitivity.min_pattern_duration
+                or duration_candles > self.config.sensitivity.max_pattern_duration
+            ):
                 continue
 
             # Check volume confirmation if required
-            if (self.config.sensitivity.require_volume_confirmation and
-                not pattern.volume_profile.volume_confirmation):
+            if (
+                self.config.sensitivity.require_volume_confirmation
+                and not pattern.volume_profile.volume_confirmation
+            ):
                 continue
 
             # Group by type for limiting
@@ -1055,7 +1030,7 @@ class PatternAnalyzer:
         # Apply per-type limits
         for pattern_type, type_patterns in patterns_by_type.items():
             type_patterns.sort(key=lambda p: p.confidence, reverse=True)
-            limited_patterns = type_patterns[:self.config.patterns.max_patterns_per_type]
+            limited_patterns = type_patterns[: self.config.patterns.max_patterns_per_type]
             filtered_patterns.extend(limited_patterns)
 
         # Sort all patterns by confidence
@@ -1063,7 +1038,7 @@ class PatternAnalyzer:
 
         # Apply total limit
         if len(filtered_patterns) > self.config.patterns.max_total_patterns:
-            filtered_patterns = filtered_patterns[:self.config.patterns.max_total_patterns]
+            filtered_patterns = filtered_patterns[: self.config.patterns.max_total_patterns]
 
         # Filter overlapping patterns if enabled
         if self.config.patterns.filter_overlapping:
@@ -1074,20 +1049,19 @@ class PatternAnalyzer:
     def _get_category_key(self, category: PatternCategory) -> str:
         """Get category key for configuration lookup."""
         category_map = {
-            'Bullish Continuation': 'geometric',
-            'Bearish Continuation': 'geometric',
-            'Bullish Reversal': 'reversal',
-            'Bearish Reversal': 'reversal',
-            'Bilateral/Neutral': 'geometric',
-            'Harmonic Pattern': 'harmonic',
-            'Candlestick Pattern': 'candlestick',
-            'Divergence Pattern': 'divergence'
+            "Bullish Continuation": "geometric",
+            "Bearish Continuation": "geometric",
+            "Bullish Reversal": "reversal",
+            "Bearish Reversal": "reversal",
+            "Bilateral/Neutral": "geometric",
+            "Harmonic Pattern": "harmonic",
+            "Candlestick Pattern": "candlestick",
+            "Divergence Pattern": "divergence",
         }
-        return category_map.get(category.value, 'geometric')
+        return category_map.get(category.value, "geometric")
 
     def _remove_overlapping_patterns(
-        self,
-        patterns: List[DetectedPattern]
+        self, patterns: List[DetectedPattern]
     ) -> List[DetectedPattern]:
         """Remove overlapping patterns, keeping higher confidence ones."""
         if not patterns:
@@ -1118,39 +1092,35 @@ class PatternAnalyzer:
 
         return non_overlapping
 
-    def _format_patterns_for_output(
-        self,
-        patterns: List[DetectedPattern]
-    ) -> List[Dict[str, Any]]:
+    def _format_patterns_for_output(self, patterns: List[DetectedPattern]) -> List[Dict[str, Any]]:
         """Format patterns for output display."""
         formatted_patterns = []
 
         for pattern in patterns:
-            formatted_patterns.append({
-                'type': pattern.pattern_type.value.replace('_', ' ').title(),
-                'category': pattern.category.value,
-                'confidence': f"{pattern.confidence:.1%}",
-                'confidence_raw': pattern.confidence,
-                'start_time': pattern.start_time.strftime("%Y-%m-%d %H:%M:%S"),
-                'end_time': pattern.end_time.strftime("%Y-%m-%d %H:%M:%S"),
-                'duration_hours': pattern.get_duration_days() * 24,
-                'is_bullish': pattern.is_bullish(),
-                'is_bearish': pattern.is_bearish(),
-                'is_reversal': pattern.is_reversal(),
-                'description': pattern.description,
-                'key_levels': pattern.key_levels,
-                'volume_confirmation': pattern.volume_profile.volume_confirmation
-            })
+            formatted_patterns.append(
+                {
+                    "type": pattern.pattern_type.value.replace("_", " ").title(),
+                    "category": pattern.category.value,
+                    "confidence": f"{pattern.confidence:.1%}",
+                    "confidence_raw": pattern.confidence,
+                    "start_time": pattern.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "end_time": pattern.end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "duration_hours": pattern.get_duration_days() * 24,
+                    "is_bullish": pattern.is_bullish(),
+                    "is_bearish": pattern.is_bearish(),
+                    "is_reversal": pattern.is_reversal(),
+                    "description": pattern.description,
+                    "key_levels": pattern.key_levels,
+                    "volume_confirmation": pattern.volume_profile.volume_confirmation,
+                }
+            )
 
         return formatted_patterns
 
-    def _create_pattern_summary(
-        self,
-        patterns: List[DetectedPattern]
-    ) -> Dict[str, Any]:
+    def _create_pattern_summary(self, patterns: List[DetectedPattern]) -> Dict[str, Any]:
         """Create summary statistics of detected patterns."""
         if not patterns:
-            return {'total': 0}
+            return {"total": 0}
 
         # Count by category
         category_counts = {}
@@ -1167,16 +1137,18 @@ class PatternAnalyzer:
         avg_confidence = sum(p.confidence for p in patterns) / len(patterns)
 
         return {
-            'total': len(patterns),
-            'by_category': category_counts,
-            'sentiment': {
-                'bullish': bullish_count,
-                'bearish': bearish_count,
-                'neutral': neutral_count
+            "total": len(patterns),
+            "by_category": category_counts,
+            "sentiment": {
+                "bullish": bullish_count,
+                "bearish": bearish_count,
+                "neutral": neutral_count,
             },
-            'average_confidence': f"{avg_confidence:.1%}",
-            'highest_confidence': f"{max(p.confidence for p in patterns):.1%}",
-            'most_common_category': max(category_counts.items(), key=lambda x: x[1])[0] if category_counts else None
+            "average_confidence": f"{avg_confidence:.1%}",
+            "highest_confidence": f"{max(p.confidence for p in patterns):.1%}",
+            "most_common_category": (
+                max(category_counts.items(), key=lambda x: x[1])[0] if category_counts else None
+            ),
         }
 
     def _generate_recommendations(self, result: AnalysisResult) -> None:
@@ -1186,24 +1158,26 @@ class PatternAnalyzer:
         indicators = result.technical_indicators
 
         if not patterns:
-            recommendations.append("No significant patterns detected. Consider waiting for clearer signals.")
+            recommendations.append(
+                "No significant patterns detected. Consider waiting for clearer signals."
+            )
             result.recommendations = recommendations
             return
 
         # Pattern-based recommendations
-        bullish_patterns = [p for p in patterns if p.get('is_bullish', False)]
-        bearish_patterns = [p for p in patterns if p.get('is_bearish', False)]
+        bullish_patterns = [p for p in patterns if p.get("is_bullish", False)]
+        bearish_patterns = [p for p in patterns if p.get("is_bearish", False)]
 
         if len(bullish_patterns) > len(bearish_patterns):
             recommendations.append("📈 Bullish bias: More bullish patterns detected than bearish")
-            if bullish_patterns and bullish_patterns[0]['confidence_raw'] > 0.7:
+            if bullish_patterns and bullish_patterns[0]["confidence_raw"] > 0.7:
                 recommendations.append(
                     f"🔥 Strong bullish signal: {bullish_patterns[0]['type']} "
                     f"with {bullish_patterns[0]['confidence']} confidence"
                 )
         elif len(bearish_patterns) > len(bullish_patterns):
             recommendations.append("📉 Bearish bias: More bearish patterns detected than bullish")
-            if bearish_patterns and bearish_patterns[0]['confidence_raw'] > 0.7:
+            if bearish_patterns and bearish_patterns[0]["confidence_raw"] > 0.7:
                 recommendations.append(
                     f"⚠️ Strong bearish signal: {bearish_patterns[0]['type']} "
                     f"with {bearish_patterns[0]['confidence']} confidence"
@@ -1212,15 +1186,19 @@ class PatternAnalyzer:
             recommendations.append("⚖️ Mixed signals: Equal bullish and bearish patterns detected")
 
         # Indicator-based recommendations
-        if 'rsi' in indicators and indicators['rsi'].get('current'):
-            rsi_val = indicators['rsi']['current']
-            if indicators['rsi'].get('overbought'):
-                recommendations.append(f"⚠️ RSI overbought at {rsi_val:.1f} - potential pullback ahead")
-            elif indicators['rsi'].get('oversold'):
-                recommendations.append(f"💡 RSI oversold at {rsi_val:.1f} - potential bounce opportunity")
+        if "rsi" in indicators and indicators["rsi"].get("current"):
+            rsi_val = indicators["rsi"]["current"]
+            if indicators["rsi"].get("overbought"):
+                recommendations.append(
+                    f"⚠️ RSI overbought at {rsi_val:.1f} - potential pullback ahead"
+                )
+            elif indicators["rsi"].get("oversold"):
+                recommendations.append(
+                    f"💡 RSI oversold at {rsi_val:.1f} - potential bounce opportunity"
+                )
 
         # Volume confirmation
-        volume_confirmed = sum(1 for p in patterns if p.get('volume_confirmation', False))
+        volume_confirmed = sum(1 for p in patterns if p.get("volume_confirmation", False))
         if volume_confirmed > len(patterns) * 0.6:
             recommendations.append("✅ Good volume confirmation on most patterns")
         elif volume_confirmed < len(patterns) * 0.3:
@@ -1236,10 +1214,14 @@ class PatternAnalyzer:
         """Add ticker information to result."""
         try:
             ticker_info = {
-                'symbol': data_frame.symbol or result.symbol,
-                'data_points': len(data_frame),
-                'data_interval': data_frame.timeframe,
-                'last_update': data_frame.data[-1].timestamp.strftime("%Y-%m-%d %H:%M:%S") if data_frame.data else None
+                "symbol": data_frame.symbol or result.symbol,
+                "data_points": len(data_frame),
+                "data_interval": data_frame.timeframe,
+                "last_update": (
+                    data_frame.data[-1].timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                    if data_frame.data
+                    else None
+                ),
             }
 
             # Add price change information
@@ -1248,18 +1230,18 @@ class PatternAnalyzer:
                 last_price = data_frame.data[-1].close
                 price_change = (last_price - first_price) / first_price
 
-                ticker_info['price_change'] = {
-                    'absolute': last_price - first_price,
-                    'percentage': price_change,
-                    'first_price': first_price,
-                    'last_price': last_price
+                ticker_info["price_change"] = {
+                    "absolute": last_price - first_price,
+                    "percentage": price_change,
+                    "first_price": first_price,
+                    "last_price": last_price,
                 }
 
             # Try to get current price
             try:
                 current_price = self.data_fetcher.get_current_price(data_frame.symbol)
                 if current_price:
-                    ticker_info['current_price'] = current_price
+                    ticker_info["current_price"] = current_price
             except Exception:
                 pass
 
@@ -1275,69 +1257,69 @@ class PatternAnalyzer:
             if isinstance(ml_predictions, dict):
                 # Already in dict format, return as-is
                 return ml_predictions
-            
+
             # Object format - convert to dict
             result = {}
-            
+
             # Price forecast
-            price_forecast = getattr(ml_predictions, 'price_forecast', None)
+            price_forecast = getattr(ml_predictions, "price_forecast", None)
             if price_forecast:
                 if isinstance(price_forecast, dict):
-                    result['price_forecast'] = price_forecast
+                    result["price_forecast"] = price_forecast
                 else:
-                    result['price_forecast'] = {
-                        'daily_prices': getattr(price_forecast, 'daily_prices', []),
-                        'expected_return': f"{getattr(price_forecast, 'expected_return', 0):.2%}",
-                        'prediction_dates': [
-                            d.strftime("%Y-%m-%d") if hasattr(d, 'strftime') else str(d)
-                            for d in getattr(price_forecast, 'prediction_dates', [])
+                    result["price_forecast"] = {
+                        "daily_prices": getattr(price_forecast, "daily_prices", []),
+                        "expected_return": f"{getattr(price_forecast, 'expected_return', 0):.2%}",
+                        "prediction_dates": [
+                            d.strftime("%Y-%m-%d") if hasattr(d, "strftime") else str(d)
+                            for d in getattr(price_forecast, "prediction_dates", [])
                         ],
-                        'confidence_intervals': getattr(price_forecast, 'confidence_intervals', {}),
-                        'probability_up': getattr(price_forecast, 'probability_up', 0.5)
+                        "confidence_intervals": getattr(price_forecast, "confidence_intervals", {}),
+                        "probability_up": getattr(price_forecast, "probability_up", 0.5),
                     }
-            
+
             # Trend forecast
-            trend_forecast = getattr(ml_predictions, 'trend_forecast', None)
+            trend_forecast = getattr(ml_predictions, "trend_forecast", None)
             if trend_forecast:
                 if isinstance(trend_forecast, dict):
-                    result['trend_forecast'] = trend_forecast
+                    result["trend_forecast"] = trend_forecast
                 else:
-                    result['trend_forecast'] = {
-                        'trend_7d': getattr(trend_forecast, 'trend_7d', 'Unknown'),
-                        'trend_30d': getattr(trend_forecast, 'trend_30d', 'Unknown'),
-                        'trend_strength': f"{getattr(trend_forecast, 'trend_strength', 0):.1%}",
-                        'reversal_probability': f"{getattr(trend_forecast, 'reversal_probability', 0):.1%}"
+                    result["trend_forecast"] = {
+                        "trend_7d": getattr(trend_forecast, "trend_7d", "Unknown"),
+                        "trend_30d": getattr(trend_forecast, "trend_30d", "Unknown"),
+                        "trend_strength": f"{getattr(trend_forecast, 'trend_strength', 0):.1%}",
+                        "reversal_probability": f"{getattr(trend_forecast, 'reversal_probability', 0):.1%}",
                     }
-            
+
             # Market regime
-            market_regime = getattr(ml_predictions, 'market_regime', None)
+            market_regime = getattr(ml_predictions, "market_regime", None)
             if market_regime:
                 if isinstance(market_regime, dict):
-                    result['market_regime'] = market_regime
+                    result["market_regime"] = market_regime
                 else:
-                    regime_prob = getattr(market_regime, 'regime_probability', {})
+                    regime_prob = getattr(market_regime, "regime_probability", {})
                     if not isinstance(regime_prob, dict):
                         regime_prob = {}
-                    result['market_regime'] = {
-                        'current_regime': getattr(market_regime, 'current_regime', 'Unknown'),
-                        'regime_probability': {k: f"{v:.1%}" for k, v in regime_prob.items()},
-                        'regime_persistence': f"{getattr(market_regime, 'regime_persistence', 0):.1f} days"
+                    result["market_regime"] = {
+                        "current_regime": getattr(market_regime, "current_regime", "Unknown"),
+                        "regime_probability": {k: f"{v:.1%}" for k, v in regime_prob.items()},
+                        "regime_persistence": f"{getattr(market_regime, 'regime_persistence', 0):.1f} days",
                     }
-            
-            result['model_performance'] = getattr(ml_predictions, 'model_performance', {})
-            result['feature_importance'] = getattr(ml_predictions, 'feature_importance', {})
-            
-            pred_timestamp = getattr(ml_predictions, 'prediction_timestamp', None)
+
+            result["model_performance"] = getattr(ml_predictions, "model_performance", {})
+            result["feature_importance"] = getattr(ml_predictions, "feature_importance", {})
+
+            pred_timestamp = getattr(ml_predictions, "prediction_timestamp", None)
             if pred_timestamp:
-                if hasattr(pred_timestamp, 'strftime'):
-                    result['prediction_timestamp'] = pred_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                if hasattr(pred_timestamp, "strftime"):
+                    result["prediction_timestamp"] = pred_timestamp.strftime("%Y-%m-%d %H:%M:%S")
                 else:
-                    result['prediction_timestamp'] = str(pred_timestamp)
-            
+                    result["prediction_timestamp"] = str(pred_timestamp)
+
             return result
         except Exception as e:
             self.logger.error(f"Failed to format ML predictions: {e}")
-            return {'error': 'Failed to format ML predictions'}
+            return {"error": "Failed to format ML predictions"}
 
     # Utility methods for backward compatibility and convenience
 
@@ -1373,7 +1355,6 @@ class PatternAnalyzer:
         except Exception as e:
             self.logger.error(f"Failed to get current price for {ticker}: {e}")
             return None
-
 
 
 class ResultValidator:
@@ -1423,13 +1404,9 @@ class ResultValidator:
 
         return len(errors) == 0, errors
 
-    def _validate_required_fields(
-        self,
-        result: AnalysisResult,
-        errors: List[str]
-    ) -> bool:
+    def _validate_required_fields(self, result: AnalysisResult, errors: List[str]) -> bool:
         """Validate that required fields are present."""
-        required_fields = ['success', 'symbol', 'analysis_timestamp']
+        required_fields = ["success", "symbol", "analysis_timestamp"]
 
         for field in required_fields:
             if not hasattr(result, field) or getattr(result, field) is None:
@@ -1437,18 +1414,14 @@ class ResultValidator:
 
         # If success is True, additional fields are required
         if result.success:
-            success_required = ['patterns', 'pattern_summary', 'data_summary']
+            success_required = ["patterns", "pattern_summary", "data_summary"]
             for field in success_required:
                 if not hasattr(result, field) or getattr(result, field) is None:
                     errors.append(f"Missing required field for successful analysis: {field}")
 
         return len(errors) == 0
 
-    def _validate_data_types(
-        self,
-        result: AnalysisResult,
-        errors: List[str]
-    ) -> bool:
+    def _validate_data_types(self, result: AnalysisResult, errors: List[str]) -> bool:
         """Validate data types of result fields."""
         # Validate boolean fields
         if not isinstance(result.success, bool):
@@ -1469,39 +1442,47 @@ class ResultValidator:
             errors.append(f"Field 'warnings' must be list, got {type(result.warnings)}")
 
         if not isinstance(result.recommendations, list):
-            errors.append(f"Field 'recommendations' must be list, got {type(result.recommendations)}")
+            errors.append(
+                f"Field 'recommendations' must be list, got {type(result.recommendations)}"
+            )
 
         # Validate dict fields
         if not isinstance(result.pattern_summary, dict):
-            errors.append(f"Field 'pattern_summary' must be dict, got {type(result.pattern_summary)}")
+            errors.append(
+                f"Field 'pattern_summary' must be dict, got {type(result.pattern_summary)}"
+            )
 
         if not isinstance(result.technical_indicators, dict):
-            errors.append(f"Field 'technical_indicators' must be dict, got {type(result.technical_indicators)}")
+            errors.append(
+                f"Field 'technical_indicators' must be dict, got {type(result.technical_indicators)}"
+            )
 
         if not isinstance(result.ticker_info, dict):
             errors.append(f"Field 'ticker_info' must be dict, got {type(result.ticker_info)}")
 
         if not isinstance(result.configuration_used, dict):
-            errors.append(f"Field 'configuration_used' must be dict, got {type(result.configuration_used)}")
+            errors.append(
+                f"Field 'configuration_used' must be dict, got {type(result.configuration_used)}"
+            )
 
         if not isinstance(result.data_summary, dict):
             errors.append(f"Field 'data_summary' must be dict, got {type(result.data_summary)}")
 
         # Validate numeric fields
         if not isinstance(result.analysis_time, (int, float)):
-            errors.append(f"Field 'analysis_time' must be numeric, got {type(result.analysis_time)}")
+            errors.append(
+                f"Field 'analysis_time' must be numeric, got {type(result.analysis_time)}"
+            )
 
         # Validate datetime field
         if result.analysis_timestamp and not isinstance(result.analysis_timestamp, datetime):
-            errors.append(f"Field 'analysis_timestamp' must be datetime, got {type(result.analysis_timestamp)}")
+            errors.append(
+                f"Field 'analysis_timestamp' must be datetime, got {type(result.analysis_timestamp)}"
+            )
 
         return len(errors) == 0
 
-    def _validate_data_ranges(
-        self,
-        result: AnalysisResult,
-        errors: List[str]
-    ) -> bool:
+    def _validate_data_ranges(self, result: AnalysisResult, errors: List[str]) -> bool:
         """Validate data ranges and values."""
         # Validate analysis_time is non-negative
         if result.analysis_time < 0:
@@ -1526,20 +1507,20 @@ class ResultValidator:
                 continue
 
             # Validate pattern has required fields
-            required_pattern_fields = ['type', 'confidence', 'category']
+            required_pattern_fields = ["type", "confidence", "category"]
             for field in required_pattern_fields:
                 if field not in pattern:
                     errors.append(f"Pattern {i} missing required field: {field}")
 
             # Validate confidence_raw is in valid range
-            if 'confidence_raw' in pattern:
-                conf = pattern['confidence_raw']
+            if "confidence_raw" in pattern:
+                conf = pattern["confidence_raw"]
                 if not isinstance(conf, (int, float)) or conf < 0 or conf > 1:
                     errors.append(f"Pattern {i} confidence_raw must be between 0 and 1, got {conf}")
 
         # Validate pattern_summary
-        if result.pattern_summary and 'total' in result.pattern_summary:
-            total = result.pattern_summary['total']
+        if result.pattern_summary and "total" in result.pattern_summary:
+            total = result.pattern_summary["total"]
             if not isinstance(total, int) or total < 0:
                 errors.append(f"pattern_summary.total must be non-negative integer, got {total}")
 
@@ -1570,7 +1551,9 @@ class ResultValidator:
         result.warnings = [self._sanitize_string(warn, max_length=500) for warn in result.warnings]
 
         # Sanitize recommendations
-        result.recommendations = [self._sanitize_string(rec, max_length=500) for rec in result.recommendations]
+        result.recommendations = [
+            self._sanitize_string(rec, max_length=500) for rec in result.recommendations
+        ]
 
         # Sanitize chart output (limit size)
         if result.chart and len(result.chart) > 100000:  # 100KB limit
@@ -1579,8 +1562,10 @@ class ResultValidator:
 
         # Sanitize pattern descriptions
         for pattern in result.patterns:
-            if 'description' in pattern:
-                pattern['description'] = self._sanitize_string(pattern['description'], max_length=1000)
+            if "description" in pattern:
+                pattern["description"] = self._sanitize_string(
+                    pattern["description"], max_length=1000
+                )
 
     def _sanitize_string(self, value: str, max_length: int = 500) -> str:
         """
@@ -1597,7 +1582,7 @@ class ResultValidator:
             value = str(value)
 
         # Remove null bytes
-        value = value.replace('\x00', '')
+        value = value.replace("\x00", "")
 
         # Truncate if too long
         if len(value) > max_length:
@@ -1623,10 +1608,7 @@ class ResultValidator:
         if not is_valid:
             error_msg = "Result validation failed: " + "; ".join(errors)
             self.logger.error(error_msg)
-            raise ValidationError(
-                error_msg,
-                details={'validation_errors': errors}
-            )
+            raise ValidationError(error_msg, details={"validation_errors": errors})
 
         return result
 

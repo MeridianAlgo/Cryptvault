@@ -11,13 +11,13 @@ Example:
     >>> timeout = config.get('network.timeout', default=30)
 """
 
-import os
-import yaml
 import logging
-from typing import Any, Dict, Optional
-from pathlib import Path
+import os
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, Optional
 
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class NetworkConfig:
     """Network and API configuration."""
+
     timeout: int = 30
     max_retries: int = 3
     retry_backoff: float = 2.0
@@ -36,20 +37,22 @@ class NetworkConfig:
 @dataclass
 class CacheConfig:
     """Caching configuration."""
+
     enabled: bool = True
     ttl: int = 300  # seconds (5 minutes)
     max_size_mb: int = 100
-    backend: str = 'memory'  # 'memory' or 'disk'
+    backend: str = "memory"  # 'memory' or 'disk'
     disk_path: Optional[str] = None
 
 
 @dataclass
 class LoggingConfig:
     """Logging configuration."""
-    level: str = 'INFO'
-    format: str = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+    level: str = "INFO"
+    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     file_enabled: bool = True
-    file_path: str = 'logs/cryptvault.log'
+    file_path: str = "logs/cryptvault.log"
     file_max_bytes: int = 10485760  # 10 MB
     file_backup_count: int = 5
     console_enabled: bool = True
@@ -58,8 +61,9 @@ class LoggingConfig:
 @dataclass
 class AnalysisConfig:
     """Analysis configuration."""
+
     default_days: int = 60
-    default_interval: str = '1d'
+    default_interval: str = "1d"
     min_data_points: int = 50
     pattern_sensitivity: float = 0.5
     ml_enabled: bool = True
@@ -69,8 +73,9 @@ class AnalysisConfig:
 @dataclass
 class DataSourceConfig:
     """Data source configuration."""
-    primary: str = 'yfinance'
-    fallback: list = field(default_factory=lambda: ['ccxt', 'cryptocompare'])
+
+    primary: str = "yfinance"
+    fallback: list = field(default_factory=lambda: ["ccxt", "cryptocompare"])
     yfinance_enabled: bool = True
     ccxt_enabled: bool = True
     cryptocompare_enabled: bool = True
@@ -126,9 +131,9 @@ class ConfigValidator:
             raise ValueError("Cache TTL must be positive")
         if config.max_size_mb <= 0:
             raise ValueError("Cache max size must be positive")
-        if config.backend not in ['memory', 'disk']:
+        if config.backend not in ["memory", "disk"]:
             raise ValueError("Cache backend must be 'memory' or 'disk'")
-        if config.backend == 'disk' and not config.disk_path:
+        if config.backend == "disk" and not config.disk_path:
             raise ValueError("Disk cache requires disk_path")
         return True
 
@@ -146,7 +151,7 @@ class ConfigValidator:
         Raises:
             ValueError: If configuration is invalid
         """
-        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if config.level not in valid_levels:
             raise ValueError(f"Log level must be one of {valid_levels}")
         if config.file_max_bytes <= 0:
@@ -177,7 +182,7 @@ class ConfigValidator:
             raise ValueError("Pattern sensitivity must be between 0 and 1")
         if not 0 <= config.ml_confidence_threshold <= 1:
             raise ValueError("ML confidence threshold must be between 0 and 1")
-        valid_intervals = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1wk', '1mo']
+        valid_intervals = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1wk", "1mo"]
         if config.default_interval not in valid_intervals:
             raise ValueError(f"Default interval must be one of {valid_intervals}")
         return True
@@ -204,7 +209,7 @@ class Config:
         >>> config.validate()
     """
 
-    def __init__(self, environment: str = 'production'):
+    def __init__(self, environment: str = "production"):
         """
         Initialize configuration.
 
@@ -220,7 +225,7 @@ class Config:
         self._custom_values: Dict[str, Any] = {}
 
     @classmethod
-    def load(cls, environment: str = 'production') -> 'Config':
+    def load(cls, environment: str = "production") -> "Config":
         """
         Load configuration for specified environment.
 
@@ -256,76 +261,76 @@ class Config:
 
     def _load_from_yaml(self) -> None:
         """Load configuration from YAML files."""
-        config_dir = Path(__file__).parent.parent / 'config'
+        config_dir = Path(__file__).parent.parent / "config"
 
         # Load base settings
-        base_config_path = config_dir / 'settings.yaml'
+        base_config_path = config_dir / "settings.yaml"
         if base_config_path.exists():
-            with open(base_config_path, 'r') as f:
+            with open(base_config_path, "r") as f:
                 base_config = yaml.safe_load(f) or {}
                 self._apply_config_dict(base_config)
 
         # Load environment-specific settings
-        env_config_path = config_dir / f'settings.{self.environment}.yaml'
+        env_config_path = config_dir / f"settings.{self.environment}.yaml"
         if env_config_path.exists():
-            with open(env_config_path, 'r') as f:
+            with open(env_config_path, "r") as f:
                 env_config = yaml.safe_load(f) or {}
                 self._apply_config_dict(env_config)
 
     def _load_from_env(self) -> None:
         """Load configuration from environment variables."""
         # Network configuration
-        if timeout := os.getenv('CRYPTVAULT_NETWORK_TIMEOUT'):
+        if timeout := os.getenv("CRYPTVAULT_NETWORK_TIMEOUT"):
             self.network.timeout = int(timeout)
-        if max_retries := os.getenv('CRYPTVAULT_NETWORK_MAX_RETRIES'):
+        if max_retries := os.getenv("CRYPTVAULT_NETWORK_MAX_RETRIES"):
             self.network.max_retries = int(max_retries)
 
         # Cache configuration
-        if cache_enabled := os.getenv('CRYPTVAULT_CACHE_ENABLED'):
-            self.cache.enabled = cache_enabled.lower() == 'true'
-        if cache_ttl := os.getenv('CRYPTVAULT_CACHE_TTL'):
+        if cache_enabled := os.getenv("CRYPTVAULT_CACHE_ENABLED"):
+            self.cache.enabled = cache_enabled.lower() == "true"
+        if cache_ttl := os.getenv("CRYPTVAULT_CACHE_TTL"):
             self.cache.ttl = int(cache_ttl)
 
         # Logging configuration
-        if log_level := os.getenv('CRYPTVAULT_LOG_LEVEL'):
+        if log_level := os.getenv("CRYPTVAULT_LOG_LEVEL"):
             self.logging.level = log_level.upper()
-        if log_file := os.getenv('CRYPTVAULT_LOG_FILE'):
+        if log_file := os.getenv("CRYPTVAULT_LOG_FILE"):
             self.logging.file_path = log_file
 
         # Analysis configuration
-        if default_days := os.getenv('CRYPTVAULT_DEFAULT_DAYS'):
+        if default_days := os.getenv("CRYPTVAULT_DEFAULT_DAYS"):
             self.analysis.default_days = int(default_days)
-        if ml_enabled := os.getenv('CRYPTVAULT_ML_ENABLED'):
-            self.analysis.ml_enabled = ml_enabled.lower() == 'true'
+        if ml_enabled := os.getenv("CRYPTVAULT_ML_ENABLED"):
+            self.analysis.ml_enabled = ml_enabled.lower() == "true"
 
         # Data source configuration
-        if api_key := os.getenv('CRYPTOCOMPARE_API_KEY'):
+        if api_key := os.getenv("CRYPTOCOMPARE_API_KEY"):
             self.data_sources.cryptocompare_api_key = api_key
 
     def _apply_config_dict(self, config_dict: Dict[str, Any]) -> None:
         """Apply configuration from dictionary."""
-        if 'network' in config_dict:
-            for key, value in config_dict['network'].items():
+        if "network" in config_dict:
+            for key, value in config_dict["network"].items():
                 if hasattr(self.network, key):
                     setattr(self.network, key, value)
 
-        if 'cache' in config_dict:
-            for key, value in config_dict['cache'].items():
+        if "cache" in config_dict:
+            for key, value in config_dict["cache"].items():
                 if hasattr(self.cache, key):
                     setattr(self.cache, key, value)
 
-        if 'logging' in config_dict:
-            for key, value in config_dict['logging'].items():
+        if "logging" in config_dict:
+            for key, value in config_dict["logging"].items():
                 if hasattr(self.logging, key):
                     setattr(self.logging, key, value)
 
-        if 'analysis' in config_dict:
-            for key, value in config_dict['analysis'].items():
+        if "analysis" in config_dict:
+            for key, value in config_dict["analysis"].items():
                 if hasattr(self.analysis, key):
                     setattr(self.analysis, key, value)
 
-        if 'data_sources' in config_dict:
-            for key, value in config_dict['data_sources'].items():
+        if "data_sources" in config_dict:
+            for key, value in config_dict["data_sources"].items():
                 if hasattr(self.data_sources, key):
                     setattr(self.data_sources, key, value)
 
@@ -367,7 +372,7 @@ class Config:
             >>> timeout = config.get('network.timeout')
             >>> custom = config.get('custom.value', default=42)
         """
-        parts = key.split('.')
+        parts = key.split(".")
 
         # Check custom values first
         if key in self._custom_values:
@@ -410,47 +415,47 @@ class Config:
             >>> print(config_dict['network']['timeout'])
         """
         return {
-            'environment': self.environment,
-            'network': {
-                'timeout': self.network.timeout,
-                'max_retries': self.network.max_retries,
-                'retry_backoff': self.network.retry_backoff,
-                'connection_pool_size': self.network.connection_pool_size,
-                'rate_limit_calls': self.network.rate_limit_calls,
-                'rate_limit_period': self.network.rate_limit_period,
+            "environment": self.environment,
+            "network": {
+                "timeout": self.network.timeout,
+                "max_retries": self.network.max_retries,
+                "retry_backoff": self.network.retry_backoff,
+                "connection_pool_size": self.network.connection_pool_size,
+                "rate_limit_calls": self.network.rate_limit_calls,
+                "rate_limit_period": self.network.rate_limit_period,
             },
-            'cache': {
-                'enabled': self.cache.enabled,
-                'ttl': self.cache.ttl,
-                'max_size_mb': self.cache.max_size_mb,
-                'backend': self.cache.backend,
-                'disk_path': self.cache.disk_path,
+            "cache": {
+                "enabled": self.cache.enabled,
+                "ttl": self.cache.ttl,
+                "max_size_mb": self.cache.max_size_mb,
+                "backend": self.cache.backend,
+                "disk_path": self.cache.disk_path,
             },
-            'logging': {
-                'level': self.logging.level,
-                'format': self.logging.format,
-                'file_enabled': self.logging.file_enabled,
-                'file_path': self.logging.file_path,
-                'file_max_bytes': self.logging.file_max_bytes,
-                'file_backup_count': self.logging.file_backup_count,
-                'console_enabled': self.logging.console_enabled,
+            "logging": {
+                "level": self.logging.level,
+                "format": self.logging.format,
+                "file_enabled": self.logging.file_enabled,
+                "file_path": self.logging.file_path,
+                "file_max_bytes": self.logging.file_max_bytes,
+                "file_backup_count": self.logging.file_backup_count,
+                "console_enabled": self.logging.console_enabled,
             },
-            'analysis': {
-                'default_days': self.analysis.default_days,
-                'default_interval': self.analysis.default_interval,
-                'min_data_points': self.analysis.min_data_points,
-                'pattern_sensitivity': self.analysis.pattern_sensitivity,
-                'ml_enabled': self.analysis.ml_enabled,
-                'ml_confidence_threshold': self.analysis.ml_confidence_threshold,
+            "analysis": {
+                "default_days": self.analysis.default_days,
+                "default_interval": self.analysis.default_interval,
+                "min_data_points": self.analysis.min_data_points,
+                "pattern_sensitivity": self.analysis.pattern_sensitivity,
+                "ml_enabled": self.analysis.ml_enabled,
+                "ml_confidence_threshold": self.analysis.ml_confidence_threshold,
             },
-            'data_sources': {
-                'primary': self.data_sources.primary,
-                'fallback': self.data_sources.fallback,
-                'yfinance_enabled': self.data_sources.yfinance_enabled,
-                'ccxt_enabled': self.data_sources.ccxt_enabled,
-                'cryptocompare_enabled': self.data_sources.cryptocompare_enabled,
+            "data_sources": {
+                "primary": self.data_sources.primary,
+                "fallback": self.data_sources.fallback,
+                "yfinance_enabled": self.data_sources.yfinance_enabled,
+                "ccxt_enabled": self.data_sources.ccxt_enabled,
+                "cryptocompare_enabled": self.data_sources.cryptocompare_enabled,
             },
-            'custom': self._custom_values,
+            "custom": self._custom_values,
         }
 
 
@@ -472,7 +477,7 @@ def get_config() -> Config:
     """
     global _config
     if _config is None:
-        env = os.getenv('CRYPTVAULT_ENV', 'production')
+        env = os.getenv("CRYPTVAULT_ENV", "production")
         _config = Config.load(env)
     return _config
 

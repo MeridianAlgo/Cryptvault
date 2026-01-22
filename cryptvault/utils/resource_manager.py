@@ -15,16 +15,17 @@ Example:
     ...     data = conn.get()
 """
 
+import gc
 import logging
 import time
 import tracemalloc
 from contextlib import contextmanager
-from typing import Optional, Dict, Any, Callable
 from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import gc
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class ResourceStats:
         duration_seconds: Duration in seconds
         resource_type: Type of resource
     """
+
     memory_start_mb: float
     memory_end_mb: float
     memory_peak_mb: float
@@ -69,7 +71,7 @@ class ConnectionPool:
         max_connections: int = 10,
         max_retries: int = 3,
         timeout: int = 30,
-        backoff_factor: float = 0.3
+        backoff_factor: float = 0.3,
     ):
         """
         Initialize connection pool.
@@ -90,13 +92,13 @@ class ConnectionPool:
             total=max_retries,
             backoff_factor=backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"]
+            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
         )
 
         adapter = HTTPAdapter(
             max_retries=retry_strategy,
             pool_connections=max_connections,
-            pool_maxsize=max_connections
+            pool_maxsize=max_connections,
         )
 
         self.session.mount("http://", adapter)
@@ -121,7 +123,7 @@ class ConnectionPool:
         Raises:
             requests.RequestException: If request fails
         """
-        kwargs.setdefault('timeout', self.timeout)
+        kwargs.setdefault("timeout", self.timeout)
 
         try:
             self._request_count += 1
@@ -147,7 +149,7 @@ class ConnectionPool:
         Raises:
             requests.RequestException: If request fails
         """
-        kwargs.setdefault('timeout', self.timeout)
+        kwargs.setdefault("timeout", self.timeout)
 
         try:
             self._request_count += 1
@@ -172,10 +174,10 @@ class ConnectionPool:
             Dictionary with pool statistics
         """
         return {
-            'max_connections': self.max_connections,
-            'request_count': self._request_count,
-            'error_count': self._error_count,
-            'error_rate': self._error_count / max(1, self._request_count)
+            "max_connections": self.max_connections,
+            "request_count": self._request_count,
+            "error_count": self._error_count,
+            "error_rate": self._error_count / max(1, self._request_count),
         }
 
 
@@ -258,7 +260,7 @@ def managed_memory(operation_name: str, threshold_mb: float = 100.0):
         memory_end_mb=0.0,
         memory_peak_mb=0.0,
         duration_seconds=0.0,
-        resource_type="memory"
+        resource_type="memory",
     )
 
     try:
@@ -292,7 +294,7 @@ def managed_memory(operation_name: str, threshold_mb: float = 100.0):
 
 
 @contextmanager
-def managed_file(filepath: str, mode: str = 'r', **kwargs):
+def managed_file(filepath: str, mode: str = "r", **kwargs):
     """
     Context manager for file operations with automatic cleanup.
 
@@ -375,10 +377,10 @@ class ResourceMonitor:
             avg_duration = sum(s.duration_seconds for s in stats_list) / len(stats_list)
 
             summary[op_name] = {
-                'count': len(stats_list),
-                'avg_memory_mb': round(avg_memory, 2),
-                'max_memory_mb': round(max_memory, 2),
-                'avg_duration_seconds': round(avg_duration, 4)
+                "count": len(stats_list),
+                "avg_memory_mb": round(avg_memory, 2),
+                "max_memory_mb": round(max_memory, 2),
+                "avg_duration_seconds": round(avg_duration, 4),
             }
 
         return summary
@@ -445,6 +447,7 @@ def limit_memory_usage(max_mb: float = 1000.0) -> Callable:
         ...     # processing code
         ...     pass
     """
+
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
             with managed_memory(func.__name__, threshold_mb=max_mb) as stats:
@@ -501,7 +504,4 @@ def get_memory_usage() -> Dict[str, float]:
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
-    return {
-        'current_mb': current / 1024 / 1024,
-        'peak_mb': peak / 1024 / 1024
-    }
+    return {"current_mb": current / 1024 / 1024, "peak_mb": peak / 1024 / 1024}

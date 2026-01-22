@@ -19,11 +19,11 @@ Performance:
 - Thread-safe operations
 """
 
-import time
-from typing import Optional, Any, Dict, List
-from datetime import datetime, timedelta
-from dataclasses import dataclass
 import logging
+import time
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -41,6 +41,7 @@ class CachedPrediction:
         verified: Whether prediction has been verified
         accurate: Whether prediction was accurate (if verified)
     """
+
     value: Dict[str, Any]
     timestamp: float
     ttl: int
@@ -109,7 +110,7 @@ class PredictionCache:
         ttl: int = 300,
         symbol: Optional[str] = None,
         target_price: Optional[float] = None,
-        target_date: Optional[datetime] = None
+        target_date: Optional[datetime] = None,
     ) -> None:
         """
         Cache a prediction with optional accuracy tracking.
@@ -126,22 +127,17 @@ class PredictionCache:
             value=value,
             timestamp=time.time(),
             ttl=ttl,
-            symbol=symbol or 'unknown',
+            symbol=symbol or "unknown",
             target_price=target_price,
             target_date=target_date,
             verified=False,
-            accurate=False
+            accurate=False,
         )
 
         self._cache[key] = cached
         self.logger.debug(f"Cached prediction for key: {key} (TTL: {ttl}s)")
 
-    def verify_prediction(
-        self,
-        key: str,
-        actual_price: float,
-        tolerance: float = 0.05
-    ) -> bool:
+    def verify_prediction(self, key: str, actual_price: float, tolerance: float = 0.05) -> bool:
         """
         Verify a cached prediction against actual price.
 
@@ -194,7 +190,8 @@ class PredictionCache:
         """
         current_time = time.time()
         expired_keys = [
-            key for key, cached in self._cache.items()
+            key
+            for key, cached in self._cache.items()
             if current_time - cached.timestamp > cached.ttl
         ]
 
@@ -217,10 +214,7 @@ class PredictionCache:
             Number of predictions removed
         """
         cutoff_time = time.time() - (days_to_keep * 86400)
-        old_keys = [
-            key for key, cached in self._cache.items()
-            if cached.timestamp < cutoff_time
-        ]
+        old_keys = [key for key, cached in self._cache.items() if cached.timestamp < cutoff_time]
 
         for key in old_keys:
             del self._cache[key]
@@ -250,10 +244,7 @@ class PredictionCache:
         total = len(self._cache)
         verified = sum(1 for c in self._cache.values() if c.verified)
         accurate = sum(1 for c in self._cache.values() if c.accurate)
-        expired = sum(
-            1 for c in self._cache.values()
-            if current_time - c.timestamp > c.ttl
-        )
+        expired = sum(1 for c in self._cache.values() if current_time - c.timestamp > c.ttl)
 
         # Calculate accuracy rate
         accuracy_rate = (accurate / verified * 100) if verified > 0 else 0.0
@@ -269,14 +260,14 @@ class PredictionCache:
         cache_size_mb = len(self._cache) * 0.001  # ~1KB per prediction
 
         return {
-            'total_predictions': total,
-            'verified_predictions': verified,
-            'accurate_predictions': accurate,
-            'accuracy_rate': round(accuracy_rate, 2),
-            'pending_predictions': total - verified,
-            'expired_predictions': expired,
-            'cache_size_mb': round(cache_size_mb, 3),
-            'oldest_prediction_hours': round(oldest_age_hours, 2)
+            "total_predictions": total,
+            "verified_predictions": verified,
+            "accurate_predictions": accurate,
+            "accuracy_rate": round(accuracy_rate, 2),
+            "pending_predictions": total - verified,
+            "expired_predictions": expired,
+            "cache_size_mb": round(cache_size_mb, 3),
+            "oldest_prediction_hours": round(oldest_age_hours, 2),
         }
 
     def get_accuracy_report(self, days_back: int = 30) -> Dict[str, Any]:
@@ -297,7 +288,8 @@ class PredictionCache:
         cutoff_time = time.time() - (days_back * 86400)
 
         recent_predictions = [
-            cached for cached in self._cache.values()
+            cached
+            for cached in self._cache.values()
             if cached.timestamp >= cutoff_time and cached.verified
         ]
 
@@ -310,26 +302,25 @@ class PredictionCache:
         for pred in recent_predictions:
             symbol = pred.symbol
             if symbol not in by_symbol:
-                by_symbol[symbol] = {'verified': 0, 'accurate': 0}
+                by_symbol[symbol] = {"verified": 0, "accurate": 0}
 
-            by_symbol[symbol]['verified'] += 1
+            by_symbol[symbol]["verified"] += 1
             if pred.accurate:
-                by_symbol[symbol]['accurate'] += 1
+                by_symbol[symbol]["accurate"] += 1
 
         # Calculate accuracy rate per symbol
         for symbol, stats in by_symbol.items():
-            stats['accuracy_rate'] = (
-                stats['accurate'] / stats['verified'] * 100
-                if stats['verified'] > 0 else 0.0
+            stats["accuracy_rate"] = (
+                stats["accurate"] / stats["verified"] * 100 if stats["verified"] > 0 else 0.0
             )
 
         return {
-            'days_back': days_back,
-            'total_verified': total_verified,
-            'total_accurate': total_accurate,
-            'accuracy_rate': round(accuracy_rate, 2),
-            'by_symbol': by_symbol,
-            'recent_predictions_count': len(recent_predictions)
+            "days_back": days_back,
+            "total_verified": total_verified,
+            "total_accurate": total_accurate,
+            "accuracy_rate": round(accuracy_rate, 2),
+            "by_symbol": by_symbol,
+            "recent_predictions_count": len(recent_predictions),
         }
 
     def get_predictions_by_symbol(self, symbol: str) -> List[Dict[str, Any]]:
@@ -344,11 +335,11 @@ class PredictionCache:
         """
         predictions = [
             {
-                'value': cached.value,
-                'timestamp': datetime.fromtimestamp(cached.timestamp).isoformat(),
-                'verified': cached.verified,
-                'accurate': cached.accurate,
-                'target_price': cached.target_price
+                "value": cached.value,
+                "timestamp": datetime.fromtimestamp(cached.timestamp).isoformat(),
+                "verified": cached.verified,
+                "accurate": cached.accurate,
+                "target_price": cached.target_price,
             }
             for cached in self._cache.values()
             if cached.symbol == symbol

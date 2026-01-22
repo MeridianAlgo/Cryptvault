@@ -8,12 +8,13 @@ This file is kept for backward compatibility only.
 """
 
 import warnings
-from .core.analyzer import PatternAnalyzer, AnalysisResult, ResultValidator
+
+from .core.analyzer import AnalysisResult, PatternAnalyzer, ResultValidator
 
 warnings.warn(
     "cryptvault.analyzer is deprecated. Use cryptvault.core.analyzer instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
-__all__ = ['PatternAnalyzer', 'AnalysisResult', 'ResultValidator']
+__all__ = ["PatternAnalyzer", "AnalysisResult", "ResultValidator"]

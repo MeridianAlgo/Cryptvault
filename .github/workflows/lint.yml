@@ -1,0 +1,142 @@
+name: Lint and Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    name: Lint Python Code
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort pylint mypy bandit safety
+        pip install -r requirements.txt
+
+    - name: Run Black (Code Formatting)
+      id: black
+      continue-on-error: true
+      run: |
+        black --check --diff cryptvault/ cryptvault_cli.py || echo "BLACK_FAILED=true" >> $GITHUB_ENV
+
+    - name: Run isort (Import Sorting)
+      id: isort
+      continue-on-error: true
+      run: |
+        isort --check-only --diff cryptvault/ cryptvault_cli.py || echo "ISORT_FAILED=true" >> $GITHUB_ENV
+
+    - name: Run Flake8 (Style Guide)
+      id: flake8
+      continue-on-error: true
+      run: |
+        flake8 cryptvault/ cryptvault_cli.py --count --select=E9,F63,F7,F82 --show-source --statistics || echo "FLAKE8_FAILED=true" >> $GITHUB_ENV
+        flake8 cryptvault/ cryptvault_cli.py --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+
+    - name: Run Pylint (Code Analysis)
+      id: pylint
+      continue-on-error: true
+      run: |
+        pylint cryptvault/ cryptvault_cli.py --exit-zero --output-format=text || echo "PYLINT_FAILED=true" >> $GITHUB_ENV
+
+    - name: Run MyPy (Type Checking)
+      id: mypy
+      continue-on-error: true
+      run: |
+        mypy cryptvault/ cryptvault_cli.py --ignore-missing-imports || echo "MYPY_FAILED=true" >> $GITHUB_ENV
+
+    - name: Run Bandit (Security Linting)
+      id: bandit
+      continue-on-error: true
+      run: |
+        bandit -r cryptvault/ -f json -o bandit-report.json || echo "BANDIT_FAILED=true" >> $GITHUB_ENV
+        bandit -r cryptvault/ -f screen
+
+    - name: Run Safety (Dependency Security)
+      id: safety
+      continue-on-error: true
+      run: |
+        safety check --json || echo "SAFETY_FAILED=true" >> $GITHUB_ENV
+
+    - name: Create Issue on Failure
+      if: env.BLACK_FAILED == 'true' || env.ISORT_FAILED == 'true' || env.FLAKE8_FAILED == 'true' || env.PYLINT_FAILED == 'true' || env.MYPY_FAILED == 'true' || env.BANDIT_FAILED == 'true' || env.SAFETY_FAILED == 'true'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const failures = [];
+          if (process.env.BLACK_FAILED) failures.push('Black (Code Formatting)');
+          if (process.env.ISORT_FAILED) failures.push('isort (Import Sorting)');
+          if (process.env.FLAKE8_FAILED) failures.push('Flake8 (Style Guide)');
+          if (process.env.PYLINT_FAILED) failures.push('Pylint (Code Analysis)');
+          if (process.env.MYPY_FAILED) failures.push('MyPy (Type Checking)');
+          if (process.env.BANDIT_FAILED) failures.push('Bandit (Security)');
+          if (process.env.SAFETY_FAILED) failures.push('Safety (Dependencies)');
+          
+          const title = `Lint Failures: ${failures.join(', ')}`;
+          const body = `## Automated Lint Report
+          
+**Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+**Branch:** ${{ github.ref_name }}
+**Commit:** ${{ github.sha }}
+
+### Failed Checks
+${failures.map(f => `- ❌ ${f}`).join('\n')}
+
+### Action Required
+Please review the workflow logs and fix the linting issues:
+1. Run \`black cryptvault/ cryptvault_cli.py\` to format code
+2. Run \`isort cryptvault/ cryptvault_cli.py\` to sort imports
+3. Run \`flake8 cryptvault/\` to check style issues
+4. Run \`pylint cryptvault/\` for code quality
+5. Run \`mypy cryptvault/\` for type checking
+6. Run \`bandit -r cryptvault/\` for security issues
+
+### Auto-Fix Commands
+\`\`\`bash
+black cryptvault/ cryptvault_cli.py
+isort cryptvault/ cryptvault_cli.py
+\`\`\`
+`;
+
+          // Check if issue already exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'automated,lint-failure'
+          });
+          
+          if (issues.data.length === 0) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['automated', 'lint-failure', 'bug']
+            });
+          }
+
+    - name: Fail workflow if critical issues found
+      if: env.FLAKE8_FAILED == 'true' || env.BANDIT_FAILED == 'true'
+      run: exit 1

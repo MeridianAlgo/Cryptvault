@@ -32,7 +32,7 @@ Example:
     ...     logger.error(f"Failed to fetch data: {e}")
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class CryptVaultError(Exception):
@@ -61,7 +61,7 @@ class CryptVaultError(Exception):
         self,
         message: str,
         details: Optional[Dict[str, Any]] = None,
-        original_error: Optional[Exception] = None
+        original_error: Optional[Exception] = None,
     ):
         """
         Initialize CryptVault error.
@@ -79,7 +79,7 @@ class CryptVaultError(Exception):
     def __str__(self) -> str:
         """Return string representation of error."""
         if self.details:
-            details_str = ', '.join(f"{k}={v}" for k, v in self.details.items())
+            details_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
             return f"{self.message} ({details_str})"
         return self.message
 
@@ -89,6 +89,7 @@ class CryptVaultError(Exception):
 
 
 # Configuration Errors
+
 
 class ConfigurationError(CryptVaultError):
     """
@@ -103,10 +104,12 @@ class ConfigurationError(CryptVaultError):
         ...     details={'timeout': -1, 'expected': 'positive integer'}
         ... )
     """
+
     pass
 
 
 # Validation Errors
+
 
 class ValidationError(CryptVaultError):
     """
@@ -120,6 +123,7 @@ class ValidationError(CryptVaultError):
         ...     details={'field': 'symbol', 'value': '123', 'reason': 'must be alphabetic'}
         ... )
     """
+
     pass
 
 
@@ -133,6 +137,7 @@ class InvalidTickerError(ValidationError):
         ...     details={'symbol': 'INVALID', 'supported': ['BTC', 'ETH', 'AAPL']}
         ... )
     """
+
     pass
 
 
@@ -149,6 +154,7 @@ class InvalidDateRangeError(ValidationError):
         ...     details={'start': '2024-01-01', 'end': '2023-01-01'}
         ... )
     """
+
     pass
 
 
@@ -162,10 +168,12 @@ class InvalidIntervalError(ValidationError):
         ...     details={'interval': '2d', 'valid': ['1m', '5m', '1h', '1d', '1wk']}
         ... )
     """
+
     pass
 
 
 # Data Errors
+
 
 class DataError(CryptVaultError):
     """
@@ -173,6 +181,7 @@ class DataError(CryptVaultError):
 
     Includes errors related to data fetching, validation, and processing.
     """
+
     pass
 
 
@@ -189,6 +198,7 @@ class DataFetchError(DataError):
         ...     details={'source': 'yfinance', 'symbol': 'BTC', 'attempts': 3}
         ... )
     """
+
     pass
 
 
@@ -202,6 +212,7 @@ class APIError(DataFetchError):
         ...     details={'status_code': 404, 'message': 'Symbol not found'}
         ... )
     """
+
     pass
 
 
@@ -217,6 +228,7 @@ class NetworkError(DataFetchError):
         ...     details={'url': 'https://api.example.com', 'timeout': 30}
         ... )
     """
+
     pass
 
 
@@ -230,6 +242,7 @@ class RateLimitError(DataFetchError):
         ...     details={'limit': 100, 'period': 60, 'retry_after': 45}
         ... )
     """
+
     pass
 
 
@@ -246,6 +259,7 @@ class DataValidationError(DataError):
         ...     details={'field': 'close', 'data_points': 100}
         ... )
     """
+
     pass
 
 
@@ -259,10 +273,12 @@ class InsufficientDataError(DataError):
         ...     details={'required': 50, 'available': 30, 'symbol': 'BTC'}
         ... )
     """
+
     pass
 
 
 # Analysis Errors
+
 
 class AnalysisError(CryptVaultError):
     """
@@ -270,6 +286,7 @@ class AnalysisError(CryptVaultError):
 
     Includes errors during pattern detection, ML prediction, and indicator calculation.
     """
+
     pass
 
 
@@ -283,6 +300,7 @@ class PatternDetectionError(AnalysisError):
         ...     details={'pattern_type': 'double_top', 'reason': 'insufficient peaks'}
         ... )
     """
+
     pass
 
 
@@ -296,6 +314,7 @@ class MLPredictionError(AnalysisError):
         ...     details={'model': 'ensemble', 'reason': 'feature extraction failed'}
         ... )
     """
+
     pass
 
 
@@ -309,10 +328,12 @@ class IndicatorCalculationError(AnalysisError):
         ...     details={'indicator': 'RSI', 'period': 14, 'data_points': 10}
         ... )
     """
+
     pass
 
 
 # Cache Errors
+
 
 class CacheError(CryptVaultError):
     """
@@ -327,16 +348,18 @@ class CacheError(CryptVaultError):
         ...     details={'key': 'BTC_60d_1d', 'backend': 'disk'}
         ... )
     """
+
     pass
 
 
 # Utility Functions
 
+
 def wrap_exception(
     original_error: Exception,
     new_exception_class: type,
     message: str,
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[Dict[str, Any]] = None,
 ) -> CryptVaultError:
     """
     Wrap an exception in a CryptVault exception.
@@ -365,11 +388,7 @@ def wrap_exception(
         ...         details={'url': 'https://api.example.com'}
         ...     )
     """
-    return new_exception_class(
-        message=message,
-        details=details,
-        original_error=original_error
-    )
+    return new_exception_class(message=message, details=details, original_error=original_error)
 
 
 def format_error_message(error: CryptVaultError, include_details: bool = True) -> str:
@@ -392,10 +411,12 @@ def format_error_message(error: CryptVaultError, include_details: bool = True) -
     message = f"{error.__class__.__name__}: {error.message}"
 
     if include_details and error.details:
-        details_str = ', '.join(f"{k}={v}" for k, v in error.details.items())
+        details_str = ", ".join(f"{k}={v}" for k, v in error.details.items())
         message += f" ({details_str})"
 
     if error.original_error:
-        message += f"\nCaused by: {type(error.original_error).__name__}: {str(error.original_error)}"
+        message += (
+            f"\nCaused by: {type(error.original_error).__name__}: {str(error.original_error)}"
+        )
 
     return message

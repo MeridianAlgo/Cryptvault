@@ -13,7 +13,8 @@ Example:
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 
 
@@ -45,6 +46,7 @@ class PricePoint:
         >>> print(f"Close: ${point.close:,.2f}")
         Close: $50,500.00
     """
+
     timestamp: datetime
     open: float
     high: float
@@ -113,12 +115,7 @@ class PriceDataFrame:
         >>> print(f"Data points: {len(data)}")
     """
 
-    def __init__(
-        self,
-        data: List[PricePoint],
-        symbol: str = "",
-        interval: str = "1d"
-    ) -> None:
+    def __init__(self, data: List[PricePoint], symbol: str = "", interval: str = "1d") -> None:
         """
         Initialize price data frame.
 
@@ -145,7 +142,7 @@ class PriceDataFrame:
 
         # Check chronological order
         for i in range(1, len(self.data)):
-            if self.data[i].timestamp <= self.data[i-1].timestamp:
+            if self.data[i].timestamp <= self.data[i - 1].timestamp:
                 raise ValueError("Data points must be in chronological order")
 
     def __len__(self) -> int:
@@ -197,7 +194,7 @@ class PriceDataFrame:
         """Get typical prices (HLC/3)."""
         return [point.typical_price for point in self.data]
 
-    def slice(self, start: Optional[int] = None, end: Optional[int] = None) -> 'PriceDataFrame':
+    def slice(self, start: Optional[int] = None, end: Optional[int] = None) -> "PriceDataFrame":
         """
         Get slice of data.
 
@@ -208,11 +205,7 @@ class PriceDataFrame:
         Returns:
             New PriceDataFrame with sliced data
         """
-        return PriceDataFrame(
-            self.data[start:end],
-            symbol=self.symbol,
-            interval=self.interval
-        )
+        return PriceDataFrame(self.data[start:end], symbol=self.symbol, interval=self.interval)
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -222,22 +215,22 @@ class PriceDataFrame:
             Dictionary representation
         """
         return {
-            'symbol': self.symbol,
-            'interval': self.interval,
-            'data_points': len(self),
-            'start_time': self.data[0].timestamp.isoformat(),
-            'end_time': self.data[-1].timestamp.isoformat(),
-            'data': [
+            "symbol": self.symbol,
+            "interval": self.interval,
+            "data_points": len(self),
+            "start_time": self.data[0].timestamp.isoformat(),
+            "end_time": self.data[-1].timestamp.isoformat(),
+            "data": [
                 {
-                    'timestamp': p.timestamp.isoformat(),
-                    'open': p.open,
-                    'high': p.high,
-                    'low': p.low,
-                    'close': p.close,
-                    'volume': p.volume
+                    "timestamp": p.timestamp.isoformat(),
+                    "open": p.open,
+                    "high": p.high,
+                    "low": p.low,
+                    "close": p.close,
+                    "volume": p.volume,
                 }
                 for p in self.data
-            ]
+            ],
         }
 
     def to_numpy(self) -> Dict[str, np.ndarray]:
@@ -248,11 +241,11 @@ class PriceDataFrame:
             Dictionary of NumPy arrays
         """
         return {
-            'open': np.array(self.get_opens()),
-            'high': np.array(self.get_highs()),
-            'low': np.array(self.get_lows()),
-            'close': np.array(self.get_closes()),
-            'volume': np.array(self.get_volumes())
+            "open": np.array(self.get_opens()),
+            "high": np.array(self.get_highs()),
+            "low": np.array(self.get_lows()),
+            "close": np.array(self.get_closes()),
+            "volume": np.array(self.get_volumes()),
         }
 
     @property
@@ -322,11 +315,12 @@ class TickerInfo:
         ...     currency='USD'
         ... )
     """
+
     symbol: str
     name: str
     type: str  # 'crypto', 'stock', 'etf'
     exchange: str
-    currency: str = 'USD'
+    currency: str = "USD"
     market_cap: Optional[float] = None
     description: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -334,7 +328,7 @@ class TickerInfo:
     def __post_init__(self):
         """Validate ticker info."""
         self.symbol = self.symbol.upper()
-        valid_types = ['crypto', 'stock', 'etf', 'forex', 'commodity']
+        valid_types = ["crypto", "stock", "etf", "forex", "commodity"]
         if self.type.lower() not in valid_types:
             raise ValueError(f"Type must be one of {valid_types}")
 
@@ -360,6 +354,7 @@ class MarketData:
         ...     source='yfinance'
         ... )
     """
+
     price_data: PriceDataFrame
     ticker_info: TickerInfo
     fetch_time: datetime
@@ -379,23 +374,23 @@ class MarketData:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'symbol': self.symbol,
-            'current_price': self.current_price,
-            'price_change': self.price_data.price_change,
-            'price_change_percent': self.price_data.price_change_percent,
-            'ticker_info': {
-                'name': self.ticker_info.name,
-                'type': self.ticker_info.type,
-                'exchange': self.ticker_info.exchange,
-                'currency': self.ticker_info.currency
+            "symbol": self.symbol,
+            "current_price": self.current_price,
+            "price_change": self.price_data.price_change,
+            "price_change_percent": self.price_data.price_change_percent,
+            "ticker_info": {
+                "name": self.ticker_info.name,
+                "type": self.ticker_info.type,
+                "exchange": self.ticker_info.exchange,
+                "currency": self.ticker_info.currency,
             },
-            'price_data': {
-                'interval': self.price_data.interval,
-                'data_points': len(self.price_data),
-                'start_time': self.price_data.start_time.isoformat(),
-                'end_time': self.price_data.end_time.isoformat()
+            "price_data": {
+                "interval": self.price_data.interval,
+                "data_points": len(self.price_data),
+                "start_time": self.price_data.start_time.isoformat(),
+                "end_time": self.price_data.end_time.isoformat(),
             },
-            'fetch_time': self.fetch_time.isoformat(),
-            'source': self.source,
-            'metadata': self.metadata
+            "fetch_time": self.fetch_time.isoformat(),
+            "source": self.source,
+            "metadata": self.metadata,
         }

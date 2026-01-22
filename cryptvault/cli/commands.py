@@ -15,29 +15,29 @@ Functions:
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from cryptvault.core.analyzer import PatternAnalyzer
+
 from .formatters import (
+    create_progress_indicator,
     format_analysis_results,
-    format_portfolio_results,
     format_comparison_results,
-    format_success,
     format_error,
     format_info,
+    format_portfolio_results,
+    format_success,
     format_warning,
-    create_progress_indicator
 )
 from .validators import (
-    validate_ticker,
+    ValidationError,
     validate_days,
+    validate_file_path,
     validate_interval,
     validate_portfolio_holdings,
-    validate_file_path,
-    ValidationError
+    validate_ticker,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +45,11 @@ logger = logging.getLogger(__name__)
 def analyze_ticker(
     ticker: str,
     days: int = 30,
-    interval: str = '1d',
+    interval: str = "1d",
     verbose: bool = False,
     generate_chart: bool = True,
     save_chart_path: Optional[str] = None,
-    no_chart: bool = False
+    no_chart: bool = False,
 ) -> bool:
     """
     Analyze a cryptocurrency or stock ticker.
@@ -98,31 +98,31 @@ def analyze_ticker(
             progress.stop()
 
         # Convert AnalysisResult to dict if needed
-        if hasattr(results, 'to_dict'):
+        if hasattr(results, "to_dict"):
             results_dict = results.to_dict()
         elif isinstance(results, dict):
             results_dict = results
         else:
             # Fallback: create dict from object attributes
             results_dict = {
-                'success': getattr(results, 'success', False),
-                'symbol': getattr(results, 'symbol', 'Unknown'),
-                'patterns_found': len(getattr(results, 'patterns', [])),
-                'patterns': getattr(results, 'patterns', []),
-                'pattern_summary': getattr(results, 'pattern_summary', {}),
-                'technical_indicators': getattr(results, 'technical_indicators', {}),
-                'ml_predictions': getattr(results, 'ml_predictions', None),
-                'ticker_info': getattr(results, 'ticker_info', {}),
-                'analysis_time_seconds': getattr(results, 'analysis_time', 0),
-                'errors': getattr(results, 'errors', []),
-                'warnings': getattr(results, 'warnings', [])
+                "success": getattr(results, "success", False),
+                "symbol": getattr(results, "symbol", "Unknown"),
+                "patterns_found": len(getattr(results, "patterns", [])),
+                "patterns": getattr(results, "patterns", []),
+                "pattern_summary": getattr(results, "pattern_summary", {}),
+                "technical_indicators": getattr(results, "technical_indicators", {}),
+                "ml_predictions": getattr(results, "ml_predictions", None),
+                "ticker_info": getattr(results, "ticker_info", {}),
+                "analysis_time_seconds": getattr(results, "analysis_time", 0),
+                "errors": getattr(results, "errors", []),
+                "warnings": getattr(results, "warnings", []),
             }
 
         # Format and display results
         output = format_analysis_results(results_dict, verbose=verbose)
         print(output)
 
-        if not results_dict.get('success', False):
+        if not results_dict.get("success", False):
             return False
 
         # Generate chart if requested
@@ -139,6 +139,7 @@ def analyze_ticker(
         print(format_error(f"Analysis failed: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
@@ -174,7 +175,7 @@ def analyze_portfolio(holdings_str: List[str], verbose: bool = False) -> bool:
         # Convert holdings dict to PortfolioAsset objects
         portfolio_assets = []
         total_value = sum(holdings.values())
-        
+
         for symbol, amount in holdings.items():
             # Convert monetary amount to allocation percentage
             allocation = amount / total_value if total_value > 0 else 0
@@ -194,7 +195,7 @@ def analyze_portfolio(holdings_str: List[str], verbose: bool = False) -> bool:
         output = format_portfolio_results(results)
         print(output)
 
-        return results.get('success', False)
+        return results.get("success", False)
 
     except ValidationError as e:
         print(format_error(str(e)))
@@ -204,6 +205,7 @@ def analyze_portfolio(holdings_str: List[str], verbose: bool = False) -> bool:
         print(format_error(f"Portfolio analysis failed: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
@@ -255,7 +257,7 @@ def compare_assets(symbols: List[str], verbose: bool = False) -> bool:
         output = format_comparison_results(results)
         print(output)
 
-        return results.get('success', False)
+        return results.get("success", False)
 
     except ValidationError as e:
         print(format_error(str(e)))
@@ -265,6 +267,7 @@ def compare_assets(symbols: List[str], verbose: bool = False) -> bool:
         print(format_error(f"Asset comparison failed: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
@@ -297,19 +300,40 @@ def show_demo() -> None:
         # Top cryptocurrencies
         print("\nTop Cryptocurrencies (20):")
         crypto_list = [
-            s for s in supported
-            if s in ['BTC', 'ETH', 'USDT', 'BNB', 'SOL', 'XRP', 'USDC', 'ADA',
-                    'AVAX', 'DOGE', 'TRX', 'DOT', 'MATIC', 'LINK', 'TON', 'SHIB',
-                    'LTC', 'BCH', 'UNI', 'ATOM']
+            s
+            for s in supported
+            if s
+            in [
+                "BTC",
+                "ETH",
+                "USDT",
+                "BNB",
+                "SOL",
+                "XRP",
+                "USDC",
+                "ADA",
+                "AVAX",
+                "DOGE",
+                "TRX",
+                "DOT",
+                "MATIC",
+                "LINK",
+                "TON",
+                "SHIB",
+                "LTC",
+                "BCH",
+                "UNI",
+                "ATOM",
+            ]
         ]
         print(f"  {', '.join(crypto_list)}")
 
         # Popular stocks
         print("\nPopular Stocks (10):")
         stock_list = [
-            s for s in supported
-            if s in ['AAPL', 'TSLA', 'GOOGL', 'MSFT', 'NVDA', 'AMZN', 'META',
-                    'NFLX', 'AMD', 'INTC']
+            s
+            for s in supported
+            if s in ["AAPL", "TSLA", "GOOGL", "MSFT", "NVDA", "AMZN", "META", "NFLX", "AMD", "INTC"]
         ]
         print(f"  {', '.join(stock_list)}")
 
@@ -357,11 +381,11 @@ def show_api_status() -> None:
         if missing:
             print("\nInstallation suggestions:")
             for package in missing:
-                if package == 'yfinance':
+                if package == "yfinance":
                     print(f"  pip install yfinance")
-                elif package == 'ccxt':
+                elif package == "ccxt":
                     print(f"  pip install ccxt")
-                elif package == 'cryptocompare':
+                elif package == "cryptocompare":
                     print(f"  pip install cryptocompare")
 
         print("=" * 70 + "\n")
@@ -400,11 +424,11 @@ def show_prediction_accuracy(days: int = 30, verbose: bool = False) -> None:
         finally:
             progress.stop()
 
-        if 'error' in report:
+        if "error" in report:
             print(format_error(f"Error generating report: {report['error']}"))
             return
 
-        if report.get('total_predictions', 0) == 0:
+        if report.get("total_predictions", 0) == 0:
             print(format_info("No verified predictions found in the specified period"))
             print(format_info("Make some predictions first, then check back later!"))
             return
@@ -416,33 +440,37 @@ def show_prediction_accuracy(days: int = 30, verbose: bool = False) -> None:
         print(f"Average Error: {report['average_error']:.1%}")
 
         # Accuracy by symbol
-        if report.get('accuracy_by_symbol'):
+        if report.get("accuracy_by_symbol"):
             print("\nAccuracy by Symbol:")
-            for symbol, data in report['accuracy_by_symbol'].items():
-                accuracy = data['accuracy_rate']
-                total = data['total']
-                confidence = data['avg_confidence']
-                print(f"  {symbol}: {accuracy:.1%} ({total} predictions, "
-                     f"avg confidence: {confidence:.1%})")
+            for symbol, data in report["accuracy_by_symbol"].items():
+                accuracy = data["accuracy_rate"]
+                total = data["total"]
+                confidence = data["avg_confidence"]
+                print(
+                    f"  {symbol}: {accuracy:.1%} ({total} predictions, "
+                    f"avg confidence: {confidence:.1%})"
+                )
 
         # Recent predictions (if verbose)
-        if verbose and report.get('recent_predictions'):
+        if verbose and report.get("recent_predictions"):
             print("\nRecent Predictions:")
-            for pred in report['recent_predictions'][:10]:
-                symbol = pred['symbol']
-                predicted = pred['predicted']
-                actual = pred['actual']
-                accuracy = pred['accuracy']
-                date = pred['date']
+            for pred in report["recent_predictions"][:10]:
+                symbol = pred["symbol"]
+                predicted = pred["predicted"]
+                actual = pred["actual"]
+                accuracy = pred["accuracy"]
+                date = pred["date"]
 
                 if accuracy >= 0.9:
                     status = format_success("Accurate")
                 else:
                     status = format_warning("Inaccurate")
 
-                print(f"  {status} {symbol} on {date}: "
-                     f"Predicted ${predicted:.2f}, Actual ${actual:.2f} "
-                     f"(Score: {accuracy:.1%})")
+                print(
+                    f"  {status} {symbol} on {date}: "
+                    f"Predicted ${predicted:.2f}, Actual ${actual:.2f} "
+                    f"(Score: {accuracy:.1%})"
+                )
 
         # Cache statistics
         cache_stats = predictor.cache.get_cache_stats()
@@ -461,6 +489,7 @@ def show_prediction_accuracy(days: int = 30, verbose: bool = False) -> None:
         print(format_error(f"Failed to generate accuracy report: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()
 
 
@@ -500,6 +529,7 @@ def start_live_analysis(symbol: str, verbose: bool = False) -> None:
         print(format_error(f"Live analysis failed: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()
 
 
@@ -531,15 +561,12 @@ def open_desktop_charts(verbose: bool = False) -> None:
         print(format_error(f"Desktop charts failed: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()
 
 
 def _generate_chart(
-    ticker: str,
-    days: int,
-    interval: str,
-    save_path: Optional[str],
-    verbose: bool
+    ticker: str, days: int, interval: str, save_path: Optional[str], verbose: bool
 ) -> None:
     """
     Generate chart with pattern overlays using the new ChartGenerator.
@@ -552,43 +579,46 @@ def _generate_chart(
         verbose: Enable verbose output
     """
     try:
-        from cryptvault.visualization.chart_generator import ChartGenerator
-        from cryptvault.patterns.scanner import PatternScanner
-        from cryptvault.ml.simple_predictor import SimplePredictor
-        from cryptvault.data.fetchers import DataFetcher
         import pandas as pd
-        
+
+        from cryptvault.data.fetchers import DataFetcher
+        from cryptvault.ml.simple_predictor import SimplePredictor
+        from cryptvault.patterns.scanner import PatternScanner
+        from cryptvault.visualization.chart_generator import ChartGenerator
+
         # Fetch data
         print(format_info(f"Fetching {ticker} data for chart..."))
         fetcher = DataFetcher()
         data = fetcher.fetch(ticker, days=days, interval=interval)
-        
+
         if not data or len(data) == 0:
             print(format_warning("Could not generate chart: no data available"))
             return
-        
+
         # Convert to DataFrame
-        df = pd.DataFrame({
-            'Date': [point.timestamp for point in data],
-            'Open': [point.open for point in data],
-            'High': [point.high for point in data],
-            'Low': [point.low for point in data],
-            'Close': [point.close for point in data],
-            'Volume': [point.volume for point in data]
-        })
-        
+        df = pd.DataFrame(
+            {
+                "Date": [point.timestamp for point in data],
+                "Open": [point.open for point in data],
+                "High": [point.high for point in data],
+                "Low": [point.low for point in data],
+                "Close": [point.close for point in data],
+                "Volume": [point.volume for point in data],
+            }
+        )
+
         # Scan for patterns
         print(format_info("Scanning for patterns..."))
         scanner = PatternScanner(window=5)
         patterns = scanner.scan(df)
         pattern_list = scanner.to_dict_list()
-        
+
         if patterns:
             print(format_success(f"Found {len(patterns)} patterns"))
             # Show diverse patterns (not all the same type)
             diverse = []
             seen_types = set()
-            
+
             for p in patterns:
                 ptype = p.pattern_type
                 # Add if new type or if we have less than 3 patterns
@@ -597,39 +627,38 @@ def _generate_chart(
                     seen_types.add(ptype)
                 if len(diverse) >= 5:
                     break
-            
+
             for i, p in enumerate(diverse, 1):
                 print(format_info(f"  {i}. {p.pattern_type} ({p.confidence:.0f}%) - {p.direction}"))
-        
+
         # Generate prediction
         predictor = SimplePredictor()
         prediction = predictor.predict(df, pattern_list)
-        prediction_dict = {
-            'direction': prediction.direction,
-            'confidence': prediction.confidence
-        }
-        
+        prediction_dict = {"direction": prediction.direction, "confidence": prediction.confidence}
+
         # Generate chart
         chart_gen = ChartGenerator()
-        
+
         if save_path:
             print(format_info(f"Saving chart to {save_path}..."))
             chart_gen.generate(
-                df, pattern_list, 
+                df,
+                pattern_list,
                 symbol=f"{ticker}-USD",
                 prediction=prediction_dict,
-                save_path=save_path
+                save_path=save_path,
             )
             print(format_success(f"Chart saved to: {save_path}"))
         else:
             print(format_info("Generating interactive chart..."))
             chart_gen.generate(
-                df, pattern_list,
-                symbol=f"{ticker}-USD", 
+                df,
+                pattern_list,
+                symbol=f"{ticker}-USD",
                 prediction=prediction_dict,
-                save_path=None  # Display interactively
+                save_path=None,  # Display interactively
             )
-            
+
     except ImportError as e:
         print(format_warning(f"Chart generation requires additional packages: {e}"))
         print(format_info("Install with: pip install matplotlib pandas numpy"))
@@ -638,4 +667,5 @@ def _generate_chart(
         print(format_error(f"Chart generation failed: {e}"))
         if verbose:
             import traceback
+
             traceback.print_exc()

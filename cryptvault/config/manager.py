@@ -1,15 +1,18 @@
 """Configuration manager for loading, saving, and managing settings."""
 
 import json
-import os
-from pathlib import Path
-from typing import Dict, Any, Optional
-from dataclasses import asdict, fields
 import logging
+import os
+from dataclasses import asdict, fields
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 from .settings import (
-    SensitivitySettings, DisplaySettings, PatternSettings,
-    AnalysisSettings, SensitivityLevel
+    AnalysisSettings,
+    DisplaySettings,
+    PatternSettings,
+    SensitivityLevel,
+    SensitivitySettings,
 )
 
 
@@ -48,21 +51,21 @@ class ConfigManager:
                 self.save_config()
                 return True
 
-            with open(self.config_file, 'r') as f:
+            with open(self.config_file, "r") as f:
                 config_data = json.load(f)
 
             # Load each settings section
-            if 'sensitivity' in config_data:
-                self._load_sensitivity_settings(config_data['sensitivity'])
+            if "sensitivity" in config_data:
+                self._load_sensitivity_settings(config_data["sensitivity"])
 
-            if 'display' in config_data:
-                self._load_display_settings(config_data['display'])
+            if "display" in config_data:
+                self._load_display_settings(config_data["display"])
 
-            if 'patterns' in config_data:
-                self._load_pattern_settings(config_data['patterns'])
+            if "patterns" in config_data:
+                self._load_pattern_settings(config_data["patterns"])
 
-            if 'analysis' in config_data:
-                self._load_analysis_settings(config_data['analysis'])
+            if "analysis" in config_data:
+                self._load_analysis_settings(config_data["analysis"])
 
             return True
 
@@ -74,15 +77,15 @@ class ConfigManager:
         """Save current configuration to file."""
         try:
             config_data = {
-                'sensitivity': self._serialize_settings(self.sensitivity),
-                'display': self._serialize_settings(self.display),
-                'patterns': self._serialize_settings(self.patterns),
-                'analysis': self._serialize_settings(self.analysis),
-                'version': '1.0',
-                'created_by': 'Crypto Chart Analyzer'
+                "sensitivity": self._serialize_settings(self.sensitivity),
+                "display": self._serialize_settings(self.display),
+                "patterns": self._serialize_settings(self.patterns),
+                "analysis": self._serialize_settings(self.analysis),
+                "version": "1.0",
+                "created_by": "Crypto Chart Analyzer",
             }
 
-            with open(self.config_file, 'w') as f:
+            with open(self.config_file, "w") as f:
                 json.dump(config_data, f, indent=2, default=str)
 
             return True
@@ -140,48 +143,47 @@ class ConfigManager:
     def get_config_summary(self) -> Dict[str, Any]:
         """Get a summary of current configuration."""
         return {
-            'sensitivity_level': self.sensitivity.level.value,
-            'patterns_enabled': len(self.patterns.get_enabled_patterns()),
-            'colors_enabled': self.display.enable_colors,
-            'chart_size': f"{self.display.chart_width}x{self.display.chart_height}",
-            'config_file': str(self.config_file),
-            'config_exists': self.config_file.exists()
+            "sensitivity_level": self.sensitivity.level.value,
+            "patterns_enabled": len(self.patterns.get_enabled_patterns()),
+            "colors_enabled": self.display.enable_colors,
+            "chart_size": f"{self.display.chart_width}x{self.display.chart_height}",
+            "config_file": str(self.config_file),
+            "config_exists": self.config_file.exists(),
         }
 
     def validate_config(self) -> Dict[str, list]:
         """Validate current configuration and return any issues."""
-        issues = {
-            'errors': [],
-            'warnings': []
-        }
+        issues = {"errors": [], "warnings": []}
 
         # Validate sensitivity settings
         if not (0.0 <= self.sensitivity.geometric_patterns <= 1.0):
-            issues['errors'].append("Geometric patterns sensitivity must be between 0.0 and 1.0")
+            issues["errors"].append("Geometric patterns sensitivity must be between 0.0 and 1.0")
 
         if not (0.0 <= self.sensitivity.volume_confirmation_weight <= 1.0):
-            issues['errors'].append("Volume confirmation weight must be between 0.0 and 1.0")
+            issues["errors"].append("Volume confirmation weight must be between 0.0 and 1.0")
 
         # Validate display settings
         if self.display.chart_width < 40:
-            issues['warnings'].append("Chart width is very small, may affect readability")
+            issues["warnings"].append("Chart width is very small, may affect readability")
 
         if self.display.chart_height < 15:
-            issues['warnings'].append("Chart height is very small, may affect pattern visibility")
+            issues["warnings"].append("Chart height is very small, may affect pattern visibility")
 
         # Validate pattern settings
         if not any(self.patterns.enabled_patterns.values()):
-            issues['errors'].append("No patterns are enabled")
+            issues["errors"].append("No patterns are enabled")
 
         if self.patterns.max_total_patterns < 1:
-            issues['errors'].append("Maximum total patterns must be at least 1")
+            issues["errors"].append("Maximum total patterns must be at least 1")
 
         # Validate analysis settings
         if self.analysis.min_data_points < 10:
-            issues['warnings'].append("Minimum data points is very low, may affect pattern detection")
+            issues["warnings"].append(
+                "Minimum data points is very low, may affect pattern detection"
+            )
 
         if self.analysis.max_data_points > 10000:
-            issues['warnings'].append("Maximum data points is very high, may affect performance")
+            issues["warnings"].append("Maximum data points is very high, may affect performance")
 
         return issues
 
@@ -190,7 +192,7 @@ class ConfigManager:
         for field in fields(SensitivitySettings):
             if field.name in data:
                 value = data[field.name]
-                if field.name == 'level' and isinstance(value, str):
+                if field.name == "level" and isinstance(value, str):
                     try:
                         value = SensitivityLevel(value)
                     except ValueError:
@@ -221,7 +223,7 @@ class ConfigManager:
 
         # Handle enum serialization
         for key, value in data.items():
-            if hasattr(value, 'value'):  # Enum
+            if hasattr(value, "value"):  # Enum
                 data[key] = value.value
 
         return data
@@ -232,8 +234,7 @@ class ConfigManager:
 
         # Configure logging
         logging.basicConfig(
-            level=log_level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
         # Add file handler if enabled
@@ -241,7 +242,9 @@ class ConfigManager:
             try:
                 file_handler = logging.FileHandler(self.analysis.log_file_path)
                 file_handler.setLevel(log_level)
-                formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                formatter = logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                )
                 file_handler.setFormatter(formatter)
                 logging.getLogger().addHandler(file_handler)
             except Exception as e:
@@ -252,10 +255,12 @@ class ConfigManager:
         pattern_key = pattern_name.lower()
 
         return {
-            'enabled': self.patterns.is_pattern_enabled(pattern_key),
-            'sensitivity': self.sensitivity.get_pattern_sensitivity('geometric'),  # Default category
-            'min_confidence': self.sensitivity.get_min_confidence('geometric'),
-            'require_volume': self.patterns.require_volume_confirmation,
-            'min_duration': self.sensitivity.min_pattern_duration,
-            'max_duration': self.sensitivity.max_pattern_duration
+            "enabled": self.patterns.is_pattern_enabled(pattern_key),
+            "sensitivity": self.sensitivity.get_pattern_sensitivity(
+                "geometric"
+            ),  # Default category
+            "min_confidence": self.sensitivity.get_min_confidence("geometric"),
+            "require_volume": self.patterns.require_volume_confirmation,
+            "min_duration": self.sensitivity.min_pattern_duration,
+            "max_duration": self.sensitivity.max_pattern_duration,
         }

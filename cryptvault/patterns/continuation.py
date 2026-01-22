@@ -6,10 +6,13 @@ These patterns typically form during consolidation periods within a larger trend
 """
 
 from typing import List
+
 import numpy as np
-from .base import BasePatternDetector, DetectedPattern
+
 from ..data.models import PriceDataFrame
-from ..indicators.trend_analysis import TrendAnalysis, PeakTrough
+from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
+from .base import BasePatternDetector, DetectedPattern
+
 
 class ContinuationPatternDetector(BasePatternDetector):
     """
@@ -108,8 +111,13 @@ class ContinuationPatternDetector(BasePatternDetector):
             List of continuation pattern type names
         """
         return [
-            'Ascending Triangle', 'Descending Triangle', 'Symmetrical Triangle',
-            'Bull Flag', 'Bear Flag', 'Pennant', 'Rectangle'
+            "Ascending Triangle",
+            "Descending Triangle",
+            "Symmetrical Triangle",
+            "Bull Flag",
+            "Bear Flag",
+            "Pennant",
+            "Rectangle",
         ]
 
     def _detect_triangles(self, data: PriceDataFrame, sensitivity: float) -> List[DetectedPattern]:
@@ -134,21 +142,62 @@ class ContinuationPatternDetector(BasePatternDetector):
         highs = data.get_highs()
         lows = data.get_lows()
 
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=5) if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=5) if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=5)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=5)
+            if pt.type == "trough"
+        ]
 
         if len(high_peaks) >= 2 and len(low_troughs) >= 2:
             # Check for ascending triangle (flat top, rising bottom)
-            if self._is_flat_line([p.value for p in high_peaks[-2:]]) and self._is_rising_line([t.value for t in low_troughs[-2:]]):
-                patterns.append(self._create_triangle_pattern(data, 'Ascending Triangle', high_peaks[-2:], low_troughs[-2:], 'bullish', sensitivity))
+            if self._is_flat_line([p.value for p in high_peaks[-2:]]) and self._is_rising_line(
+                [t.value for t in low_troughs[-2:]]
+            ):
+                patterns.append(
+                    self._create_triangle_pattern(
+                        data,
+                        "Ascending Triangle",
+                        high_peaks[-2:],
+                        low_troughs[-2:],
+                        "bullish",
+                        sensitivity,
+                    )
+                )
 
             # Check for descending triangle (falling top, flat bottom)
-            elif self._is_falling_line([p.value for p in high_peaks[-2:]]) and self._is_flat_line([t.value for t in low_troughs[-2:]]):
-                patterns.append(self._create_triangle_pattern(data, 'Descending Triangle', high_peaks[-2:], low_troughs[-2:], 'bearish', sensitivity))
+            elif self._is_falling_line([p.value for p in high_peaks[-2:]]) and self._is_flat_line(
+                [t.value for t in low_troughs[-2:]]
+            ):
+                patterns.append(
+                    self._create_triangle_pattern(
+                        data,
+                        "Descending Triangle",
+                        high_peaks[-2:],
+                        low_troughs[-2:],
+                        "bearish",
+                        sensitivity,
+                    )
+                )
 
             # Check for symmetrical triangle (converging lines)
-            elif self._is_falling_line([p.value for p in high_peaks[-2:]]) and self._is_rising_line([t.value for t in low_troughs[-2:]]):
-                patterns.append(self._create_triangle_pattern(data, 'Symmetrical Triangle', high_peaks[-2:], low_troughs[-2:], 'neutral', sensitivity))
+            elif self._is_falling_line([p.value for p in high_peaks[-2:]]) and self._is_rising_line(
+                [t.value for t in low_troughs[-2:]]
+            ):
+                patterns.append(
+                    self._create_triangle_pattern(
+                        data,
+                        "Symmetrical Triangle",
+                        high_peaks[-2:],
+                        low_troughs[-2:],
+                        "neutral",
+                        sensitivity,
+                    )
+                )
 
         return patterns
 
@@ -182,37 +231,49 @@ class ContinuationPatternDetector(BasePatternDetector):
             consolidation_period = closes[-10:]
 
             trend_change = (trend_period[-1] - trend_period[0]) / trend_period[0]
-            consolidation_range = (max(consolidation_period) - min(consolidation_period)) / np.mean(consolidation_period)
+            consolidation_range = (max(consolidation_period) - min(consolidation_period)) / np.mean(
+                consolidation_period
+            )
 
             # Bull flag: strong uptrend + small consolidation
             if trend_change > 0.1 and consolidation_range < 0.05:
                 confidence = self._calculate_confidence([0.7, 0.8], [1.0, 1.0])
-                patterns.append(DetectedPattern(
-                    pattern_type='Bull Flag',
-                    category='Bullish Continuation',
-                    confidence=confidence,
-                    start_time=data[-30].timestamp,
-                    end_time=data[-1].timestamp,
-                    start_index=len(data)-30,
-                    end_index=len(data)-1,
-                    key_levels={'support': min(consolidation_period), 'resistance': max(consolidation_period)},
-                    description=f"Bull Flag pattern with {confidence:.1%} confidence"
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="Bull Flag",
+                        category="Bullish Continuation",
+                        confidence=confidence,
+                        start_time=data[-30].timestamp,
+                        end_time=data[-1].timestamp,
+                        start_index=len(data) - 30,
+                        end_index=len(data) - 1,
+                        key_levels={
+                            "support": min(consolidation_period),
+                            "resistance": max(consolidation_period),
+                        },
+                        description=f"Bull Flag pattern with {confidence:.1%} confidence",
+                    )
+                )
 
             # Bear flag: strong downtrend + small consolidation
             elif trend_change < -0.1 and consolidation_range < 0.05:
                 confidence = self._calculate_confidence([0.7, 0.8], [1.0, 1.0])
-                patterns.append(DetectedPattern(
-                    pattern_type='Bear Flag',
-                    category='Bearish Continuation',
-                    confidence=confidence,
-                    start_time=data[-30].timestamp,
-                    end_time=data[-1].timestamp,
-                    start_index=len(data)-30,
-                    end_index=len(data)-1,
-                    key_levels={'support': min(consolidation_period), 'resistance': max(consolidation_period)},
-                    description=f"Bear Flag pattern with {confidence:.1%} confidence"
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="Bear Flag",
+                        category="Bearish Continuation",
+                        confidence=confidence,
+                        start_time=data[-30].timestamp,
+                        end_time=data[-1].timestamp,
+                        start_index=len(data) - 30,
+                        end_index=len(data) - 1,
+                        key_levels={
+                            "support": min(consolidation_period),
+                            "resistance": max(consolidation_period),
+                        },
+                        description=f"Bear Flag pattern with {confidence:.1%} confidence",
+                    )
+                )
 
         return patterns
 
@@ -249,17 +310,19 @@ class ContinuationPatternDetector(BasePatternDetector):
 
             if 0.03 < range_pct < 0.15:  # 3-15% range
                 confidence = self._calculate_confidence([0.6, 0.7], [1.0, 1.0])
-                patterns.append(DetectedPattern(
-                    pattern_type='Rectangle',
-                    category='Continuation',
-                    confidence=confidence,
-                    start_time=data[-20].timestamp,
-                    end_time=data[-1].timestamp,
-                    start_index=len(data)-20,
-                    end_index=len(data)-1,
-                    key_levels={'support': low_level, 'resistance': high_level},
-                    description=f"Rectangle pattern with {confidence:.1%} confidence"
-                ))
+                patterns.append(
+                    DetectedPattern(
+                        pattern_type="Rectangle",
+                        category="Continuation",
+                        confidence=confidence,
+                        start_time=data[-20].timestamp,
+                        end_time=data[-1].timestamp,
+                        start_index=len(data) - 20,
+                        end_index=len(data) - 1,
+                        key_levels={"support": low_level, "resistance": high_level},
+                        description=f"Rectangle pattern with {confidence:.1%} confidence",
+                    )
+                )
 
         return patterns
 
@@ -293,7 +356,7 @@ class ContinuationPatternDetector(BasePatternDetector):
         Returns:
             True if each value is higher than the previous, False otherwise
         """
-        return all(values[i] < values[i+1] for i in range(len(values)-1))
+        return all(values[i] < values[i + 1] for i in range(len(values) - 1))
 
     def _is_falling_line(self, values: List[float]) -> bool:
         """
@@ -307,7 +370,7 @@ class ContinuationPatternDetector(BasePatternDetector):
         Returns:
             True if each value is lower than the previous, False otherwise
         """
-        return all(values[i] > values[i+1] for i in range(len(values)-1))
+        return all(values[i] > values[i + 1] for i in range(len(values) - 1))
 
     def _create_triangle_pattern(self, data, pattern_type, peaks, troughs, bias, sensitivity):
         """
@@ -332,15 +395,15 @@ class ContinuationPatternDetector(BasePatternDetector):
 
         return DetectedPattern(
             pattern_type=pattern_type,
-            category=f"{bias.title()} Continuation" if bias != 'neutral' else 'Continuation',
+            category=f"{bias.title()} Continuation" if bias != "neutral" else "Continuation",
             confidence=confidence,
             start_time=data[start_idx].timestamp,
             end_time=data[end_idx].timestamp,
             start_index=start_idx,
             end_index=end_idx,
             key_levels={
-                'upper': max(p.value for p in peaks),
-                'lower': min(t.value for t in troughs)
+                "upper": max(p.value for p in peaks),
+                "lower": min(t.value for t in troughs),
             },
-            description=f"{pattern_type} with {confidence:.1%} confidence"
+            description=f"{pattern_type} with {confidence:.1%} confidence",
         )

@@ -1,6 +1,7 @@
 """Data validation utilities."""
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from .models import PriceDataFrame
 
 
@@ -15,11 +16,11 @@ class DataValidator:
         if len(data_frame) == 0:
             errors.append("Empty data frame")
             return {
-                'is_valid': False,
-                'errors': errors,
-                'warnings': warnings,
-                'suggestions': ['Provide price data'],
-                'statistics': {}
+                "is_valid": False,
+                "errors": errors,
+                "warnings": warnings,
+                "suggestions": ["Provide price data"],
+                "statistics": {},
             }
 
         # Check for invalid prices
@@ -36,22 +37,19 @@ class DataValidator:
         volumes = data_frame.get_volumes()
 
         statistics = {
-            'data_points': len(data_frame),
-            'price_range': {
-                'min': min(closes),
-                'max': max(closes),
-                'current': closes[-1] if closes else 0
+            "data_points": len(data_frame),
+            "price_range": {
+                "min": min(closes),
+                "max": max(closes),
+                "current": closes[-1] if closes else 0,
             },
-            'volume': {
-                'avg': sum(volumes) / len(volumes) if volumes else 0,
-                'total': sum(volumes)
-            }
+            "volume": {"avg": sum(volumes) / len(volumes) if volumes else 0, "total": sum(volumes)},
         }
 
         return {
-            'is_valid': len(errors) == 0,
-            'errors': errors,
-            'warnings': warnings,
-            'suggestions': [] if len(errors) == 0 else ['Fix data quality issues'],
-            'statistics': statistics
+            "is_valid": len(errors) == 0,
+            "errors": errors,
+            "warnings": warnings,
+            "suggestions": [] if len(errors) == 0 else ["Fix data quality issues"],
+            "statistics": statistics,
         }

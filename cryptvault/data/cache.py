@@ -11,14 +11,14 @@ Example:
     >>> data = cache.get('BTC_60d_1d')
 """
 
+import hashlib
 import logging
 import pickle
-import hashlib
 import time
-from pathlib import Path
-from typing import Optional, Any, Dict
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 from ..config import get_config
 from ..exceptions import CacheError
@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """Cache entry with metadata."""
+
     key: str
     value: Any
     created_at: float
@@ -88,12 +89,7 @@ class MemoryCache:
         while self._size_bytes + size > self.max_size_mb * 1024 * 1024:
             self._evict_lru()
 
-        entry = CacheEntry(
-            key=key,
-            value=value,
-            created_at=time.time(),
-            ttl=ttl
-        )
+        entry = CacheEntry(key=key, value=value, created_at=time.time(), ttl=ttl)
 
         self._cache[key] = entry
         self._size_bytes += size
@@ -115,8 +111,7 @@ class MemoryCache:
 
         # Find entry with lowest hits and oldest
         lru_key = min(
-            self._cache.keys(),
-            key=lambda k: (self._cache[k].hits, -self._cache[k].created_at)
+            self._cache.keys(), key=lambda k: (self._cache[k].hits, -self._cache[k].created_at)
         )
 
         del self._cache[lru_key]
@@ -125,11 +120,13 @@ class MemoryCache:
         """Get cache statistics."""
         total_hits = sum(e.hits for e in self._cache.values())
         return {
-            'entries': len(self._cache),
-            'size_mb': self._size_bytes / (1024 * 1024),
-            'max_size_mb': self.max_size_mb,
-            'total_hits': total_hits,
-            'avg_age': sum(e.age for e in self._cache.values()) / len(self._cache) if self._cache else 0
+            "entries": len(self._cache),
+            "size_mb": self._size_bytes / (1024 * 1024),
+            "max_size_mb": self.max_size_mb,
+            "total_hits": total_hits,
+            "avg_age": (
+                sum(e.age for e in self._cache.values()) / len(self._cache) if self._cache else 0
+            ),
         }
 
 
@@ -147,14 +144,14 @@ class DiskCache:
         self.cache_dir = Path(cache_dir)
         self.max_size_mb = max_size_mb
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self._index_file = self.cache_dir / 'index.pkl'
+        self._index_file = self.cache_dir / "index.pkl"
         self._index: Dict[str, CacheEntry] = self._load_index()
 
     def _load_index(self) -> Dict[str, CacheEntry]:
         """Load cache index."""
         if self._index_file.exists():
             try:
-                with open(self._index_file, 'rb') as f:
+                with open(self._index_file, "rb") as f:
                     return pickle.load(f)  # nosec B301 - Internal cache data only
             except:
                 return {}
@@ -163,14 +160,16 @@ class DiskCache:
     def _save_index(self) -> None:
         """Save cache index."""
         try:
-            with open(self._index_file, 'wb') as f:
+            with open(self._index_file, "wb") as f:
                 pickle.dump(self._index, f)
         except Exception as e:
             logger.error(f"Failed to save cache index: {e}")
 
     def _get_cache_path(self, key: str) -> Path:
         """Get cache file path for key."""
-        key_hash = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()  # nosec B324 - Used for cache key only
+        key_hash = hashlib.md5(
+            key.encode(), usedforsecurity=False
+        ).hexdigest()  # nosec B324 - Used for cache key only
         return self.cache_dir / f"{key_hash}.cache"
 
     def get(self, key: str) -> Optional[Any]:
@@ -190,7 +189,7 @@ class DiskCache:
             return None
 
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 value = pickle.load(f)  # nosec B301 - Internal cache data only
 
             entry.hits += 1
@@ -206,14 +205,11 @@ class DiskCache:
         cache_path = self._get_cache_path(key)
 
         try:
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(value, f)
 
             entry = CacheEntry(
-                key=key,
-                value=None,  # Don't store value in index
-                created_at=time.time(),
-                ttl=ttl
+                key=key, value=None, created_at=time.time(), ttl=ttl  # Don't store value in index
             )
 
             self._index[key] = entry
@@ -223,8 +219,8 @@ class DiskCache:
             logger.error(f"Failed to save cache entry: {e}")
             raise CacheError(
                 "Failed to save to disk cache",
-                details={'key': key, 'error': str(e)},
-                original_error=e
+                details={"key": key, "error": str(e)},
+                original_error=e,
             )
 
     def delete(self, key: str) -> None:
@@ -238,7 +234,7 @@ class DiskCache:
 
     def clear(self) -> None:
         """Clear all cache entries."""
-        for cache_file in self.cache_dir.glob('*.cache'):
+        for cache_file in self.cache_dir.glob("*.cache"):
             cache_file.unlink()
         self._index.clear()
         self._save_index()
@@ -252,10 +248,10 @@ class DiskCache:
         )
 
         return {
-            'entries': len(self._index),
-            'size_mb': total_size / (1024 * 1024),
-            'max_size_mb': self.max_size_mb,
-            'total_hits': sum(e.hits for e in self._index.values())
+            "entries": len(self._index),
+            "size_mb": total_size / (1024 * 1024),
+            "max_size_mb": self.max_size_mb,
+            "total_hits": sum(e.hits for e in self._index.values()),
         }
 
 
@@ -285,10 +281,10 @@ class DataCache:
         if not self.config.cache.enabled:
             return None
 
-        if self.config.cache.backend == 'memory':
+        if self.config.cache.backend == "memory":
             return MemoryCache(max_size_mb=self.config.cache.max_size_mb)
-        elif self.config.cache.backend == 'disk':
-            cache_dir = self.config.cache.disk_path or 'cache'
+        elif self.config.cache.backend == "disk":
+            cache_dir = self.config.cache.disk_path or "cache"
             return DiskCache(cache_dir, max_size_mb=self.config.cache.max_size_mb)
         else:
             logger.warning(f"Unknown cache backend: {self.config.cache.backend}")
@@ -369,16 +365,16 @@ class DataCache:
             Dictionary with cache statistics
         """
         if not self._backend:
-            return {'enabled': False}
+            return {"enabled": False}
 
         try:
             stats = self._backend.get_stats()
-            stats['enabled'] = True
-            stats['backend'] = self.config.cache.backend
+            stats["enabled"] = True
+            stats["backend"] = self.config.cache.backend
             return stats
         except Exception as e:
             logger.error(f"Failed to get cache stats: {e}")
-            return {'enabled': True, 'error': str(e)}
+            return {"enabled": True, "error": str(e)}
 
     @staticmethod
     def make_key(symbol: str, days: int, interval: str) -> str:

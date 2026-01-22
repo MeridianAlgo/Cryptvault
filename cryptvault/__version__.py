@@ -10,10 +10,10 @@ Attributes:
     __license__: License type
 """
 
-__version__ = '4.5.0'
-__version_info__ = (4, 5, 0)
-__author__ = 'MeridianAlgo Algorithmic Research Team (Quantum Meridian)'
-__license__ = 'MIT'
-__copyright__ = 'Copyright 2024 MeridianAlgo'
-__url__ = 'https://github.com/MeridianAlgo/Cryptvault'
-__description__ = 'Advanced AI-Powered Cryptocurrency Analysis Platform'
+__version__ = "5.0.0"
+__version_info__ = (5, 0, 0)
+__author__ = "MeridianAlgo Algorithmic Research Team (Quantum Meridian)"
+__license__ = "MIT"
+__copyright__ = "Copyright 2026 MeridianAlgo"
+__url__ = "https://github.com/MeridianAlgo/Cryptvault"
+__description__ = "Advanced AI-Powered Cryptocurrency Analysis Platform"

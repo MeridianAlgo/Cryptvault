@@ -1,11 +1,12 @@
 """Geometric pattern detection algorithms for triangles, flags, wedges, etc."""
 
-from typing import List, Dict, Optional, Tuple
 import math
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
+from ..analysis.trend_analysis import PeakTrough, TrendAnalysis, TrendLine
 from ..data.models import PriceDataFrame
-from ..analysis.trend_analysis import TrendAnalysis, TrendLine, PeakTrough
-from .types import PatternType, PatternCategory, DetectedPattern, VolumeProfile, PATTERN_CATEGORIES
+from .types import PATTERN_CATEGORIES, DetectedPattern, PatternCategory, PatternType, VolumeProfile
 
 
 class GeometricPatternAnalyzer:
@@ -17,8 +18,9 @@ class GeometricPatternAnalyzer:
         self.min_pattern_length = 10  # Minimum number of data points for a pattern
         self.max_pattern_length = 100  # Maximum number of data points for a pattern
 
-    def detect_triangle_patterns(self, data: PriceDataFrame,
-                               sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_triangle_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect ascending, descending, and symmetrical triangle patterns.
 
@@ -37,10 +39,16 @@ class GeometricPatternAnalyzer:
         lows = data.get_lows()
 
         # Find peaks and troughs
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=3)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=3)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=3)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=3)
+            if pt.type == "trough"
+        ]
 
         if len(high_peaks) < 2 or len(low_troughs) < 2:
             return patterns
@@ -51,8 +59,7 @@ class GeometricPatternAnalyzer:
                 peak1, peak2 = high_peaks[i], high_peaks[j]
 
                 # Find troughs within the peak range
-                relevant_troughs = [t for t in low_troughs
-                                  if peak1.index <= t.index <= peak2.index]
+                relevant_troughs = [t for t in low_troughs if peak1.index <= t.index <= peak2.index]
 
                 if len(relevant_troughs) < 2:
                     continue
@@ -72,10 +79,15 @@ class GeometricPatternAnalyzer:
         # Remove overlapping patterns and keep the best ones
         return self._filter_overlapping_patterns(patterns)
 
-    def _analyze_triangle_formation(self, data: PriceDataFrame,
-                                  peak1: PeakTrough, peak2: PeakTrough,
-                                  trough1: PeakTrough, trough2: PeakTrough,
-                                  sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_triangle_formation(
+        self,
+        data: PriceDataFrame,
+        peak1: PeakTrough,
+        peak2: PeakTrough,
+        trough1: PeakTrough,
+        trough2: PeakTrough,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Analyze if four points form a valid triangle pattern."""
 
         # Calculate trend lines
@@ -116,8 +128,15 @@ class GeometricPatternAnalyzer:
 
         # Calculate pattern confidence
         confidence = self._calculate_triangle_confidence(
-            data, start_index, end_index, upper_slope, upper_intercept,
-            lower_slope, lower_intercept, triangle_type, sensitivity
+            data,
+            start_index,
+            end_index,
+            upper_slope,
+            upper_intercept,
+            lower_slope,
+            lower_intercept,
+            triangle_type,
+            sensitivity,
         )
 
         if confidence < (0.3 + sensitivity * 0.4):  # Adjust threshold based on sensitivity
@@ -138,17 +157,21 @@ class GeometricPatternAnalyzer:
             start_index=start_index,
             end_index=end_index,
             key_levels={
-                'upper_resistance': peak1.value,
-                'lower_support': trough1.value,
-                'convergence_price': upper_slope * convergence_index + upper_intercept,
-                'upper_slope': upper_slope,
-                'lower_slope': lower_slope
+                "upper_resistance": peak1.value,
+                "lower_support": trough1.value,
+                "convergence_price": upper_slope * convergence_index + upper_intercept,
+                "upper_slope": upper_slope,
+                "lower_slope": lower_slope,
             },
             volume_profile=volume_profile,
-            description=self._generate_triangle_description(triangle_type, confidence, pattern_length)
+            description=self._generate_triangle_description(
+                triangle_type, confidence, pattern_length
+            ),
         )
 
-    def _classify_triangle_type(self, upper_slope: float, lower_slope: float) -> Optional[PatternType]:
+    def _classify_triangle_type(
+        self, upper_slope: float, lower_slope: float
+    ) -> Optional[PatternType]:
         """Classify triangle type based on trend line slopes."""
         slope_threshold = 0.001  # Threshold for considering a line horizontal
 
@@ -161,26 +184,31 @@ class GeometricPatternAnalyzer:
             return PatternType.DESCENDING_TRIANGLE
 
         # Symmetrical Triangle: converging lines with opposite slopes
-        elif (upper_slope < -slope_threshold and lower_slope > slope_threshold and
-              abs(abs(upper_slope) - abs(lower_slope)) < abs(upper_slope) * 0.5):
+        elif (
+            upper_slope < -slope_threshold
+            and lower_slope > slope_threshold
+            and abs(abs(upper_slope) - abs(lower_slope)) < abs(upper_slope) * 0.5
+        ):
             return PatternType.SYMMETRICAL_TRIANGLE
 
         return None
 
-    def _calculate_convergence_point(self, upper_slope: float, upper_intercept: float,
-                                   lower_slope: float, lower_intercept: float) -> float:
+    def _calculate_convergence_point(
+        self, upper_slope: float, upper_intercept: float, lower_slope: float, lower_intercept: float
+    ) -> float:
         """Calculate where the two trend lines converge."""
         if abs(upper_slope - lower_slope) < 1e-10:  # Parallel lines
-            return float('inf')
+            return float("inf")
 
         # Solve: upper_slope * x + upper_intercept = lower_slope * x + lower_intercept
         convergence_x = (lower_intercept - upper_intercept) / (upper_slope - lower_slope)
         return convergence_x
 
-    def _validate_triangle_convergence(self, convergence_index: float,
-                                     start_index: int, end_index: int) -> bool:
+    def _validate_triangle_convergence(
+        self, convergence_index: float, start_index: int, end_index: int
+    ) -> bool:
         """Validate that triangle convergence is reasonable."""
-        if convergence_index == float('inf'):
+        if convergence_index == float("inf"):
             return False
 
         pattern_length = end_index - start_index
@@ -192,10 +220,18 @@ class GeometricPatternAnalyzer:
 
         return min_convergence <= convergence_index <= max_convergence
 
-    def _calculate_triangle_confidence(self, data: PriceDataFrame, start_index: int, end_index: int,
-                                     upper_slope: float, upper_intercept: float,
-                                     lower_slope: float, lower_intercept: float,
-                                     triangle_type: PatternType, sensitivity: float) -> float:
+    def _calculate_triangle_confidence(
+        self,
+        data: PriceDataFrame,
+        start_index: int,
+        end_index: int,
+        upper_slope: float,
+        upper_intercept: float,
+        lower_slope: float,
+        lower_intercept: float,
+        triangle_type: PatternType,
+        sensitivity: float,
+    ) -> float:
         """Calculate confidence score for triangle pattern."""
         highs = data.get_highs()
         lows = data.get_lows()
@@ -205,10 +241,14 @@ class GeometricPatternAnalyzer:
 
         # 1. Trend line fit quality
         upper_fit_score = self._calculate_trendline_fit(
-            highs[start_index:end_index+1], upper_slope, upper_intercept, start_index, 'resistance'
+            highs[start_index : end_index + 1],
+            upper_slope,
+            upper_intercept,
+            start_index,
+            "resistance",
         )
         lower_fit_score = self._calculate_trendline_fit(
-            lows[start_index:end_index+1], lower_slope, lower_intercept, start_index, 'support'
+            lows[start_index : end_index + 1], lower_slope, lower_intercept, start_index, "support"
         )
 
         confidence_factors.append(upper_fit_score * 0.3)
@@ -216,17 +256,17 @@ class GeometricPatternAnalyzer:
 
         # 2. Number of touches on trend lines
         upper_touches = self._count_trendline_touches(
-            highs[start_index:end_index+1], upper_slope, upper_intercept, start_index
+            highs[start_index : end_index + 1], upper_slope, upper_intercept, start_index
         )
         lower_touches = self._count_trendline_touches(
-            lows[start_index:end_index+1], lower_slope, lower_intercept, start_index
+            lows[start_index : end_index + 1], lower_slope, lower_intercept, start_index
         )
 
         touch_score = min(1.0, (upper_touches + lower_touches - 4) / 4)  # Normalize, 4 is minimum
         confidence_factors.append(touch_score * 0.2)
 
         # 3. Volume pattern (should decrease towards apex)
-        volume_score = self._analyze_triangle_volume_pattern(volumes[start_index:end_index+1])
+        volume_score = self._analyze_triangle_volume_pattern(volumes[start_index : end_index + 1])
         confidence_factors.append(volume_score * 0.1)
 
         # 4. Pattern length appropriateness
@@ -243,8 +283,9 @@ class GeometricPatternAnalyzer:
 
         return final_confidence
 
-    def _calculate_trendline_fit(self, values: List[float], slope: float, intercept: float,
-                               start_index: int, line_type: str) -> float:
+    def _calculate_trendline_fit(
+        self, values: List[float], slope: float, intercept: float, start_index: int, line_type: str
+    ) -> float:
         """Calculate how well a trend line fits the data."""
         if not values:
             return 0.0
@@ -262,9 +303,9 @@ class GeometricPatternAnalyzer:
             # For support lines, penalize points below the line more
             error = abs(value - expected_value)
 
-            if line_type == 'resistance' and value > expected_value:
+            if line_type == "resistance" and value > expected_value:
                 error *= 2  # Penalize breaks above resistance
-            elif line_type == 'support' and value < expected_value:
+            elif line_type == "support" and value < expected_value:
                 error *= 2  # Penalize breaks below support
 
             total_error += error
@@ -285,8 +326,14 @@ class GeometricPatternAnalyzer:
 
         return fit_score
 
-    def _count_trendline_touches(self, values: List[float], slope: float,
-                               intercept: float, start_index: int, tolerance: float = 0.02) -> int:
+    def _count_trendline_touches(
+        self,
+        values: List[float],
+        slope: float,
+        intercept: float,
+        start_index: int,
+        tolerance: float = 0.02,
+    ) -> int:
         """Count how many points touch the trend line within tolerance."""
         touches = 0
 
@@ -316,8 +363,8 @@ class GeometricPatternAnalyzer:
             return 0.5
 
         # Calculate volume trend
-        first_third = valid_volumes[:len(valid_volumes)//3]
-        last_third = valid_volumes[-len(valid_volumes)//3:]
+        first_third = valid_volumes[: len(valid_volumes) // 3]
+        last_third = valid_volumes[-len(valid_volumes) // 3 :]
 
         if not first_third or not last_third:
             return 0.5
@@ -347,25 +394,22 @@ class GeometricPatternAnalyzer:
         else:  # pattern_length > ideal_max
             return max(0.3, ideal_max / pattern_length)
 
-    def _calculate_volume_profile(self, data: PriceDataFrame,
-                                start_index: int, end_index: int) -> VolumeProfile:
+    def _calculate_volume_profile(
+        self, data: PriceDataFrame, start_index: int, end_index: int
+    ) -> VolumeProfile:
         """Calculate volume profile for the pattern period."""
-        volumes = data.get_volumes()[start_index:end_index+1]
+        volumes = data.get_volumes()[start_index : end_index + 1]
         valid_volumes = [v for v in volumes if v is not None and v > 0]
 
         if not valid_volumes:
-            return VolumeProfile(
-                avg_volume=0.0,
-                volume_trend="unknown",
-                volume_confirmation=False
-            )
+            return VolumeProfile(avg_volume=0.0, volume_trend="unknown", volume_confirmation=False)
 
         avg_volume = sum(valid_volumes) / len(valid_volumes)
 
         # Determine volume trend
         if len(valid_volumes) >= 3:
-            first_half = valid_volumes[:len(valid_volumes)//2]
-            second_half = valid_volumes[len(valid_volumes)//2:]
+            first_half = valid_volumes[: len(valid_volumes) // 2]
+            second_half = valid_volumes[len(valid_volumes) // 2 :]
 
             avg_first = sum(first_half) / len(first_half)
             avg_second = sum(second_half) / len(second_half)
@@ -387,16 +431,17 @@ class GeometricPatternAnalyzer:
         return VolumeProfile(
             avg_volume=avg_volume,
             volume_trend=volume_trend,
-            volume_confirmation=volume_confirmation
+            volume_confirmation=volume_confirmation,
         )
 
-    def _generate_triangle_description(self, triangle_type: PatternType,
-                                     confidence: float, pattern_length: int) -> str:
+    def _generate_triangle_description(
+        self, triangle_type: PatternType, confidence: float, pattern_length: int
+    ) -> str:
         """Generate human-readable description of triangle pattern."""
         type_descriptions = {
             PatternType.ASCENDING_TRIANGLE: "Ascending Triangle - bullish continuation pattern with horizontal resistance and rising support",
             PatternType.DESCENDING_TRIANGLE: "Descending Triangle - bearish continuation pattern with horizontal support and falling resistance",
-            PatternType.SYMMETRICAL_TRIANGLE: "Symmetrical Triangle - neutral pattern with converging trend lines"
+            PatternType.SYMMETRICAL_TRIANGLE: "Symmetrical Triangle - neutral pattern with converging trend lines",
         }
 
         base_description = type_descriptions.get(triangle_type, "Triangle pattern")
@@ -405,7 +450,9 @@ class GeometricPatternAnalyzer:
 
         return f"{base_description}. Confidence: {confidence_level} ({confidence:.1%}). Duration: {pattern_length} periods."
 
-    def _filter_overlapping_patterns(self, patterns: List[DetectedPattern]) -> List[DetectedPattern]:
+    def _filter_overlapping_patterns(
+        self, patterns: List[DetectedPattern]
+    ) -> List[DetectedPattern]:
         """Filter out overlapping patterns, keeping the highest confidence ones."""
         if not patterns:
             return patterns
@@ -436,20 +483,27 @@ class GeometricPatternAnalyzer:
 
         return filtered_patterns
 
-    def detect_flag_patterns(self, data: PriceDataFrame, sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_flag_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """Alias for detect_flag_and_pennant_patterns for backward compatibility."""
         return self.detect_flag_and_pennant_patterns(data, sensitivity)
 
-    def detect_cup_and_handle(self, data: PriceDataFrame, sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_cup_and_handle(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """Alias for detect_cup_and_handle_patterns for backward compatibility."""
         return self.detect_cup_and_handle_patterns(data, sensitivity)
 
-    def detect_rectangle_patterns(self, data: PriceDataFrame, sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_rectangle_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """Alias for detect_rectangle_and_channel_patterns for backward compatibility."""
         return self.detect_rectangle_and_channel_patterns(data, sensitivity)
 
-    def detect_flag_and_pennant_patterns(self, data: PriceDataFrame,
-                                       sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_flag_and_pennant_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect bull/bear flag and pennant patterns.
 
@@ -474,8 +528,10 @@ class GeometricPatternAnalyzer:
 
         for flagpole in flagpoles:
             # Look for consolidation after flagpole
-            consolidation_start = flagpole['end_index'] + 1
-            max_consolidation_length = min(flagpole['length'], 30)  # Consolidation should be shorter than flagpole
+            consolidation_start = flagpole["end_index"] + 1
+            max_consolidation_length = min(
+                flagpole["length"], 30
+            )  # Consolidation should be shorter than flagpole
 
             for consolidation_length in range(5, max_consolidation_length):
                 consolidation_end = consolidation_start + consolidation_length
@@ -494,15 +550,18 @@ class GeometricPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_flagpoles(self, closes: List[float], volumes: List[float],
-                       sensitivity: float) -> List[Dict]:
+    def _find_flagpoles(
+        self, closes: List[float], volumes: List[float], sensitivity: float
+    ) -> List[Dict]:
         """Find strong directional moves that could be flagpoles."""
         flagpoles = []
         min_flagpole_length = 3
         max_flagpole_length = 20
 
         for start_idx in range(len(closes) - min_flagpole_length):
-            for length in range(min_flagpole_length, min(max_flagpole_length, len(closes) - start_idx)):
+            for length in range(
+                min_flagpole_length, min(max_flagpole_length, len(closes) - start_idx)
+            ):
                 end_idx = start_idx + length
 
                 if end_idx >= len(closes):
@@ -524,7 +583,7 @@ class GeometricPatternAnalyzer:
                     continue
 
                 # Check for volume confirmation
-                flagpole_volumes = volumes[start_idx:end_idx+1]
+                flagpole_volumes = volumes[start_idx : end_idx + 1]
                 valid_volumes = [v for v in flagpole_volumes if v is not None and v > 0]
 
                 if len(valid_volumes) < length // 2:
@@ -533,23 +592,25 @@ class GeometricPatternAnalyzer:
                 avg_flagpole_volume = sum(valid_volumes) / len(valid_volumes)
 
                 # Calculate trend strength
-                trend_strength = self._calculate_trend_strength(closes[start_idx:end_idx+1])
+                trend_strength = self._calculate_trend_strength(closes[start_idx : end_idx + 1])
 
                 if trend_strength < 0.6:  # Require strong trend
                     continue
 
-                flagpoles.append({
-                    'start_index': start_idx,
-                    'end_index': end_idx,
-                    'length': length,
-                    'price_change_percent': price_change_percent,
-                    'direction': 'bullish' if price_change_percent > 0 else 'bearish',
-                    'avg_volume': avg_flagpole_volume,
-                    'trend_strength': trend_strength
-                })
+                flagpoles.append(
+                    {
+                        "start_index": start_idx,
+                        "end_index": end_idx,
+                        "length": length,
+                        "price_change_percent": price_change_percent,
+                        "direction": "bullish" if price_change_percent > 0 else "bearish",
+                        "avg_volume": avg_flagpole_volume,
+                        "trend_strength": trend_strength,
+                    }
+                )
 
         # Sort by trend strength and return best candidates
-        flagpoles.sort(key=lambda x: x['trend_strength'], reverse=True)
+        flagpoles.sort(key=lambda x: x["trend_strength"], reverse=True)
         return flagpoles[:10]  # Limit to top 10 candidates
 
     def _calculate_trend_strength(self, prices: List[float]) -> float:
@@ -568,24 +629,35 @@ class GeometricPatternAnalyzer:
         except:
             return 0.0
 
-    def _analyze_flag_consolidation(self, data: PriceDataFrame, flagpole: Dict,
-                                  consolidation_start: int, consolidation_end: int,
-                                  sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_flag_consolidation(
+        self,
+        data: PriceDataFrame,
+        flagpole: Dict,
+        consolidation_start: int,
+        consolidation_end: int,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Analyze consolidation period to determine if it forms a flag or pennant."""
 
         if consolidation_end >= len(data):
             return None
 
-        highs = data.get_highs()[consolidation_start:consolidation_end+1]
-        lows = data.get_lows()[consolidation_start:consolidation_end+1]
-        closes = data.get_closes()[consolidation_start:consolidation_end+1]
-        volumes = data.get_volumes()[consolidation_start:consolidation_end+1]
+        highs = data.get_highs()[consolidation_start : consolidation_end + 1]
+        lows = data.get_lows()[consolidation_start : consolidation_end + 1]
+        closes = data.get_closes()[consolidation_start : consolidation_end + 1]
+        volumes = data.get_volumes()[consolidation_start : consolidation_end + 1]
 
         # Find peaks and troughs in consolidation
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=2)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=2)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=2)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=2)
+            if pt.type == "trough"
+        ]
 
         if len(high_peaks) < 2 or len(low_troughs) < 2:
             return None
@@ -599,7 +671,7 @@ class GeometricPatternAnalyzer:
             return None
 
         # Calculate volume profile
-        full_start = flagpole['start_index']
+        full_start = flagpole["start_index"]
         full_end = consolidation_end
         volume_profile = self._calculate_volume_profile(data, full_start, full_end)
 
@@ -615,20 +687,27 @@ class GeometricPatternAnalyzer:
             start_index=full_start,
             end_index=full_end,
             key_levels={
-                'flagpole_start': data.get_closes()[flagpole['start_index']],
-                'flagpole_end': data.get_closes()[flagpole['end_index']],
-                'consolidation_high': max(h for h in highs if h is not None),
-                'consolidation_low': min(l for l in lows if l is not None),
-                'flagpole_strength': flagpole['trend_strength'],
-                'price_change_percent': flagpole['price_change_percent']
+                "flagpole_start": data.get_closes()[flagpole["start_index"]],
+                "flagpole_end": data.get_closes()[flagpole["end_index"]],
+                "consolidation_high": max(h for h in highs if h is not None),
+                "consolidation_low": min(l for l in lows if l is not None),
+                "flagpole_strength": flagpole["trend_strength"],
+                "price_change_percent": flagpole["price_change_percent"],
             },
             volume_profile=volume_profile,
-            description=self._generate_flag_pennant_description(pattern_type, confidence, flagpole)
+            description=self._generate_flag_pennant_description(pattern_type, confidence, flagpole),
         )
 
-    def _classify_flag_pennant_pattern(self, flagpole: Dict, high_peaks: List, low_troughs: List,
-                                     highs: List[float], lows: List[float], volumes: List[float],
-                                     sensitivity: float) -> Tuple[Optional[PatternType], float]:
+    def _classify_flag_pennant_pattern(
+        self,
+        flagpole: Dict,
+        high_peaks: List,
+        low_troughs: List,
+        highs: List[float],
+        lows: List[float],
+        volumes: List[float],
+        sensitivity: float,
+    ) -> Tuple[Optional[PatternType], float]:
         """Classify consolidation as flag or pennant pattern."""
 
         if len(high_peaks) < 2 or len(low_troughs) < 2:
@@ -638,17 +717,25 @@ class GeometricPatternAnalyzer:
         try:
             # Upper trend line (resistance in consolidation)
             peak1, peak2 = high_peaks[0], high_peaks[-1]
-            upper_slope = (peak2.value - peak1.value) / (peak2.index - peak1.index) if peak2.index != peak1.index else 0
+            upper_slope = (
+                (peak2.value - peak1.value) / (peak2.index - peak1.index)
+                if peak2.index != peak1.index
+                else 0
+            )
 
             # Lower trend line (support in consolidation)
             trough1, trough2 = low_troughs[0], low_troughs[-1]
-            lower_slope = (trough2.value - trough1.value) / (trough2.index - trough1.index) if trough2.index != trough1.index else 0
+            lower_slope = (
+                (trough2.value - trough1.value) / (trough2.index - trough1.index)
+                if trough2.index != trough1.index
+                else 0
+            )
 
         except (IndexError, ZeroDivisionError):
             return None, 0.0
 
         # Determine pattern type based on flagpole direction and consolidation slopes
-        flagpole_direction = flagpole['direction']
+        flagpole_direction = flagpole["direction"]
 
         # Check for flag patterns (parallel consolidation lines)
         slope_difference = abs(upper_slope - lower_slope)
@@ -662,20 +749,22 @@ class GeometricPatternAnalyzer:
         # Check for pennant patterns (converging consolidation lines)
         convergence_factor = 0.0
         if upper_slope < 0 and lower_slope > 0:  # Converging
-            convergence_factor = min(abs(upper_slope), abs(lower_slope)) / max(abs(upper_slope), abs(lower_slope))
+            convergence_factor = min(abs(upper_slope), abs(lower_slope)) / max(
+                abs(upper_slope), abs(lower_slope)
+            )
 
         # Calculate confidence factors
         confidence_factors = []
 
         # 1. Flagpole strength
-        confidence_factors.append(flagpole['trend_strength'] * 0.3)
+        confidence_factors.append(flagpole["trend_strength"] * 0.3)
 
         # 2. Volume pattern (should decrease during consolidation)
         volume_score = self._analyze_flag_volume_pattern(volumes)
         confidence_factors.append(volume_score * 0.2)
 
         # 3. Consolidation slope appropriateness
-        if flagpole_direction == 'bullish':
+        if flagpole_direction == "bullish":
             # For bull flags, consolidation should be slightly downward or sideways
             if upper_slope <= 0.001 and lower_slope <= 0.001:  # Sideways/downward
                 slope_score = 0.8
@@ -692,19 +781,19 @@ class GeometricPatternAnalyzer:
 
         # 4. Pattern length appropriateness
         consolidation_length = len(highs)
-        length_score = self._score_consolidation_length(consolidation_length, flagpole['length'])
+        length_score = self._score_consolidation_length(consolidation_length, flagpole["length"])
         confidence_factors.append(length_score * 0.2)
 
         base_confidence = sum(confidence_factors)
 
         # Determine pattern type
         if slope_similarity > 0.7:  # Parallel lines = Flag
-            if flagpole_direction == 'bullish':
+            if flagpole_direction == "bullish":
                 pattern_type = PatternType.BULL_FLAG
             else:
                 pattern_type = PatternType.BEAR_FLAG
         elif convergence_factor > 0.5:  # Converging lines = Pennant
-            if flagpole_direction == 'bullish':
+            if flagpole_direction == "bullish":
                 pattern_type = PatternType.BULL_PENNANT
             else:
                 pattern_type = PatternType.BEAR_PENNANT
@@ -727,8 +816,8 @@ class GeometricPatternAnalyzer:
             return 0.5
 
         # Volume should generally decrease during consolidation
-        first_half = valid_volumes[:len(valid_volumes)//2]
-        second_half = valid_volumes[len(valid_volumes)//2:]
+        first_half = valid_volumes[: len(valid_volumes) // 2]
+        second_half = valid_volumes[len(valid_volumes) // 2 :]
 
         if not first_half or not second_half:
             return 0.5
@@ -756,24 +845,28 @@ class GeometricPatternAnalyzer:
         else:  # consolidation_length > ideal_max
             return max(0.3, ideal_max / consolidation_length)
 
-    def _generate_flag_pennant_description(self, pattern_type: PatternType,
-                                         confidence: float, flagpole: Dict) -> str:
+    def _generate_flag_pennant_description(
+        self, pattern_type: PatternType, confidence: float, flagpole: Dict
+    ) -> str:
         """Generate description for flag/pennant pattern."""
         type_descriptions = {
             PatternType.BULL_FLAG: "Bull Flag - bullish continuation pattern with strong upward move followed by sideways consolidation",
             PatternType.BEAR_FLAG: "Bear Flag - bearish continuation pattern with strong downward move followed by sideways consolidation",
             PatternType.BULL_PENNANT: "Bull Pennant - bullish continuation pattern with strong upward move followed by converging consolidation",
-            PatternType.BEAR_PENNANT: "Bear Pennant - bearish continuation pattern with strong downward move followed by converging consolidation"
+            PatternType.BEAR_PENNANT: "Bear Pennant - bearish continuation pattern with strong downward move followed by converging consolidation",
         }
 
         base_description = type_descriptions.get(pattern_type, "Flag/Pennant pattern")
         confidence_level = "high" if confidence > 0.7 else "medium" if confidence > 0.5 else "low"
 
-        return (f"{base_description}. Flagpole move: {flagpole['price_change_percent']:.1%}. "
-                f"Confidence: {confidence_level} ({confidence:.1%}).")
+        return (
+            f"{base_description}. Flagpole move: {flagpole['price_change_percent']:.1%}. "
+            f"Confidence: {confidence_level} ({confidence:.1%})."
+        )
 
-    def detect_cup_and_handle_patterns(self, data: PriceDataFrame,
-                                     sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_cup_and_handle_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect cup and handle patterns.
 
@@ -806,8 +899,9 @@ class GeometricPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_cup_formations(self, closes: List[float], highs: List[float],
-                           lows: List[float], sensitivity: float) -> List[Dict]:
+    def _find_cup_formations(
+        self, closes: List[float], highs: List[float], lows: List[float], sensitivity: float
+    ) -> List[Dict]:
         """Find U-shaped cup formations in price data."""
         cups = []
         min_cup_length = 15
@@ -820,35 +914,38 @@ class GeometricPatternAnalyzer:
                 if end_idx >= len(closes):
                     break
 
-                cup_data = closes[start_idx:end_idx+1]
-                cup_highs = highs[start_idx:end_idx+1]
-                cup_lows = lows[start_idx:end_idx+1]
+                cup_data = closes[start_idx : end_idx + 1]
+                cup_highs = highs[start_idx : end_idx + 1]
+                cup_lows = lows[start_idx : end_idx + 1]
 
                 # Analyze cup shape
                 cup_analysis = self._analyze_cup_shape(cup_data, cup_highs, cup_lows, start_idx)
 
-                if cup_analysis['is_valid_cup']:
-                    cups.append({
-                        'start_index': start_idx,
-                        'end_index': end_idx,
-                        'length': cup_length,
-                        'left_rim': cup_analysis['left_rim'],
-                        'right_rim': cup_analysis['right_rim'],
-                        'bottom': cup_analysis['bottom'],
-                        'depth_percent': cup_analysis['depth_percent'],
-                        'symmetry_score': cup_analysis['symmetry_score'],
-                        'u_shape_score': cup_analysis['u_shape_score']
-                    })
+                if cup_analysis["is_valid_cup"]:
+                    cups.append(
+                        {
+                            "start_index": start_idx,
+                            "end_index": end_idx,
+                            "length": cup_length,
+                            "left_rim": cup_analysis["left_rim"],
+                            "right_rim": cup_analysis["right_rim"],
+                            "bottom": cup_analysis["bottom"],
+                            "depth_percent": cup_analysis["depth_percent"],
+                            "symmetry_score": cup_analysis["symmetry_score"],
+                            "u_shape_score": cup_analysis["u_shape_score"],
+                        }
+                    )
 
         # Sort by quality and return best candidates
-        cups.sort(key=lambda x: x['u_shape_score'] * x['symmetry_score'], reverse=True)
+        cups.sort(key=lambda x: x["u_shape_score"] * x["symmetry_score"], reverse=True)
         return cups[:5]  # Top 5 candidates
 
-    def _analyze_cup_shape(self, closes: List[float], highs: List[float],
-                         lows: List[float], start_index: int) -> Dict:
+    def _analyze_cup_shape(
+        self, closes: List[float], highs: List[float], lows: List[float], start_index: int
+    ) -> Dict:
         """Analyze if price data forms a valid cup shape."""
         if len(closes) < 10:
-            return {'is_valid_cup': False}
+            return {"is_valid_cup": False}
 
         # Find left and right rim levels (should be similar)
         left_rim = closes[0]
@@ -864,12 +961,12 @@ class GeometricPatternAnalyzer:
 
         # Cup should be at least 12% deep but not more than 50%
         if depth_percent < 0.12 or depth_percent > 0.50:
-            return {'is_valid_cup': False}
+            return {"is_valid_cup": False}
 
         # Check rim similarity (rims should be within 5% of each other)
         rim_difference = abs(right_rim - left_rim) / left_rim if left_rim > 0 else 1
         if rim_difference > 0.05:
-            return {'is_valid_cup': False}
+            return {"is_valid_cup": False}
 
         # Analyze U-shape quality
         u_shape_score = self._calculate_u_shape_score(closes, bottom_index)
@@ -878,18 +975,17 @@ class GeometricPatternAnalyzer:
         symmetry_score = self._calculate_cup_symmetry(closes, bottom_index)
 
         # Check for valid cup criteria
-        is_valid = (u_shape_score > 0.6 and symmetry_score > 0.5 and
-                   0.12 <= depth_percent <= 0.50)
+        is_valid = u_shape_score > 0.6 and symmetry_score > 0.5 and 0.12 <= depth_percent <= 0.50
 
         return {
-            'is_valid_cup': is_valid,
-            'left_rim': left_rim,
-            'right_rim': right_rim,
-            'bottom': min_low,
-            'bottom_index': start_index + bottom_index,
-            'depth_percent': depth_percent,
-            'symmetry_score': symmetry_score,
-            'u_shape_score': u_shape_score
+            "is_valid_cup": is_valid,
+            "left_rim": left_rim,
+            "right_rim": right_rim,
+            "bottom": min_low,
+            "bottom_index": start_index + bottom_index,
+            "depth_percent": depth_percent,
+            "symmetry_score": symmetry_score,
+            "u_shape_score": u_shape_score,
         }
 
     def _calculate_u_shape_score(self, closes: List[float], bottom_index: int) -> float:
@@ -898,7 +994,7 @@ class GeometricPatternAnalyzer:
             return 0.0
 
         # Check left side (should decline towards bottom)
-        left_side = closes[:bottom_index+1]
+        left_side = closes[: bottom_index + 1]
         left_trend = self._calculate_trend_strength(left_side)
         left_declining = closes[0] > closes[bottom_index]
 
@@ -928,7 +1024,7 @@ class GeometricPatternAnalyzer:
         second_derivatives = []
         for i in range(1, len(closes) - 1):
             if i - 1 >= 0 and i + 1 < len(closes):
-                second_deriv = closes[i+1] - 2*closes[i] + closes[i-1]
+                second_deriv = closes[i + 1] - 2 * closes[i] + closes[i - 1]
                 second_derivatives.append(abs(second_deriv))
 
         if not second_derivatives:
@@ -972,11 +1068,12 @@ class GeometricPatternAnalyzer:
 
         return symmetry_score
 
-    def _find_handle_formation(self, data: PriceDataFrame, cup: Dict,
-                             sensitivity: float) -> Optional[Dict]:
+    def _find_handle_formation(
+        self, data: PriceDataFrame, cup: Dict, sensitivity: float
+    ) -> Optional[Dict]:
         """Find handle formation after cup."""
-        cup_end = cup['end_index']
-        max_handle_length = min(cup['length'] // 3, 20)  # Handle should be shorter than cup
+        cup_end = cup["end_index"]
+        max_handle_length = min(cup["length"] // 3, 20)  # Handle should be shorter than cup
         min_handle_length = 3
 
         if cup_end + min_handle_length >= len(data):
@@ -993,46 +1090,54 @@ class GeometricPatternAnalyzer:
             if handle_end >= len(data):
                 break
 
-            handle_closes = closes[cup_end:handle_end+1]
-            handle_highs = highs[cup_end:handle_end+1]
-            handle_lows = lows[cup_end:handle_end+1]
-            handle_volumes = volumes[cup_end:handle_end+1]
+            handle_closes = closes[cup_end : handle_end + 1]
+            handle_highs = highs[cup_end : handle_end + 1]
+            handle_lows = lows[cup_end : handle_end + 1]
+            handle_volumes = volumes[cup_end : handle_end + 1]
 
             # Analyze handle characteristics
             handle_analysis = self._analyze_handle_shape(
                 handle_closes, handle_highs, handle_lows, handle_volumes, cup
             )
 
-            if handle_analysis['is_valid_handle']:
+            if handle_analysis["is_valid_handle"]:
                 return {
-                    'start_index': cup_end,
-                    'end_index': handle_end,
-                    'length': handle_length,
-                    'retracement_percent': handle_analysis['retracement_percent'],
-                    'volume_decline': handle_analysis['volume_decline'],
-                    'handle_score': handle_analysis['handle_score']
+                    "start_index": cup_end,
+                    "end_index": handle_end,
+                    "length": handle_length,
+                    "retracement_percent": handle_analysis["retracement_percent"],
+                    "volume_decline": handle_analysis["volume_decline"],
+                    "handle_score": handle_analysis["handle_score"],
                 }
 
         return None
 
-    def _analyze_handle_shape(self, closes: List[float], highs: List[float],
-                            lows: List[float], volumes: List[float], cup: Dict) -> Dict:
+    def _analyze_handle_shape(
+        self,
+        closes: List[float],
+        highs: List[float],
+        lows: List[float],
+        volumes: List[float],
+        cup: Dict,
+    ) -> Dict:
         """Analyze if consolidation forms a valid handle."""
         if len(closes) < 3:
-            return {'is_valid_handle': False}
+            return {"is_valid_handle": False}
 
-        cup_right_rim = cup['right_rim']
+        cup_right_rim = cup["right_rim"]
         handle_low = min(l for l in lows if l is not None)
 
         # Calculate retracement from cup rim
-        retracement_percent = (cup_right_rim - handle_low) / cup_right_rim if cup_right_rim > 0 else 0
+        retracement_percent = (
+            (cup_right_rim - handle_low) / cup_right_rim if cup_right_rim > 0 else 0
+        )
 
         # Handle should retrace 10-50% of cup depth
-        cup_depth_percent = cup['depth_percent']
+        cup_depth_percent = cup["depth_percent"]
         max_handle_retracement = cup_depth_percent * 0.5  # Max 50% of cup depth
 
         if retracement_percent < 0.05 or retracement_percent > max_handle_retracement:
-            return {'is_valid_handle': False}
+            return {"is_valid_handle": False}
 
         # Check volume decline in handle
         valid_volumes = [v for v in volumes if v is not None and v > 0]
@@ -1054,28 +1159,31 @@ class GeometricPatternAnalyzer:
         is_valid = handle_score >= 0.6
 
         return {
-            'is_valid_handle': is_valid,
-            'retracement_percent': retracement_percent,
-            'volume_decline': volume_decline,
-            'handle_score': handle_score
+            "is_valid_handle": is_valid,
+            "retracement_percent": retracement_percent,
+            "volume_decline": volume_decline,
+            "handle_score": handle_score,
         }
 
-    def _create_cup_handle_pattern(self, data: PriceDataFrame, cup: Dict,
-                                 handle: Dict, sensitivity: float) -> Optional[DetectedPattern]:
+    def _create_cup_handle_pattern(
+        self, data: PriceDataFrame, cup: Dict, handle: Dict, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """Create cup and handle pattern from cup and handle data."""
 
         # Calculate overall confidence
         confidence_factors = []
 
         # Cup quality
-        confidence_factors.append(cup['u_shape_score'] * 0.4)
-        confidence_factors.append(cup['symmetry_score'] * 0.2)
+        confidence_factors.append(cup["u_shape_score"] * 0.4)
+        confidence_factors.append(cup["symmetry_score"] * 0.2)
 
         # Handle quality
-        confidence_factors.append(handle['handle_score'] * 0.3)
+        confidence_factors.append(handle["handle_score"] * 0.3)
 
         # Volume pattern
-        volume_profile = self._calculate_volume_profile(data, cup['start_index'], handle['end_index'])
+        volume_profile = self._calculate_volume_profile(
+            data, cup["start_index"], handle["end_index"]
+        )
         volume_score = 1.0 if volume_profile.volume_trend == "decreasing" else 0.5
         confidence_factors.append(volume_score * 0.1)
 
@@ -1090,7 +1198,7 @@ class GeometricPatternAnalyzer:
 
         # Determine pattern type (regular or inverted)
         pattern_type = PatternType.CUP_AND_HANDLE
-        if cup['left_rim'] < cup['bottom']:  # Inverted cup
+        if cup["left_rim"] < cup["bottom"]:  # Inverted cup
             pattern_type = PatternType.INVERTED_CUP_HANDLE
 
         pattern_category = PATTERN_CATEGORIES[pattern_type]
@@ -1099,39 +1207,47 @@ class GeometricPatternAnalyzer:
             pattern_type=pattern_type,
             category=pattern_category,
             confidence=final_confidence,
-            start_time=data[cup['start_index']].timestamp,
-            end_time=data[handle['end_index']].timestamp,
-            start_index=cup['start_index'],
-            end_index=handle['end_index'],
+            start_time=data[cup["start_index"]].timestamp,
+            end_time=data[handle["end_index"]].timestamp,
+            start_index=cup["start_index"],
+            end_index=handle["end_index"],
             key_levels={
-                'cup_left_rim': cup['left_rim'],
-                'cup_right_rim': cup['right_rim'],
-                'cup_bottom': cup['bottom'],
-                'cup_depth_percent': cup['depth_percent'],
-                'handle_low': data.get_lows()[handle['start_index']:handle['end_index']+1],
-                'handle_retracement': handle['retracement_percent'],
-                'breakout_level': cup['right_rim']
+                "cup_left_rim": cup["left_rim"],
+                "cup_right_rim": cup["right_rim"],
+                "cup_bottom": cup["bottom"],
+                "cup_depth_percent": cup["depth_percent"],
+                "handle_low": data.get_lows()[handle["start_index"] : handle["end_index"] + 1],
+                "handle_retracement": handle["retracement_percent"],
+                "breakout_level": cup["right_rim"],
             },
             volume_profile=volume_profile,
-            description=self._generate_cup_handle_description(pattern_type, final_confidence, cup, handle)
+            description=self._generate_cup_handle_description(
+                pattern_type, final_confidence, cup, handle
+            ),
         )
 
-    def _generate_cup_handle_description(self, pattern_type: PatternType, confidence: float,
-                                       cup: Dict, handle: Dict) -> str:
+    def _generate_cup_handle_description(
+        self, pattern_type: PatternType, confidence: float, cup: Dict, handle: Dict
+    ) -> str:
         """Generate description for cup and handle pattern."""
         if pattern_type == PatternType.CUP_AND_HANDLE:
             base_desc = "Cup and Handle - bullish continuation pattern with U-shaped cup followed by small consolidation"
         else:
-            base_desc = "Inverted Cup and Handle - bearish continuation pattern with inverted U-shape"
+            base_desc = (
+                "Inverted Cup and Handle - bearish continuation pattern with inverted U-shape"
+            )
 
         confidence_level = "high" if confidence > 0.7 else "medium" if confidence > 0.5 else "low"
 
-        return (f"{base_desc}. Cup depth: {cup['depth_percent']:.1%}, "
-                f"Handle retracement: {handle['retracement_percent']:.1%}. "
-                f"Confidence: {confidence_level} ({confidence:.1%}).")
+        return (
+            f"{base_desc}. Cup depth: {cup['depth_percent']:.1%}, "
+            f"Handle retracement: {handle['retracement_percent']:.1%}. "
+            f"Confidence: {confidence_level} ({confidence:.1%})."
+        )
 
-    def detect_wedge_patterns(self, data: PriceDataFrame,
-                            sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_wedge_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect rising and falling wedge patterns.
 
@@ -1150,10 +1266,16 @@ class GeometricPatternAnalyzer:
         lows = data.get_lows()
 
         # Find peaks and troughs for wedge analysis
-        high_peaks = [pt for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=3)
-                     if pt.type == 'peak']
-        low_troughs = [pt for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=3)
-                      if pt.type == 'trough']
+        high_peaks = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(highs, min_distance=3)
+            if pt.type == "peak"
+        ]
+        low_troughs = [
+            pt
+            for pt in self.trend_analysis.find_peaks_and_troughs(lows, min_distance=3)
+            if pt.type == "trough"
+        ]
 
         if len(high_peaks) < 3 or len(low_troughs) < 3:
             return patterns
@@ -1168,8 +1290,9 @@ class GeometricPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_wedge_candidates(self, high_peaks: List, low_troughs: List,
-                             data: PriceDataFrame) -> List[Dict]:
+    def _find_wedge_candidates(
+        self, high_peaks: List, low_troughs: List, data: PriceDataFrame
+    ) -> List[Dict]:
         """Find potential wedge formations from peaks and troughs."""
         candidates = []
 
@@ -1181,8 +1304,7 @@ class GeometricPatternAnalyzer:
                 upper_slope = (peak2.value - peak1.value) / (peak2.index - peak1.index)
 
                 # Find relevant troughs in the same time range
-                relevant_troughs = [t for t in low_troughs
-                                  if peak1.index <= t.index <= peak2.index]
+                relevant_troughs = [t for t in low_troughs if peak1.index <= t.index <= peak2.index]
 
                 if len(relevant_troughs) < 2:
                     continue
@@ -1191,22 +1313,26 @@ class GeometricPatternAnalyzer:
                 for k in range(len(relevant_troughs) - 1):
                     for l in range(k + 1, len(relevant_troughs)):
                         trough1, trough2 = relevant_troughs[k], relevant_troughs[l]
-                        lower_slope = (trough2.value - trough1.value) / (trough2.index - trough1.index)
+                        lower_slope = (trough2.value - trough1.value) / (
+                            trough2.index - trough1.index
+                        )
 
                         # Check for wedge characteristics
                         wedge_type = self._classify_wedge_type(upper_slope, lower_slope)
                         if wedge_type:
-                            candidates.append({
-                                'type': wedge_type,
-                                'peak1': peak1,
-                                'peak2': peak2,
-                                'trough1': trough1,
-                                'trough2': trough2,
-                                'upper_slope': upper_slope,
-                                'lower_slope': lower_slope,
-                                'start_index': min(peak1.index, trough1.index),
-                                'end_index': max(peak2.index, trough2.index)
-                            })
+                            candidates.append(
+                                {
+                                    "type": wedge_type,
+                                    "peak1": peak1,
+                                    "peak2": peak2,
+                                    "trough1": trough1,
+                                    "trough2": trough2,
+                                    "upper_slope": upper_slope,
+                                    "lower_slope": lower_slope,
+                                    "start_index": min(peak1.index, trough1.index),
+                                    "end_index": max(peak2.index, trough2.index),
+                                }
+                            )
 
         return candidates
 
@@ -1215,23 +1341,30 @@ class GeometricPatternAnalyzer:
         slope_threshold = 0.001
 
         # Rising Wedge: both lines rising, but lower rises faster (converging upward)
-        if (upper_slope > slope_threshold and lower_slope > slope_threshold and
-            lower_slope > upper_slope * 1.2):  # Lower slope significantly steeper
-            return 'rising_wedge'
+        if (
+            upper_slope > slope_threshold
+            and lower_slope > slope_threshold
+            and lower_slope > upper_slope * 1.2
+        ):  # Lower slope significantly steeper
+            return "rising_wedge"
 
         # Falling Wedge: both lines falling, but upper falls faster (converging downward)
-        elif (upper_slope < -slope_threshold and lower_slope < -slope_threshold and
-              upper_slope < lower_slope * 1.2):  # Upper slope more negative
-            return 'falling_wedge'
+        elif (
+            upper_slope < -slope_threshold
+            and lower_slope < -slope_threshold
+            and upper_slope < lower_slope * 1.2
+        ):  # Upper slope more negative
+            return "falling_wedge"
 
         return None
 
-    def _analyze_wedge_formation(self, data: PriceDataFrame, candidate: Dict,
-                               sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_wedge_formation(
+        self, data: PriceDataFrame, candidate: Dict, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """Analyze wedge candidate and create pattern if valid."""
 
-        start_idx = candidate['start_index']
-        end_idx = candidate['end_index']
+        start_idx = candidate["start_index"]
+        end_idx = candidate["end_index"]
         pattern_length = end_idx - start_idx
 
         # Validate pattern length
@@ -1240,8 +1373,10 @@ class GeometricPatternAnalyzer:
 
         # Calculate convergence point
         convergence_index = self._calculate_convergence_point(
-            candidate['upper_slope'], candidate['peak1'].value - candidate['upper_slope'] * candidate['peak1'].index,
-            candidate['lower_slope'], candidate['trough1'].value - candidate['lower_slope'] * candidate['trough1'].index
+            candidate["upper_slope"],
+            candidate["peak1"].value - candidate["upper_slope"] * candidate["peak1"].index,
+            candidate["lower_slope"],
+            candidate["trough1"].value - candidate["lower_slope"] * candidate["trough1"].index,
         )
 
         # Validate convergence (should be reasonable)
@@ -1255,8 +1390,8 @@ class GeometricPatternAnalyzer:
             return None
 
         # Determine pattern type and category
-        wedge_type = candidate['type']
-        if wedge_type == 'rising_wedge':
+        wedge_type = candidate["type"]
+        if wedge_type == "rising_wedge":
             # Rising wedge can be continuation (bearish) or reversal (bearish)
             pattern_type = PatternType.RISING_WEDGE_REVERSAL  # Default to reversal
         else:  # falling_wedge
@@ -1277,23 +1412,26 @@ class GeometricPatternAnalyzer:
             start_index=start_idx,
             end_index=end_idx,
             key_levels={
-                'upper_slope': candidate['upper_slope'],
-                'lower_slope': candidate['lower_slope'],
-                'convergence_price': candidate['upper_slope'] * convergence_index +
-                                   (candidate['peak1'].value - candidate['upper_slope'] * candidate['peak1'].index),
-                'upper_start': candidate['peak1'].value,
-                'upper_end': candidate['peak2'].value,
-                'lower_start': candidate['trough1'].value,
-                'lower_end': candidate['trough2'].value
+                "upper_slope": candidate["upper_slope"],
+                "lower_slope": candidate["lower_slope"],
+                "convergence_price": candidate["upper_slope"] * convergence_index
+                + (candidate["peak1"].value - candidate["upper_slope"] * candidate["peak1"].index),
+                "upper_start": candidate["peak1"].value,
+                "upper_end": candidate["peak2"].value,
+                "lower_start": candidate["trough1"].value,
+                "lower_end": candidate["trough2"].value,
             },
             volume_profile=volume_profile,
-            description=self._generate_wedge_description(pattern_type, confidence, wedge_type, pattern_length)
+            description=self._generate_wedge_description(
+                pattern_type, confidence, wedge_type, pattern_length
+            ),
         )
 
-    def _validate_wedge_convergence(self, convergence_index: float,
-                                  start_index: int, end_index: int) -> bool:
+    def _validate_wedge_convergence(
+        self, convergence_index: float, start_index: int, end_index: int
+    ) -> bool:
         """Validate wedge convergence point."""
-        if convergence_index == float('inf'):
+        if convergence_index == float("inf"):
             return False
 
         pattern_length = end_index - start_index
@@ -1304,27 +1442,32 @@ class GeometricPatternAnalyzer:
 
         return min_convergence <= convergence_index <= max_convergence
 
-    def _calculate_wedge_confidence(self, data: PriceDataFrame, candidate: Dict,
-                                  sensitivity: float) -> float:
+    def _calculate_wedge_confidence(
+        self, data: PriceDataFrame, candidate: Dict, sensitivity: float
+    ) -> float:
         """Calculate confidence score for wedge pattern."""
         confidence_factors = []
 
-        start_idx = candidate['start_index']
-        end_idx = candidate['end_index']
+        start_idx = candidate["start_index"]
+        end_idx = candidate["end_index"]
 
         # 1. Trend line fit quality
-        highs = data.get_highs()[start_idx:end_idx+1]
-        lows = data.get_lows()[start_idx:end_idx+1]
+        highs = data.get_highs()[start_idx : end_idx + 1]
+        lows = data.get_lows()[start_idx : end_idx + 1]
 
         upper_fit = self._calculate_trendline_fit(
-            highs, candidate['upper_slope'],
-            candidate['peak1'].value - candidate['upper_slope'] * candidate['peak1'].index,
-            start_idx, 'resistance'
+            highs,
+            candidate["upper_slope"],
+            candidate["peak1"].value - candidate["upper_slope"] * candidate["peak1"].index,
+            start_idx,
+            "resistance",
         )
         lower_fit = self._calculate_trendline_fit(
-            lows, candidate['lower_slope'],
-            candidate['trough1'].value - candidate['lower_slope'] * candidate['trough1'].index,
-            start_idx, 'support'
+            lows,
+            candidate["lower_slope"],
+            candidate["trough1"].value - candidate["lower_slope"] * candidate["trough1"].index,
+            start_idx,
+            "support",
         )
 
         confidence_factors.append(upper_fit * 0.3)
@@ -1335,8 +1478,10 @@ class GeometricPatternAnalyzer:
         confidence_factors.append(convergence_score * 0.2)
 
         # 3. Volume pattern (should decrease in wedges)
-        volumes = data.get_volumes()[start_idx:end_idx+1]
-        volume_score = self._analyze_triangle_volume_pattern(volumes)  # Reuse triangle volume analysis
+        volumes = data.get_volumes()[start_idx : end_idx + 1]
+        volume_score = self._analyze_triangle_volume_pattern(
+            volumes
+        )  # Reuse triangle volume analysis
         confidence_factors.append(volume_score * 0.1)
 
         # 4. Pattern length
@@ -1354,13 +1499,13 @@ class GeometricPatternAnalyzer:
 
     def _score_wedge_convergence(self, candidate: Dict) -> float:
         """Score the quality of wedge convergence."""
-        upper_slope = candidate['upper_slope']
-        lower_slope = candidate['lower_slope']
+        upper_slope = candidate["upper_slope"]
+        lower_slope = candidate["lower_slope"]
 
         # Check slope relationship for wedge type
-        wedge_type = candidate['type']
+        wedge_type = candidate["type"]
 
-        if wedge_type == 'rising_wedge':
+        if wedge_type == "rising_wedge":
             # Both should be positive, lower should be steeper
             if upper_slope > 0 and lower_slope > 0 and lower_slope > upper_slope:
                 slope_ratio = upper_slope / lower_slope
@@ -1368,7 +1513,7 @@ class GeometricPatternAnalyzer:
             else:
                 return 0.0
 
-        elif wedge_type == 'falling_wedge':
+        elif wedge_type == "falling_wedge":
             # Both should be negative, upper should be steeper (more negative)
             if upper_slope < 0 and lower_slope < 0 and upper_slope < lower_slope:
                 slope_ratio = lower_slope / upper_slope
@@ -1378,21 +1523,27 @@ class GeometricPatternAnalyzer:
 
         return 0.0
 
-    def _generate_wedge_description(self, pattern_type: PatternType, confidence: float,
-                                  wedge_type: str, pattern_length: int) -> str:
+    def _generate_wedge_description(
+        self, pattern_type: PatternType, confidence: float, wedge_type: str, pattern_length: int
+    ) -> str:
         """Generate description for wedge pattern."""
-        if wedge_type == 'rising_wedge':
+        if wedge_type == "rising_wedge":
             base_desc = "Rising Wedge - bearish reversal pattern with converging upward trend lines"
         else:
-            base_desc = "Falling Wedge - bullish reversal pattern with converging downward trend lines"
+            base_desc = (
+                "Falling Wedge - bullish reversal pattern with converging downward trend lines"
+            )
 
         confidence_level = "high" if confidence > 0.7 else "medium" if confidence > 0.5 else "low"
 
-        return (f"{base_desc}. Duration: {pattern_length} periods. "
-                f"Confidence: {confidence_level} ({confidence:.1%}).")
+        return (
+            f"{base_desc}. Duration: {pattern_length} periods. "
+            f"Confidence: {confidence_level} ({confidence:.1%})."
+        )
 
-    def detect_rectangle_and_channel_patterns(self, data: PriceDataFrame,
-                                            sensitivity: float = 0.5) -> List[DetectedPattern]:
+    def detect_rectangle_and_channel_patterns(
+        self, data: PriceDataFrame, sensitivity: float = 0.5
+    ) -> List[DetectedPattern]:
         """
         Detect rectangle and channel patterns.
 
@@ -1413,7 +1564,7 @@ class GeometricPatternAnalyzer:
         # Find support and resistance levels
         support_resistance = self.trend_analysis.find_support_resistance_levels(data)
 
-        if not support_resistance['support'] or not support_resistance['resistance']:
+        if not support_resistance["support"] or not support_resistance["resistance"]:
             return patterns
 
         # Find horizontal channels (rectangles)
@@ -1426,13 +1577,14 @@ class GeometricPatternAnalyzer:
 
         return self._filter_overlapping_patterns(patterns)
 
-    def _find_rectangle_patterns(self, data: PriceDataFrame, support_resistance: Dict,
-                               sensitivity: float) -> List[DetectedPattern]:
+    def _find_rectangle_patterns(
+        self, data: PriceDataFrame, support_resistance: Dict, sensitivity: float
+    ) -> List[DetectedPattern]:
         """Find horizontal rectangle patterns."""
         patterns = []
 
-        for support_level in support_resistance['support']:
-            for resistance_level in support_resistance['resistance']:
+        for support_level in support_resistance["support"]:
+            for resistance_level in support_resistance["resistance"]:
                 if resistance_level <= support_level:
                     continue
 
@@ -1446,8 +1598,13 @@ class GeometricPatternAnalyzer:
 
         return patterns
 
-    def _analyze_rectangle_formation(self, data: PriceDataFrame, support_level: float,
-                                   resistance_level: float, sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_rectangle_formation(
+        self,
+        data: PriceDataFrame,
+        support_level: float,
+        resistance_level: float,
+        sensitivity: float,
+    ) -> Optional[DetectedPattern]:
         """Analyze if price action forms a rectangle pattern."""
 
         highs = data.get_highs()
@@ -1464,8 +1621,7 @@ class GeometricPatternAnalyzer:
             # Check if price action is within the rectangle bounds
             tolerance = (resistance_level - support_level) * 0.05  # 5% tolerance
 
-            if (low >= support_level - tolerance and
-                high <= resistance_level + tolerance):
+            if low >= support_level - tolerance and high <= resistance_level + tolerance:
                 in_rectangle_indices.append(i)
 
         if len(in_rectangle_indices) < self.min_pattern_length:
@@ -1505,14 +1661,15 @@ class GeometricPatternAnalyzer:
             start_index=start_idx,
             end_index=end_idx,
             key_levels={
-                'support_level': support_level,
-                'resistance_level': resistance_level,
-                'range_size': resistance_level - support_level,
-                'range_percent': (resistance_level - support_level) / support_level * 100
+                "support_level": support_level,
+                "resistance_level": resistance_level,
+                "range_size": resistance_level - support_level,
+                "range_percent": (resistance_level - support_level) / support_level * 100,
             },
             volume_profile=volume_profile,
-            description=self._generate_rectangle_description(pattern_type, confidence,
-                                                           resistance_level - support_level)
+            description=self._generate_rectangle_description(
+                pattern_type, confidence, resistance_level - support_level
+            ),
         )
 
     def _find_continuous_periods(self, indices: List[int]) -> List[Tuple[int, int]]:
@@ -1537,18 +1694,26 @@ class GeometricPatternAnalyzer:
 
         return periods
 
-    def _calculate_rectangle_confidence(self, data: PriceDataFrame, start_idx: int, end_idx: int,
-                                      support_level: float, resistance_level: float,
-                                      sensitivity: float) -> float:
+    def _calculate_rectangle_confidence(
+        self,
+        data: PriceDataFrame,
+        start_idx: int,
+        end_idx: int,
+        support_level: float,
+        resistance_level: float,
+        sensitivity: float,
+    ) -> float:
         """Calculate confidence for rectangle pattern."""
         confidence_factors = []
 
-        highs = data.get_highs()[start_idx:end_idx+1]
-        lows = data.get_lows()[start_idx:end_idx+1]
-        volumes = data.get_volumes()[start_idx:end_idx+1]
+        highs = data.get_highs()[start_idx : end_idx + 1]
+        lows = data.get_lows()[start_idx : end_idx + 1]
+        volumes = data.get_volumes()[start_idx : end_idx + 1]
 
         # 1. Level respect (how well price respects support/resistance)
-        level_respect_score = self._calculate_level_respect(highs, lows, support_level, resistance_level)
+        level_respect_score = self._calculate_level_respect(
+            highs, lows, support_level, resistance_level
+        )
         confidence_factors.append(level_respect_score * 0.4)
 
         # 2. Number of touches on levels
@@ -1575,8 +1740,9 @@ class GeometricPatternAnalyzer:
 
         return final_confidence
 
-    def _calculate_level_respect(self, highs: List[float], lows: List[float],
-                               support_level: float, resistance_level: float) -> float:
+    def _calculate_level_respect(
+        self, highs: List[float], lows: List[float], support_level: float, resistance_level: float
+    ) -> float:
         """Calculate how well price respects support and resistance levels."""
         violations = 0
         total_points = 0
@@ -1636,7 +1802,9 @@ class GeometricPatternAnalyzer:
 
         return min(1.0, stability_score)
 
-    def _classify_rectangle_type(self, data: PriceDataFrame, start_idx: int, end_idx: int) -> PatternType:
+    def _classify_rectangle_type(
+        self, data: PriceDataFrame, start_idx: int, end_idx: int
+    ) -> PatternType:
         """Classify rectangle as bullish, bearish, or neutral based on context."""
 
         # Look at trend before the rectangle
@@ -1644,22 +1812,26 @@ class GeometricPatternAnalyzer:
         if pre_trend_length < 3:
             return PatternType.RECTANGLE_NEUTRAL
 
-        pre_trend_closes = data.get_closes()[start_idx - pre_trend_length:start_idx]
+        pre_trend_closes = data.get_closes()[start_idx - pre_trend_length : start_idx]
 
         if len(pre_trend_closes) < 3:
             return PatternType.RECTANGLE_NEUTRAL
 
         # Calculate trend direction
-        trend_direction = self.trend_analysis.detect_trend_direction(pre_trend_closes, period=pre_trend_length)
+        trend_direction = self.trend_analysis.detect_trend_direction(
+            pre_trend_closes, period=pre_trend_length
+        )
 
-        if trend_direction == 'uptrend':
+        if trend_direction == "uptrend":
             return PatternType.RECTANGLE_BULLISH  # Bullish continuation expected
-        elif trend_direction == 'downtrend':
+        elif trend_direction == "downtrend":
             return PatternType.RECTANGLE_BEARISH  # Bearish continuation expected
         else:
             return PatternType.RECTANGLE_NEUTRAL
 
-    def _find_trending_channels(self, data: PriceDataFrame, sensitivity: float) -> List[DetectedPattern]:
+    def _find_trending_channels(
+        self, data: PriceDataFrame, sensitivity: float
+    ) -> List[DetectedPattern]:
         """Find trending channel patterns."""
         patterns = []
 
@@ -1673,16 +1845,17 @@ class GeometricPatternAnalyzer:
 
         return patterns
 
-    def _analyze_trending_channel(self, data: PriceDataFrame, channel: Dict,
-                                sensitivity: float) -> Optional[DetectedPattern]:
+    def _analyze_trending_channel(
+        self, data: PriceDataFrame, channel: Dict, sensitivity: float
+    ) -> Optional[DetectedPattern]:
         """Analyze trending channel and create pattern."""
 
-        upper_line = channel['upper_line']
-        lower_line = channel['lower_line']
+        upper_line = channel["upper_line"]
+        lower_line = channel["lower_line"]
 
         # Determine start and end indices from channel data
-        start_idx = min(upper_line['start'][0], lower_line['start'][0])
-        end_idx = max(upper_line['end'][0], lower_line['end'][0])
+        start_idx = min(upper_line["start"][0], lower_line["start"][0])
+        end_idx = max(upper_line["end"][0], lower_line["end"][0])
 
         # Calculate confidence based on channel quality
         confidence = self._calculate_channel_confidence(channel, sensitivity)
@@ -1691,8 +1864,8 @@ class GeometricPatternAnalyzer:
             return None
 
         # Determine channel type
-        upper_slope = upper_line['slope']
-        lower_slope = lower_line['slope']
+        upper_slope = upper_line["slope"]
+        lower_slope = lower_line["slope"]
 
         if upper_slope > 0.001 and lower_slope > 0.001:
             pattern_type = PatternType.RISING_CHANNEL
@@ -1715,17 +1888,17 @@ class GeometricPatternAnalyzer:
             start_index=start_idx,
             end_index=end_idx,
             key_levels={
-                'upper_slope': upper_slope,
-                'lower_slope': lower_slope,
-                'channel_width': channel['width'],
-                'touches': channel['touches'],
-                'upper_start_price': upper_line['start'][1],
-                'upper_end_price': upper_line['end'][1],
-                'lower_start_price': lower_line['start'][1],
-                'lower_end_price': lower_line['end'][1]
+                "upper_slope": upper_slope,
+                "lower_slope": lower_slope,
+                "channel_width": channel["width"],
+                "touches": channel["touches"],
+                "upper_start_price": upper_line["start"][1],
+                "upper_end_price": upper_line["end"][1],
+                "lower_start_price": lower_line["start"][1],
+                "lower_end_price": lower_line["end"][1],
             },
             volume_profile=volume_profile,
-            description=self._generate_channel_description(pattern_type, confidence, channel)
+            description=self._generate_channel_description(pattern_type, confidence, channel),
         )
 
     def _calculate_channel_confidence(self, channel: Dict, sensitivity: float) -> float:
@@ -1733,26 +1906,28 @@ class GeometricPatternAnalyzer:
         confidence_factors = []
 
         # 1. Number of touches (more touches = higher confidence)
-        touch_score = min(1.0, channel['touches'] / 8)  # Normalize to max 8 touches
+        touch_score = min(1.0, channel["touches"] / 8)  # Normalize to max 8 touches
         confidence_factors.append(touch_score * 0.4)
 
         # 2. Slope consistency
-        upper_slope = channel['upper_line']['slope']
-        lower_slope = channel['lower_line']['slope']
+        upper_slope = channel["upper_line"]["slope"]
+        lower_slope = channel["lower_line"]["slope"]
 
         if abs(upper_slope) > 0 and abs(lower_slope) > 0:
-            slope_ratio = min(abs(upper_slope), abs(lower_slope)) / max(abs(upper_slope), abs(lower_slope))
+            slope_ratio = min(abs(upper_slope), abs(lower_slope)) / max(
+                abs(upper_slope), abs(lower_slope)
+            )
             confidence_factors.append(slope_ratio * 0.3)
         else:
             confidence_factors.append(0.0)
 
         # 3. Channel width consistency
-        width_score = 0.8 if channel['width'] > 0 else 0.0
+        width_score = 0.8 if channel["width"] > 0 else 0.0
         confidence_factors.append(width_score * 0.2)
 
         # 4. Pattern length
-        start_x = min(channel['upper_line']['start'][0], channel['lower_line']['start'][0])
-        end_x = max(channel['upper_line']['end'][0], channel['lower_line']['end'][0])
+        start_x = min(channel["upper_line"]["start"][0], channel["lower_line"]["start"][0])
+        end_x = max(channel["upper_line"]["end"][0], channel["lower_line"]["end"][0])
         pattern_length = end_x - start_x
 
         length_score = self._score_pattern_length(pattern_length)
@@ -1766,30 +1941,40 @@ class GeometricPatternAnalyzer:
 
         return final_confidence
 
-    def _generate_rectangle_description(self, pattern_type: PatternType, confidence: float,
-                                      range_size: float) -> str:
+    def _generate_rectangle_description(
+        self, pattern_type: PatternType, confidence: float, range_size: float
+    ) -> str:
         """Generate description for rectangle pattern."""
         type_descriptions = {
             PatternType.RECTANGLE_BULLISH: "Bullish Rectangle - horizontal consolidation in uptrend, expecting upward breakout",
             PatternType.RECTANGLE_BEARISH: "Bearish Rectangle - horizontal consolidation in downtrend, expecting downward breakout",
-            PatternType.RECTANGLE_NEUTRAL: "Rectangle - horizontal consolidation, breakout direction uncertain"
+            PatternType.RECTANGLE_NEUTRAL: "Rectangle - horizontal consolidation, breakout direction uncertain",
         }
 
         base_description = type_descriptions.get(pattern_type, "Rectangle pattern")
         confidence_level = "high" if confidence > 0.7 else "medium" if confidence > 0.5 else "low"
 
-        return (f"{base_description}. Range size: {range_size:.2f}. "
-                f"Confidence: {confidence_level} ({confidence:.1%}).")
+        return (
+            f"{base_description}. Range size: {range_size:.2f}. "
+            f"Confidence: {confidence_level} ({confidence:.1%})."
+        )
 
-    def _generate_channel_description(self, pattern_type: PatternType, confidence: float,
-                                    channel: Dict) -> str:
+    def _generate_channel_description(
+        self, pattern_type: PatternType, confidence: float, channel: Dict
+    ) -> str:
         """Generate description for channel pattern."""
         if pattern_type == PatternType.RISING_CHANNEL:
-            base_desc = "Rising Channel - upward trending parallel lines, bullish continuation pattern"
+            base_desc = (
+                "Rising Channel - upward trending parallel lines, bullish continuation pattern"
+            )
         else:
-            base_desc = "Falling Channel - downward trending parallel lines, bearish continuation pattern"
+            base_desc = (
+                "Falling Channel - downward trending parallel lines, bearish continuation pattern"
+            )
 
         confidence_level = "high" if confidence > 0.7 else "medium" if confidence > 0.5 else "low"
 
-        return (f"{base_desc}. Channel touches: {channel['touches']}. "
-                f"Confidence: {confidence_level} ({confidence:.1%}).")
+        return (
+            f"{base_desc}. Channel touches: {channel['touches']}. "
+            f"Confidence: {confidence_level} ({confidence:.1%})."
+        )

@@ -1,11 +1,12 @@
 """Data parsers for CSV and JSON formats."""
 
-import json
 import csv
-from io import StringIO
+import json
 from datetime import datetime
-from typing import Dict, Any
-from . import PricePoint, PriceDataFrame
+from io import StringIO
+from typing import Any, Dict
+
+from . import PriceDataFrame, PricePoint
 
 
 class CSVParser:
@@ -18,12 +19,12 @@ class CSVParser:
 
         for row in reader:
             point = PricePoint(
-                timestamp=datetime.fromisoformat(row['timestamp']),
-                open=float(row['open']),
-                high=float(row['high']),
-                low=float(row['low']),
-                close=float(row['close']),
-                volume=float(row['volume'])
+                timestamp=datetime.fromisoformat(row["timestamp"]),
+                open=float(row["open"]),
+                high=float(row["high"]),
+                low=float(row["low"]),
+                close=float(row["close"]),
+                volume=float(row["volume"]),
             )
             data_points.append(point)
 
@@ -44,12 +45,12 @@ class JSONParser:
 
         for item in data:
             point = PricePoint(
-                timestamp=datetime.fromisoformat(item['timestamp']),
-                open=float(item['open']),
-                high=float(item['high']),
-                low=float(item['low']),
-                close=float(item['close']),
-                volume=float(item['volume'])
+                timestamp=datetime.fromisoformat(item["timestamp"]),
+                open=float(item["open"]),
+                high=float(item["high"]),
+                low=float(item["low"]),
+                close=float(item["close"]),
+                volume=float(item["volume"]),
             )
             data_points.append(point)
 

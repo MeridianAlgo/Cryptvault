@@ -1,13 +1,14 @@
 """LSTM Neural Network for cryptocurrency price prediction using PyTorch."""
 
-import numpy as np
-from typing import List, Tuple, Optional, Dict
 import logging
 import warnings
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 # Suppress warnings
-warnings.filterwarnings('ignore', category=UserWarning)
-warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 try:
     import torch
@@ -20,10 +21,12 @@ try:
     PYTORCH_AVAILABLE = True
 except ImportError:
     PYTORCH_AVAILABLE = False
+
     # Create dummy nn module for when PyTorch is not available
     class _DummyModule:
         class Module:
             pass
+
     nn = _DummyModule()
 
 from ...data.models import PriceDataFrame
@@ -112,7 +115,7 @@ class LSTMPredictor:
 
             # Create sequence
             if len(features) >= self.sequence_length:
-                X = features[-self.sequence_length:].reshape(1, self.sequence_length, -1)
+                X = features[-self.sequence_length :].reshape(1, self.sequence_length, -1)
             else:
                 # Pad if needed
                 pad_size = self.sequence_length - len(features)
@@ -155,12 +158,14 @@ class LSTMPredictor:
             self.logger.error(f"Sequence prediction failed: {e}")
             return self._fallback_sequence(steps)
 
-    def _prepare_sequences(self, features: np.ndarray, targets: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _prepare_sequences(
+        self, features: np.ndarray, targets: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Prepare sequences for LSTM."""
         X, y = [], []
 
         for i in range(self.sequence_length, len(features)):
-            X.append(features[i-self.sequence_length:i])
+            X.append(features[i - self.sequence_length : i])
             y.append(targets[i])
 
         return np.array(X), np.array(y)
@@ -173,11 +178,11 @@ class LSTMPredictor:
 
     def _fallback_predictions(self, features: np.ndarray) -> np.ndarray:
         """Fallback predictions."""
-        trend = getattr(self, 'trend', 0.01)
+        trend = getattr(self, "trend", 0.01)
         n_samples = len(features) if len(features.shape) > 1 else 1
         return np.array([trend] * n_samples)
 
     def _fallback_sequence(self, steps: int) -> List[float]:
         """Fallback sequence predictions."""
-        trend = getattr(self, 'trend', 0.01)
+        trend = getattr(self, "trend", 0.01)
         return [trend * (i + 1) * 0.1 for i in range(steps)]
