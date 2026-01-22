@@ -13,7 +13,6 @@ from typing import List, Union
 
 import numpy as np
 
-from .trend import calculate_sma
 
 
 def calculate_obv(

@@ -1,10 +1,9 @@
 """Candlestick pattern detection algorithms."""
 
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from ..data.models import PriceDataFrame, PricePoint
-from .types import PATTERN_CATEGORIES, DetectedPattern, PatternCategory, PatternType, VolumeProfile
+from .types import PATTERN_CATEGORIES, DetectedPattern, PatternType, VolumeProfile
 
 
 class CandlestickPatternAnalyzer:
@@ -1693,10 +1692,10 @@ class CandlestickPatternAnalyzer:
         )
 
         # Calculate key levels
-        all_opens = [candle.open for candle in candles]
+        [candle.open for candle in candles]
         all_highs = [candle.high for candle in candles]
         all_lows = [candle.low for candle in candles]
-        all_closes = [candle.close for candle in candles]
+        [candle.close for candle in candles]
 
         key_levels = {
             "pattern_high": max(all_highs),

@@ -14,7 +14,6 @@ Functions:
 
 import platform
 import sys
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
@@ -459,7 +458,7 @@ def format_portfolio_results(results: Dict[str, Any]) -> str:
 
     # Asset allocation
     output.append("\nAsset Allocation:")
-    correlation_matrix = results.get("correlation_matrix")
+    results.get("correlation_matrix")
     asset_analysis = results.get("asset_analysis", {})
 
     # Calculate allocation percentages from asset_analysis

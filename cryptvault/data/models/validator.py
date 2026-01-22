@@ -1,6 +1,6 @@
 """Data validation utilities."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from .models import PriceDataFrame
 

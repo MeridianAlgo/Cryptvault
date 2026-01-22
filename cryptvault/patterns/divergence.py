@@ -1,12 +1,11 @@
 """Divergence pattern detection algorithms."""
 
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from ..data.models import PriceDataFrame
 from ..indicators.technical import TechnicalIndicators
 from ..indicators.trend_analysis import TrendAnalysis
-from .types import PATTERN_CATEGORIES, DetectedPattern, PatternCategory, PatternType, VolumeProfile
+from .types import PATTERN_CATEGORIES, DetectedPattern, PatternType, VolumeProfile
 
 
 class DivergenceAnalyzer:

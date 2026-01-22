@@ -2,7 +2,7 @@
 
 import logging
 import warnings
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 
@@ -29,7 +29,6 @@ except ImportError:
 
     nn = _DummyModule()
 
-from ...data.models import PriceDataFrame
 
 
 class LSTMNet(nn.Module):

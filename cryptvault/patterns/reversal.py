@@ -5,13 +5,12 @@ Detects reversal patterns including double/triple tops/bottoms and head & should
 These patterns signal potential trend reversals and are critical for identifying market turning points.
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from ..data.models import PriceDataFrame
 from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
 from .base import BasePatternDetector, DetectedPattern
-from .types import PATTERN_CATEGORIES, PatternCategory, PatternType, VolumeProfile
+from .types import PATTERN_CATEGORIES, PatternType, VolumeProfile
 
 
 class ReversalPatternDetector(BasePatternDetector):

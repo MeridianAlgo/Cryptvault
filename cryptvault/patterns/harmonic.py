@@ -4,9 +4,8 @@ Harmonic Pattern Detection
 Detects harmonic patterns based on Fibonacci ratios including Gartley, Butterfly, Bat, Crab, and Shark patterns.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
-import numpy as np
 
 from ..data.models import PriceDataFrame
 from ..indicators.trend_analysis import PeakTrough, TrendAnalysis

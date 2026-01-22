@@ -20,7 +20,7 @@ Example:
 """
 
 import logging
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
 

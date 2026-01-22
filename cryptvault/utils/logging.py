@@ -22,7 +22,6 @@ Example:
 import json
 import logging
 import logging.handlers
-import os
 import sys
 import traceback
 from contextlib import contextmanager

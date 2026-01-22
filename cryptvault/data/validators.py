@@ -11,7 +11,7 @@ Example:
 """
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional
 
 from ..constants import SUPPORTED_INTERVALS, SUPPORTED_TICKERS

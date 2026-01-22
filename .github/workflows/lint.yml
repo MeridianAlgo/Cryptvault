@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   lint:
     name: Lint Python Code
@@ -31,8 +36,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 black isort pylint mypy bandit safety
+        pip install ruff black isort flake8 pylint mypy bandit safety
         pip install -r requirements.txt
+
+    - name: Run Ruff (Fast Linter)
+      id: ruff
+      continue-on-error: true
+      run: |
+        ruff check cryptvault/ cryptvault_cli.py --output-format=github || echo "RUFF_FAILED=true" >> $GITHUB_ENV
 
     - name: Run Black (Code Formatting)
       id: black
@@ -78,64 +89,17 @@ jobs:
       run: |
         safety check --json || echo "SAFETY_FAILED=true" >> $GITHUB_ENV
 
-    - name: Create Issue on Failure
-      if: (env.BLACK_FAILED == 'true' || env.ISORT_FAILED == 'true' || env.FLAKE8_FAILED == 'true' || env.PYLINT_FAILED == 'true' || env.MYPY_FAILED == 'true' || env.BANDIT_FAILED == 'true' || env.SAFETY_FAILED == 'true') && github.event_name == 'push'
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const failures = [];
-          if (process.env.BLACK_FAILED) failures.push('Black (Code Formatting)');
-          if (process.env.ISORT_FAILED) failures.push('isort (Import Sorting)');
-          if (process.env.FLAKE8_FAILED) failures.push('Flake8 (Style Guide)');
-          if (process.env.PYLINT_FAILED) failures.push('Pylint (Code Analysis)');
-          if (process.env.MYPY_FAILED) failures.push('MyPy (Type Checking)');
-          if (process.env.BANDIT_FAILED) failures.push('Bandit (Security)');
-          if (process.env.SAFETY_FAILED) failures.push('Safety (Dependencies)');
-          
-          const title = `Lint Failures: ${failures.join(', ')}`;
-          const body = `## Automated Lint Report
-          
-          **Workflow Run:** ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
-          **Branch:** ${process.env.GITHUB_REF_NAME}
-          **Commit:** ${process.env.GITHUB_SHA}
-          
-          ### Failed Checks
-          ${failures.map(f => `- ${f}`).join('\n')}
-          
-          ### Action Required
-          Please review the workflow logs and fix the linting issues:
-          1. Run \`black cryptvault/ cryptvault_cli.py\` to format code
-          2. Run \`isort cryptvault/ cryptvault_cli.py\` to sort imports
-          3. Run \`flake8 cryptvault/\` to check style issues
-          4. Run \`pylint cryptvault/\` for code quality
-          5. Run \`mypy cryptvault/\` for type checking
-          6. Run \`bandit -r cryptvault/\` for security issues
-          
-          ### Auto-Fix Commands
-          \`\`\`bash
-          black cryptvault/ cryptvault_cli.py
-          isort cryptvault/ cryptvault_cli.py
-          \`\`\`
-          `;
-
-          const issues = await github.rest.issues.listForRepo({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            state: 'open',
-            labels: ['automated', 'lint-failure']
-          });
-          
-          if (issues.data.length === 0) {
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: title,
-              body: body,
-              labels: ['automated', 'lint-failure', 'bug']
-            });
-          }
+    - name: Summary
+      if: always()
+      run: |
+        echo "## Lint Results" >> $GITHUB_STEP_SUMMARY
+        echo "- Ruff: ${{ env.RUFF_FAILED != 'true' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Black: ${{ env.BLACK_FAILED != 'true' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- isort: ${{ env.ISORT_FAILED != 'true' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Flake8: ${{ env.FLAKE8_FAILED != 'true' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- MyPy: ${{ env.MYPY_FAILED != 'true' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Bandit: ${{ env.BANDIT_FAILED != 'true' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
 
     - name: Fail workflow if critical issues found
-      if: env.FLAKE8_FAILED == 'true' || env.BANDIT_FAILED == 'true'
+      if: env.RUFF_FAILED == 'true' || env.FLAKE8_FAILED == 'true' || env.BANDIT_FAILED == 'true'
       run: exit 1

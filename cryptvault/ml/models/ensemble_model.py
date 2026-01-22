@@ -2,11 +2,10 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 

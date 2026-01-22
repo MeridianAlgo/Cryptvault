@@ -17,7 +17,6 @@ Example:
 """
 
 import importlib
-import sys
 from typing import Any, Dict, List, Optional
 
 # Mapping of optional dependencies to their features and installation instructions

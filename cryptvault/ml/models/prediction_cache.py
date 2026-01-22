@@ -5,7 +5,6 @@ Stores predictions with timestamps and tracks accuracy over time
 
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path

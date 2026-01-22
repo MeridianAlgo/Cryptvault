@@ -1,12 +1,10 @@
 """Geometric pattern detection algorithms for triangles, flags, wedges, etc."""
 
-import math
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from ..analysis.trend_analysis import PeakTrough, TrendAnalysis, TrendLine
+from ..analysis.trend_analysis import PeakTrough, TrendAnalysis
 from ..data.models import PriceDataFrame
-from .types import PATTERN_CATEGORIES, DetectedPattern, PatternCategory, PatternType, VolumeProfile
+from .types import PATTERN_CATEGORIES, DetectedPattern, PatternType, VolumeProfile
 
 
 class GeometricPatternAnalyzer:
@@ -519,8 +517,8 @@ class GeometricPatternAnalyzer:
 
         patterns = []
         closes = data.get_closes()
-        highs = data.get_highs()
-        lows = data.get_lows()
+        data.get_highs()
+        data.get_lows()
         volumes = data.get_volumes()
 
         # Look for potential flagpoles (strong directional moves)
@@ -644,7 +642,7 @@ class GeometricPatternAnalyzer:
 
         highs = data.get_highs()[consolidation_start : consolidation_end + 1]
         lows = data.get_lows()[consolidation_start : consolidation_end + 1]
-        closes = data.get_closes()[consolidation_start : consolidation_end + 1]
+        data.get_closes()[consolidation_start : consolidation_end + 1]
         volumes = data.get_volumes()[consolidation_start : consolidation_end + 1]
 
         # Find peaks and troughs in consolidation
@@ -1558,8 +1556,8 @@ class GeometricPatternAnalyzer:
             return []
 
         patterns = []
-        highs = data.get_highs()
-        lows = data.get_lows()
+        data.get_highs()
+        data.get_lows()
 
         # Find support and resistance levels
         support_resistance = self.trend_analysis.find_support_resistance_levels(data)
@@ -1609,7 +1607,7 @@ class GeometricPatternAnalyzer:
 
         highs = data.get_highs()
         lows = data.get_lows()
-        closes = data.get_closes()
+        data.get_closes()
 
         # Find periods where price is within the rectangle
         in_rectangle_indices = []

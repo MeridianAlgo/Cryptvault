@@ -4,12 +4,9 @@ Draws detected patterns directly on candlestick charts with proper alignment
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.lines import Line2D
 
 
 class PatternOverlay:
@@ -90,7 +87,7 @@ class PatternOverlay:
     ):
         """Draw triangle patterns (ascending, descending, symmetrical, expanding)."""
         pattern_type = pattern.get("type", "").lower()
-        key_levels = pattern.get("key_levels", {})
+        pattern.get("key_levels", {})
 
         # Get pattern boundaries
         start_idx = self._find_closest_index(dates, pattern.get("start_time"))
@@ -730,7 +727,7 @@ class PatternOverlay:
                 if diff < min_diff:
                     min_diff = diff
                     closest_idx = i
-            except (TypeError, ValueError) as e:
+            except (TypeError, ValueError):
                 # Skip this date if there's a timezone mismatch
                 continue
 

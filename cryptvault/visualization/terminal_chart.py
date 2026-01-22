@@ -2,7 +2,7 @@
 
 import os
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from ..data.models import PriceDataFrame
 from ..patterns.types import DetectedPattern, PatternCategory, PatternType

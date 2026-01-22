@@ -6,10 +6,9 @@ Target: <0.5% MAPE through advanced ensemble techniques.
 
 import logging
 import warnings
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -21,11 +20,10 @@ from sklearn.ensemble import (
     StackingRegressor,
     VotingRegressor,
 )
-from sklearn.linear_model import BayesianRidge, ElasticNet, HuberRegressor, Lasso, Ridge
+from sklearn.linear_model import BayesianRidge, HuberRegressor, Ridge
 from sklearn.metrics import mean_absolute_percentage_error, r2_score
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn.neural_network import MLPRegressor
-from sklearn.svm import SVR
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,6 @@ from ..features.time_features import TimeFeatureExtractor
 
 # LSTM removed - using SimplePredictor instead
 from ..models.ensemble_predictor import EnhancedEnsemblePredictor
-from ..models.linear_models import LinearPredictor
 from ..models.prediction_cache import PredictionCache
 
 

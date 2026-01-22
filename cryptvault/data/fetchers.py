@@ -15,9 +15,8 @@ import os
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
-from . import models
 from .models import PriceDataFrame as PriceDataFrameMain
 from .models import PricePoint
 
@@ -29,12 +28,8 @@ except ImportError:
     MarketData = None
 from ..config.manager import ConfigManager
 from ..exceptions import (
-    APIError,
     DataFetchError,
     InsufficientDataError,
-    InvalidTickerError,
-    NetworkError,
-    RateLimitError,
 )
 
 logger = logging.getLogger(__name__)
@@ -171,7 +166,7 @@ class YFinanceFetcher(BaseDataFetcher):
         except Exception as e:
             logger.error(f"YFinance fetch failed: {e}", exc_info=True)
             raise DataFetchError(
-                f"Failed to fetch data from Yahoo Finance",
+                "Failed to fetch data from Yahoo Finance",
                 details={"symbol": symbol, "error": str(e)},
                 original_error=e,
             )

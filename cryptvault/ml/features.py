@@ -15,8 +15,7 @@ Feature Importance:
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, List
 
 import numpy as np
 
@@ -152,7 +151,7 @@ class TechnicalFeatureExtractor:
             current_sma_20 = sma_20[-1] if not np.isnan(sma_20[-1]) else current_price
             current_sma_50 = sma_50[-1] if not np.isnan(sma_50[-1]) else current_price
             current_ema_12 = ema_12[-1] if not np.isnan(ema_12[-1]) else current_price
-            current_ema_26 = ema_26[-1] if not np.isnan(ema_26[-1]) else current_price
+            ema_26[-1] if not np.isnan(ema_26[-1]) else current_price
 
             features.extend(
                 [

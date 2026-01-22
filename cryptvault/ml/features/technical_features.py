@@ -1,7 +1,7 @@
 """Technical indicator feature extraction for ML models."""
 
 import logging
-from typing import Any, Dict, List
+from typing import List
 
 import numpy as np
 

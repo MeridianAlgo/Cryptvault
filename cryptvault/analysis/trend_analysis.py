@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from ..data.models import PriceDataFrame
 
@@ -82,7 +82,7 @@ class TrendAnalysis:
         sum_y = sum(y_vals)
         sum_xy = sum(x * y for x, y in valid_points)
         sum_x2 = sum(x * x for x in x_vals)
-        sum_y2 = sum(y * y for y in y_vals)
+        sum(y * y for y in y_vals)
 
         # Calculate slope and intercept
         denominator = n * sum_x2 - sum_x * sum_x

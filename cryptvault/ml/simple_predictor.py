@@ -7,8 +7,7 @@ No complex LSTM, no dimension mismatches, just reliable predictions.
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd

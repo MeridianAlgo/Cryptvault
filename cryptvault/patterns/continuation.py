@@ -10,7 +10,7 @@ from typing import List
 import numpy as np
 
 from ..data.models import PriceDataFrame
-from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
+from ..indicators.trend_analysis import TrendAnalysis
 from .base import BasePatternDetector, DetectedPattern
 
 

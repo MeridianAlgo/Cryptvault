@@ -5,7 +5,7 @@ import logging
 import os
 from dataclasses import asdict, fields
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .settings import (
     AnalysisSettings,

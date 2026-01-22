@@ -320,7 +320,7 @@ def print_summary(all_results: Dict[str, List[Dict]]):
             all_within_half.append(result["Within_0.5_Pct"])
 
     if all_mapes:
-        print(f"\nOVERALL STATISTICS:")
+        print("\nOVERALL STATISTICS:")
         print(f"  Average MAPE: {np.mean(all_mapes):.2f}%")
         print(f"  Best MAPE: {np.min(all_mapes):.2f}%")
         print(f"  Worst MAPE: {np.max(all_mapes):.2f}%")

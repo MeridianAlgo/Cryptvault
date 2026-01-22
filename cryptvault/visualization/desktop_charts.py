@@ -7,19 +7,15 @@ Made with ❤️ by the MeridianAlgo Algorithmic Research Team (Quantum Meridian
 
 import logging
 import os
-import queue
 import sys
 import threading
 import tkinter as tk
-from datetime import datetime, timedelta
+from datetime import datetime
 from tkinter import filedialog, messagebox, ttk
-from typing import Any, Dict, List, Optional
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
-import pandas as pd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
@@ -28,7 +24,6 @@ from matplotlib.lines import Line2D
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from cryptvault.core.analyzer import PatternAnalyzer
-from cryptvault.data.models import PriceDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -526,7 +521,6 @@ class CryptVaultDesktopCharts:
     def _plot_candlesticks(self, dates, opens, highs, lows, closes):
         """Plot candlestick chart with enhanced gradient effects."""
         try:
-            import numpy as np
             from matplotlib.patches import Rectangle
 
             # Calculate colors for each candlestick

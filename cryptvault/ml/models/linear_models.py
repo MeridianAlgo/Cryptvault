@@ -1,12 +1,10 @@
 """Linear models for cryptocurrency price prediction."""
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 
-from ...data.models import PriceDataFrame
 
 
 class LinearPredictor:

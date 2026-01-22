@@ -11,13 +11,12 @@ Creates beautiful charts with:
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.patches import FancyBboxPatch, Rectangle
+from matplotlib.patches import Rectangle
 
 logger = logging.getLogger(__name__)
 

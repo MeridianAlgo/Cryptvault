@@ -5,13 +5,11 @@ Beautiful terminal-based charts with advanced pattern visualization and proper d
 
 import json
 import logging
-import math
 import os
 import re
 import subprocess
-import tempfile
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List
 
 from ..data.models import PriceDataFrame
 
@@ -150,7 +148,6 @@ class CandlestickChartGenerator:
 
     def _clean_cli_output(self, output: str) -> str:
         """Clean and modernize CLI output with professional formatting."""
-        import re
 
         # Remove ANSI color codes first
         ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
@@ -616,7 +613,7 @@ class CandlestickChartGenerator:
         self, chart_arrays: list, symbol_char: str, chart_start: int, chart_end: int
     ):
         """Place emoji at top for unknown patterns."""
-        chart_height = chart_end - chart_start
+        chart_end - chart_start
         emoji_x = 30  # Center position
         emoji_y = chart_start + 1  # Near the top of the chart area
 

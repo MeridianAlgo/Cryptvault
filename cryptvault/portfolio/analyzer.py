@@ -2,8 +2,8 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -298,7 +298,7 @@ class PortfolioAnalyzer:
 
         if high_correlations:
             recommendations.append(
-                f"High correlation detected: Consider reducing exposure to highly correlated assets"
+                "High correlation detected: Consider reducing exposure to highly correlated assets"
             )
 
         # Allocation analysis

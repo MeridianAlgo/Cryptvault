@@ -296,7 +296,7 @@ class InputValidator:
             days = int(days)
         except (ValueError, TypeError) as e:
             raise ValidationError(
-                f"Days must be a valid integer", details={"days": days, "error": str(e)}
+                "Days must be a valid integer", details={"days": days, "error": str(e)}
             )
 
         if days < min_days or days > max_days:
@@ -385,7 +385,7 @@ class InputValidator:
         if allowed_extensions:
             if not any(file_path.lower().endswith(ext) for ext in allowed_extensions):
                 raise ValidationError(
-                    f"Invalid file extension",
+                    "Invalid file extension",
                     details={"file_path": file_path, "allowed_extensions": allowed_extensions},
                 )
 

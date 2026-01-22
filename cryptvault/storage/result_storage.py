@@ -7,9 +7,8 @@ import pickle
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from ..patterns.types import DetectedPattern, PatternCategory, PatternType
 
 
 @dataclass

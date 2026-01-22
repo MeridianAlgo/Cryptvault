@@ -4,7 +4,6 @@ import csv
 import json
 from datetime import datetime
 from io import StringIO
-from typing import Any, Dict
 
 from . import PriceDataFrame, PricePoint
 

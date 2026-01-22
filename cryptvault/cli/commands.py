@@ -15,8 +15,7 @@ Functions:
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from cryptvault.core.analyzer import PatternAnalyzer
 
@@ -382,11 +381,11 @@ def show_api_status() -> None:
             print("\nInstallation suggestions:")
             for package in missing:
                 if package == "yfinance":
-                    print(f"  pip install yfinance")
+                    print("  pip install yfinance")
                 elif package == "ccxt":
-                    print(f"  pip install ccxt")
+                    print("  pip install ccxt")
                 elif package == "cryptocompare":
-                    print(f"  pip install cryptocompare")
+                    print("  pip install cryptocompare")
 
         print("=" * 70 + "\n")
 

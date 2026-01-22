@@ -1,11 +1,10 @@
 """Advanced pattern detection algorithms for complex geometric patterns."""
 
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from ..data.models import PriceDataFrame
 from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
-from .types import PATTERN_CATEGORIES, DetectedPattern, PatternCategory, PatternType, VolumeProfile
+from .types import PATTERN_CATEGORIES, DetectedPattern, PatternType, VolumeProfile
 
 
 class AdvancedPatternAnalyzer:
@@ -336,8 +335,8 @@ class AdvancedPatternAnalyzer:
         # Check for expanding range over time
         if not is_expanding:
             # Calculate range at start and end
-            start_time = min(peak1.index, trough1.index)
-            end_time = max(peak2.index, trough2.index)
+            min(peak1.index, trough1.index)
+            max(peak2.index, trough2.index)
 
             # Approximate range expansion
             start_range = abs(peak1.value - trough1.value)
@@ -973,8 +972,8 @@ class AdvancedPatternAnalyzer:
         """Calculate Fibonacci retracement and extension levels."""
 
         XA = A.value - X.value
-        AB = B.value - A.value
-        BC = C.value - B.value
+        B.value - A.value
+        C.value - B.value
         CD = D.value - C.value
 
         # Common Fibonacci levels

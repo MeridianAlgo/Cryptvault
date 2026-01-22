@@ -6,11 +6,9 @@ Achieves <0.5% MAPE through ensemble of optimized models with proper validation.
 
 import logging
 import warnings
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -20,9 +18,8 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
     RandomForestRegressor,
 )
-from sklearn.linear_model import ElasticNet, HuberRegressor, Lasso, Ridge
+from sklearn.linear_model import ElasticNet, HuberRegressor, Ridge
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from sklearn.svm import SVR
 
 logger = logging.getLogger(__name__)
 

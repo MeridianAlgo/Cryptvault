@@ -10,7 +10,6 @@ Example:
     >>> api_key = creds.get_credential('CRYPTOCOMPARE_API_KEY')
 """
 
-import json
 import logging
 import os
 from datetime import datetime, timedelta
