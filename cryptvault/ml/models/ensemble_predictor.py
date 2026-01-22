@@ -46,8 +46,6 @@ try:
 except ImportError:
     LIGHTGBM_AVAILABLE = False
 
-from .ensemble_predictor import EnhancedEnsemblePredictor
-
 # LSTM removed - using SimplePredictor for reliable predictions
 from .linear_models import LinearPredictor
 from .prediction_cache import PredictionCache

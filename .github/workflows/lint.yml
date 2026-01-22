@@ -79,7 +79,7 @@ jobs:
         safety check --json || echo "SAFETY_FAILED=true" >> $GITHUB_ENV
 
     - name: Create Issue on Failure
-      if: env.BLACK_FAILED == 'true' || env.ISORT_FAILED == 'true' || env.FLAKE8_FAILED == 'true' || env.PYLINT_FAILED == 'true' || env.MYPY_FAILED == 'true' || env.BANDIT_FAILED == 'true' || env.SAFETY_FAILED == 'true'
+      if: (env.BLACK_FAILED == 'true' || env.ISORT_FAILED == 'true' || env.FLAKE8_FAILED == 'true' || env.PYLINT_FAILED == 'true' || env.MYPY_FAILED == 'true' || env.BANDIT_FAILED == 'true' || env.SAFETY_FAILED == 'true') && github.event_name == 'push'
       uses: actions/github-script@v7
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -96,35 +96,34 @@ jobs:
           const title = `Lint Failures: ${failures.join(', ')}`;
           const body = `## Automated Lint Report
           
-**Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-**Branch:** ${{ github.ref_name }}
-**Commit:** ${{ github.sha }}
+          **Workflow Run:** ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}
+          **Branch:** ${process.env.GITHUB_REF_NAME}
+          **Commit:** ${process.env.GITHUB_SHA}
+          
+          ### Failed Checks
+          ${failures.map(f => `- ${f}`).join('\n')}
+          
+          ### Action Required
+          Please review the workflow logs and fix the linting issues:
+          1. Run \`black cryptvault/ cryptvault_cli.py\` to format code
+          2. Run \`isort cryptvault/ cryptvault_cli.py\` to sort imports
+          3. Run \`flake8 cryptvault/\` to check style issues
+          4. Run \`pylint cryptvault/\` for code quality
+          5. Run \`mypy cryptvault/\` for type checking
+          6. Run \`bandit -r cryptvault/\` for security issues
+          
+          ### Auto-Fix Commands
+          \`\`\`bash
+          black cryptvault/ cryptvault_cli.py
+          isort cryptvault/ cryptvault_cli.py
+          \`\`\`
+          `;
 
-### Failed Checks
-${failures.map(f => `- ❌ ${f}`).join('\n')}
-
-### Action Required
-Please review the workflow logs and fix the linting issues:
-1. Run \`black cryptvault/ cryptvault_cli.py\` to format code
-2. Run \`isort cryptvault/ cryptvault_cli.py\` to sort imports
-3. Run \`flake8 cryptvault/\` to check style issues
-4. Run \`pylint cryptvault/\` for code quality
-5. Run \`mypy cryptvault/\` for type checking
-6. Run \`bandit -r cryptvault/\` for security issues
-
-### Auto-Fix Commands
-\`\`\`bash
-black cryptvault/ cryptvault_cli.py
-isort cryptvault/ cryptvault_cli.py
-\`\`\`
-`;
-
-          // Check if issue already exists
           const issues = await github.rest.issues.listForRepo({
             owner: context.repo.owner,
             repo: context.repo.repo,
             state: 'open',
-            labels: 'automated,lint-failure'
+            labels: ['automated', 'lint-failure']
           });
           
           if (issues.data.length === 0) {
