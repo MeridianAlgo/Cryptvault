@@ -38,10 +38,10 @@ CryptVault is an advanced cryptocurrency and stock analysis platform featuring p
 ### What's New in v5.1.0
 
 - Professional documentation formatting across all docs
-- Updated contact email to contact@meridianalgo.org
+- Updated contact email to contact@meridianalgo.org (YAY WE GOT A NEW EMAIL!!!)
 - Codecov integration with token support
 - Comprehensive linting and code quality improvements
-- Removed summary files for cleaner repository structure
+- Removed summary files for a cleaner repository structure
 - Enhanced CI/CD workflows with automated issue creation
 - Production-ready ML system with 1.6-2.4% MAPE
 - 100% direction accuracy on all tested symbols
