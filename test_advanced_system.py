@@ -4,12 +4,13 @@ Advanced System Testing - Target <0.5% MAPE
 Tests the advanced predictor with stacking and optimized features.
 """
 
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
 import logging
 import sys
 import warnings
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -25,8 +26,8 @@ except ImportError:
     YFINANCE_AVAILABLE = False
 
 try:
-    from cryptvault.ml.preprocessing import DataPreprocessor
     from cryptvault.ml.advanced_predictor import AdvancedPredictor
+    from cryptvault.ml.preprocessing import DataPreprocessor
 
     COMPONENTS_AVAILABLE = True
 except ImportError as e:
