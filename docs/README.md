@@ -2,7 +2,7 @@
 
 Welcome to the CryptVault documentation! This folder contains comprehensive guides and references for using and contributing to CryptVault.
 
-## 📚 Documentation Index
+## Documentation Index
 
 ### Getting Started
 - **[README.md](../README.md)** - Project overview and quick start guide
@@ -21,7 +21,7 @@ Welcome to the CryptVault documentation! This folder contains comprehensive guid
 ### Project Information
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 
-## 🚀 Quick Links
+## Quick Links
 
 ### For Users
 1. [Installation Guide](../README.md#installation)
@@ -38,7 +38,7 @@ Welcome to the CryptVault documentation! This folder contains comprehensive guid
 2. [Performance Tuning](PERFORMANCE.md)
 3. [Security Best Practices](SECURITY.md)
 
-## 📖 Documentation Structure
+## Documentation Structure
 
 ```
 docs/
@@ -53,7 +53,7 @@ docs/
 └── TROUBLESHOOTING.md     # Common issues and fixes
 ```
 
-## 🔍 Finding What You Need
+## Finding What You Need
 
 ### I want to...
 
@@ -79,7 +79,7 @@ docs/
 - Review [Architecture](ARCHITECTURE.md) to understand current design
 - Follow the feature request template in [Contributing](CONTRIBUTING.md)
 
-## 📝 Documentation Standards
+## Documentation Standards
 
 All documentation follows these principles:
 
@@ -89,7 +89,7 @@ All documentation follows these principles:
 4. **Searchable** - Use clear headings and keywords
 5. **Accessible** - Written for all skill levels
 
-## 🤝 Improving Documentation
+## Improving Documentation
 
 Found an error or want to improve the docs?
 
@@ -97,17 +97,17 @@ Found an error or want to improve the docs?
 2. Submit a pull request with your changes
 3. Documentation PRs are fast-tracked for review
 
-## 📧 Getting Help
+## Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/yourusername/cryptvault/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/cryptvault/discussions)
-- **Email**: support@cryptvault.dev
+- **Email**: contact@meridianalgo.org
 
-## 📄 License
+## License
 
 All documentation is licensed under [MIT License](../LICENSE).
 
 ---
 
-**Last Updated**: December 2025  
-**Version**: 4.5.0
+**Last Updated**: January 2026  
+**Version**: 5.1.0

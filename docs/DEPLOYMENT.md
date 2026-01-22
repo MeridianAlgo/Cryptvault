@@ -6,7 +6,7 @@ This guide covers deploying CryptVault in various environments, from local devel
 
 ---
 
-## 🎯 Deployment Methods Comparison
+## Deployment Methods Comparison
 
 | Method | Setup Time | Best For | Pros | Cons |
 |--------|-----------|----------|------|------|

@@ -261,7 +261,7 @@ cryptvault/
 - **Documentation**: Check `docs/` folder
 - **Issues**: Search existing issues
 - **Discussions**: Use GitHub Discussions
-- **Email**: contact@cryptvault.dev
+- **Email**: contact@meridianalgo.org
 
 ## License
 
@@ -274,4 +274,4 @@ Contributors are recognized in:
 - GitHub contributors page
 - Project README
 
-Thank you for contributing to CryptVault! 🚀
+Thank you for contributing to CryptVault!

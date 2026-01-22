@@ -1,7 +1,7 @@
 # CryptVault - AI-Powered Cryptocurrency Analysis Platform
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-5.0.0-brightgreen.svg)](https://github.com/MeridianAlgo/Cryptvault/releases)
+[![Version](https://img.shields.io/badge/version-5.1.0-brightgreen.svg)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/MeridianAlgo/Cryptvault/workflows/Tests/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml)
 [![Lint](https://github.com/MeridianAlgo/Cryptvault/workflows/Lint%20and%20Code%20Quality/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml)
@@ -35,16 +35,16 @@ CryptVault is an advanced cryptocurrency and stock analysis platform featuring p
 
 **Note**: Cryptocurrency markets are highly volatile. A MAPE of 1.6-2.4% represents strong performance for crypto price prediction. For context, professional trading algorithms typically achieve 2-5% MAPE on crypto assets.
 
-### What's New in v5.0.0
+### What's New in v5.1.0
 
-- Production-grade ML system with comprehensive preprocessing
-- Advanced ensemble predictor with stacking and 7 optimized models
-- 67+ engineered features including cyclical time encoding, MFI, CCI, Williams %R
-- Proper NaN handling and robust scaling
-- Validation-based model weighting
-- Comprehensive testing framework with real market data
+- Professional documentation formatting across all docs
+- Updated contact email to contact@meridianalgo.org
+- Codecov integration with token support
+- Comprehensive linting and code quality improvements
+- Removed summary files for cleaner repository structure
+- Enhanced CI/CD workflows with automated issue creation
+- Production-ready ML system with 1.6-2.4% MAPE
 - 100% direction accuracy on all tested symbols
-- Professional CI/CD with automated testing and linting
 
 **Developed by MeridianAlgo** - Algorithmic trading research and development.
 
@@ -396,7 +396,7 @@ For complete terms, see [LICENSE](LICENSE) and [PRIVACY.md](docs/PRIVACY.md).
 
 - **Documentation**: [docs/](docs/)
 - **Issues**: [GitHub Issues](https://github.com/MeridianAlgo/Cryptvault/issues)
-- **Email**: support@meridianalgo.com
+- **Email**: contact@meridianalgo.org
 
 ### Reporting Bugs
 
@@ -430,6 +430,6 @@ A: Yes, both asset types are supported in the same analysis.
 
 ---
 
-**Version**: 5.0.0  
+**Version**: 5.1.0  
 **Last Updated**: January 2026  
 **Maintained by**: MeridianAlgo

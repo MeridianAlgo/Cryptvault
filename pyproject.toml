@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cryptvault"
-version = "5.0.0"
+version = "5.1.0"
 description = "Advanced AI-Powered Cryptocurrency Analysis Platform with Enhanced ML Models & Professional CI/CD"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-{name = "MeridianAlgo Algorithmic Research Team (Quantum Meridian)", email = "support@meridianalgo.com"}
+{name = "MeridianAlgo Algorithmic Research Team (Quantum Meridian)", email = "contact@meridianalgo.org"}
 ]
 maintainers = [
-{name = "MeridianAlgo Algorithmic Research Team", email = "support@meridianalgo.com"}
+{name = "MeridianAlgo Algorithmic Research Team", email = "contact@meridianalgo.org"}
 ]
 keywords = [
 "cryptocurrency",
