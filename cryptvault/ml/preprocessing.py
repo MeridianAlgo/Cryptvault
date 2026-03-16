@@ -175,14 +175,117 @@ class DataPreprocessor:
         ).values
         features["price_to_vwap"] = (df["Close"] / features["vwap"]).values
 
+        # Advanced momentum features
+        # Triple EMA
+        ema_12 = df["Close"].ewm(span=12).mean()
+        ema_26 = df["Close"].ewm(span=26).mean()
+        features["tema"] = (3 * ema_12 - 3 * ema_12.ewm(span=12).mean() + 
+                           ema_12.ewm(span=12).mean().ewm(span=12).mean()).values
+
+        # Kaufman Adaptive Moving Average (KAMA)
+        change = np.abs(df["Close"] - df["Close"].shift(10))
+        volatility = df["Close"].diff().abs().rolling(10).sum()
+        er = change / volatility  # Efficiency ratio
+        fast_sc = 2 / (2 + 1)
+        slow_sc = 2 / (30 + 1)
+        sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
+        kama = df["Close"].copy()
+        for i in range(10, len(df)):
+            kama.iloc[i] = kama.iloc[i-1] + sc.iloc[i] * (df["Close"].iloc[i] - kama.iloc[i-1])
+        features["kama"] = kama.values
+
+        # Chaikin Money Flow
+        mf_multiplier = ((df["Close"] - df["Low"]) - (df["High"] - df["Close"])) / (df["High"] - df["Low"])
+        mf_volume = mf_multiplier * df["Volume"]
+        features["cmf"] = (mf_volume.rolling(20).sum() / df["Volume"].rolling(20).sum()).values
+
+        # On-Balance Volume (OBV)
+        obv = (np.sign(df["Close"].diff()) * df["Volume"]).fillna(0).cumsum()
+        features["obv"] = obv.values
+        features["obv_ema"] = obv.ewm(span=20).mean().values
+
+        # Accumulation/Distribution Line
+        clv = ((df["Close"] - df["Low"]) - (df["High"] - df["Close"])) / (df["High"] - df["Low"])
+        ad_line = (clv * df["Volume"]).cumsum()
+        features["ad_line"] = ad_line.values
+
+        # Aroon Indicator
+        high_25 = df["High"].rolling(25).apply(lambda x: x.argmax())
+        low_25 = df["Low"].rolling(25).apply(lambda x: x.argmin())
+        features["aroon_up"] = ((25 - high_25) / 25 * 100).values
+        features["aroon_down"] = ((25 - low_25) / 25 * 100).values
+        features["aroon_oscillator"] = (features["aroon_up"] - features["aroon_down"]).values
+
+        # Ultimate Oscillator (multi-timeframe momentum)
+        bp = df["Close"] - np.minimum(df["Low"], df["Close"].shift(1))
+        tr = np.maximum(df["High"], df["Close"].shift(1)) - np.minimum(df["Low"], df["Close"].shift(1))
+        avg7 = bp.rolling(7).sum() / tr.rolling(7).sum()
+        avg14 = bp.rolling(14).sum() / tr.rolling(14).sum()
+        avg28 = bp.rolling(28).sum() / tr.rolling(28).sum()
+        features["ultimate_osc"] = (100 * ((4 * avg7 + 2 * avg14 + avg28) / 7)).values
+
+        # Ichimoku Cloud components
+        high_9 = df["High"].rolling(9).max()
+        low_9 = df["Low"].rolling(9).min()
+        features["tenkan_sen"] = ((high_9 + low_9) / 2).values
+        
+        high_26 = df["High"].rolling(26).max()
+        low_26 = df["Low"].rolling(26).min()
+        features["kijun_sen"] = ((high_26 + low_26) / 2).values
+        
+        features["senkou_span_a"] = ((features["tenkan_sen"] + features["kijun_sen"]) / 2).values
+        
+        high_52 = df["High"].rolling(52).max()
+        low_52 = df["Low"].rolling(52).min()
+        features["senkou_span_b"] = ((high_52 + low_52) / 2).values
+
+        # Price acceleration
+        features["price_accel"] = df["Close"].diff().diff().values
+
+        # Volatility ratio
+        features["vol_ratio"] = (features["volatility_20"] / features["volatility_50"]).values
+
+        # Trend strength
+        features["trend_strength"] = np.abs(features["ema_20"] - features["ema_50"]) / df["Close"]
+
+        # Support/Resistance proximity
+        features["dist_to_high_20"] = (df["High"].rolling(20).max() - df["Close"]) / df["Close"]
+        features["dist_to_low_20"] = (df["Close"] - df["Low"].rolling(20).min()) / df["Close"]
+
+        # Fractal dimension (complexity measure)
+        def hurst_exponent(ts, max_lag=20):
+            lags = range(2, max_lag)
+            tau = [np.std(np.subtract(ts[lag:], ts[:-lag])) for lag in lags]
+            return np.polyfit(np.log(lags), np.log(tau), 1)[0]
+        
+        features["hurst"] = df["Close"].rolling(50).apply(lambda x: hurst_exponent(x.values) if len(x) >= 20 else np.nan).values
+
+        # Market regime indicators
+        # Volatility regime
+        vol_percentile = features["volatility_20"].rolling(100).apply(
+            lambda x: (x.iloc[-1] <= x).sum() / len(x) * 100 if len(x) > 0 else 50
+        )
+        features["vol_regime"] = vol_percentile.values
+
+        # Trend regime
+        sma_diff = (features["sma_20"] - features["sma_50"]) / df["Close"]
+        features["trend_regime"] = sma_diff.rolling(20).mean().values
+
         return features
 
     def fit(self, X: pd.DataFrame) -> "DataPreprocessor":
         """Fit the preprocessor on training data."""
-        # Store feature names
-        self.feature_names = X.columns.tolist()
+        # Drop columns that are entirely NaN (can't impute a mean from nothing)
+        all_nan_cols = X.columns[X.isna().all()].tolist()
+        if all_nan_cols:
+            logger.debug("Dropping all-NaN columns: %s", all_nan_cols)
+            X = X.drop(columns=all_nan_cols)
 
-        # Fit imputer
+        # Store feature names (after dropping all-NaN)
+        self.feature_names = X.columns.tolist()
+        self._dropped_cols = all_nan_cols
+
+        # Fit imputer on remaining (possibly partially NaN) columns
         X_imputed = self.imputer.fit_transform(X)
 
         # Fit scaler
@@ -198,7 +301,15 @@ class DataPreprocessor:
         if not self.is_fitted:
             raise RuntimeError("Preprocessor must be fitted before transform")
 
-        # Ensure same features
+        # Drop columns that were removed during fit, add any missing as 0
+        dropped = getattr(self, "_dropped_cols", [])
+        X = X.drop(columns=[c for c in dropped if c in X.columns], errors="ignore")
+
+        # Ensure same feature set (add missing columns as 0)
+        for col in self.feature_names:
+            if col not in X.columns:
+                X = X.copy()
+                X[col] = 0.0
         X = X[self.feature_names]
 
         # Impute missing values

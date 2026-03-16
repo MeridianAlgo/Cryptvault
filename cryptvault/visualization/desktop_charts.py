@@ -352,10 +352,10 @@ class CryptVaultDesktopCharts:
             self._update_pattern_list(self._display_patterns)
 
             # Get historical data for charting
-            from cryptvault.data.package_fetcher import PackageDataFetcher
+            from cryptvault.data.fetchers import DataFetcher
 
-            data_fetcher = PackageDataFetcher()
-            raw_data = data_fetcher.fetch_historical_data(
+            data_fetcher = DataFetcher()
+            raw_data = data_fetcher.fetch(
                 symbol, days=self._current_days, interval=self._current_interval
             )
 

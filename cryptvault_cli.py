@@ -123,7 +123,11 @@ def interactive_mode():
                 show_demo()
 
             elif cmd == "desktop":
-                open_desktop_charts()
+                try:
+                    from cryptvault.desktop import launch_app
+                    launch_app()
+                except ImportError:
+                    open_desktop_charts()
 
             elif cmd == "analyze":
                 if len(parts) >= 2:
@@ -269,7 +273,12 @@ Aliases:
             start_live_analysis(args.live, verbose=args.verbose)
 
         elif args.desktop:
-            open_desktop_charts(verbose=args.verbose)
+            # Launch the new comprehensive desktop app
+            try:
+                from cryptvault.desktop import launch_app
+                launch_app()
+            except ImportError:
+                open_desktop_charts(verbose=args.verbose)
 
         elif args.accuracy:
             show_prediction_accuracy(verbose=args.verbose)

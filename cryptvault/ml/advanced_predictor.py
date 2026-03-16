@@ -272,6 +272,16 @@ class AdvancedPredictor:
 
     def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict[str, float]:
         """Comprehensive evaluation."""
+        # Drop NaN targets (e.g. today's partial bar from yfinance)
+        y = np.asarray(y, dtype=float)
+        valid_mask = ~np.isnan(y)
+        if valid_mask.sum() == 0:
+            return {"MAPE": 0.0, "RMSE": 0.0, "MAE": 0.0, "R2": 0.0,
+                    "Within_0.5%": 0.0, "Within_1%": 0.0, "Within_2%": 0.0,
+                    "Direction_Accuracy": 0.0}
+        y = y[valid_mask]
+        X = X[valid_mask]
+
         predictions = self.predict(X)
 
         mape = mean_absolute_percentage_error(y, predictions) * 100
