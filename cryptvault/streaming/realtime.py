@@ -7,12 +7,10 @@ Runs in a background daemon thread and fires callbacks with new bars.
 
 import logging
 import threading
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)

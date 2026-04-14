@@ -4,9 +4,9 @@ Interactive candlestick chart panel with indicators and pattern overlays.
 
 import logging
 import tkinter as tk
+from collections import defaultdict
 from tkinter import ttk
 from typing import Any, Dict, List, Optional
-from collections import defaultdict
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -17,11 +17,23 @@ from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 
 from ..theme import (
-    ACCENT_BLUE, BB_COLOR, BG_PANEL, CANDLE_DOWN, CANDLE_UP,
-    CHART_BG, FONT_SMALL, GRID_COLOR,
-    RED, GREEN,
-    TEXT_MUTED, TEXT_PRIMARY, TEXT_SECONDARY, VOLUME_DOWN, VOLUME_UP,
-    WICK_DOWN, WICK_UP,
+    ACCENT_BLUE,
+    BB_COLOR,
+    BG_PANEL,
+    CANDLE_DOWN,
+    CANDLE_UP,
+    CHART_BG,
+    FONT_SMALL,
+    GREEN,
+    GRID_COLOR,
+    RED,
+    TEXT_MUTED,
+    TEXT_PRIMARY,
+    TEXT_SECONDARY,
+    VOLUME_DOWN,
+    VOLUME_UP,
+    WICK_DOWN,
+    WICK_UP,
 )
 
 logger = logging.getLogger(__name__)

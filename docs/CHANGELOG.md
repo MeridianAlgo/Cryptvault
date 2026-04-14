@@ -5,6 +5,27 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0] - 2026-04-13
+
+### Added
+- Ruff configuration in `pyproject.toml` with pragmatic ignores tuned for research/ML code.
+- Concise, scannable README with badge row, collapsible pattern library, and quick-reference tables.
+
+### Changed
+- CI pipelines rewritten:
+  - `lint.yml` — Ruff is the single source of truth, Bandit advisory, `actions/setup-python@v5` with built-in pip caching, concurrency cancellation.
+  - `tests.yml` — parallel test execution via `pytest-xdist -n auto`, modernized actions.
+- README overhauled for readability — clearer navigation, collapsible sections, tighter tables.
+
+### Fixed
+- `F821` undefined-name bug in `desktop/main_window.py` — lambda closure over `e` in error handler.
+- `F821` undefined-name ×5 in `portfolio/analyzer.py` — removed unreachable dead code after `return`.
+- `F402` import-shadowed-by-loop-var in `core/analyzer.py` — renamed loop variables.
+- `W293 / W291 / I001` plus 136 other lint findings auto-fixed with `ruff --fix`.
+
+### Removed
+- Flake8, Pylint, MyPy, Safety, isort, and Black from CI — consolidated into Ruff for faster, more reliable CI.
+
 ## [5.0.0] - 2026-01-21
 
 ### Major Release - Production ML System with 1.6-2.4% MAPE

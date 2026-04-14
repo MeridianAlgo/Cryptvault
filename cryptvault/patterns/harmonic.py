@@ -6,7 +6,6 @@ Detects harmonic patterns based on Fibonacci ratios including Gartley, Butterfly
 
 from typing import List, Optional
 
-
 from ..data.models import PriceDataFrame
 from ..indicators.trend_analysis import PeakTrough, TrendAnalysis
 from .base import BasePatternDetector, DetectedPattern

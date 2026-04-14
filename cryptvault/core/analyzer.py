@@ -1401,16 +1401,16 @@ class ResultValidator:
         """Validate that required fields are present."""
         required_fields = ["success", "symbol", "analysis_timestamp"]
 
-        for field in required_fields:
-            if not hasattr(result, field) or getattr(result, field) is None:
-                errors.append(f"Missing required field: {field}")
+        for fname in required_fields:
+            if not hasattr(result, fname) or getattr(result, fname) is None:
+                errors.append(f"Missing required field: {fname}")
 
         # If success is True, additional fields are required
         if result.success:
             success_required = ["patterns", "pattern_summary", "data_summary"]
-            for field in success_required:
-                if not hasattr(result, field) or getattr(result, field) is None:
-                    errors.append(f"Missing required field for successful analysis: {field}")
+            for fname in success_required:
+                if not hasattr(result, fname) or getattr(result, fname) is None:
+                    errors.append(f"Missing required field for successful analysis: {fname}")
 
         return len(errors) == 0
 
@@ -1501,9 +1501,9 @@ class ResultValidator:
 
             # Validate pattern has required fields
             required_pattern_fields = ["type", "confidence", "category"]
-            for field in required_pattern_fields:
-                if field not in pattern:
-                    errors.append(f"Pattern {i} missing required field: {field}")
+            for fname in required_pattern_fields:
+                if fname not in pattern:
+                    errors.append(f"Pattern {i} missing required field: {fname}")
 
             # Validate confidence_raw is in valid range
             if "confidence_raw" in pattern:

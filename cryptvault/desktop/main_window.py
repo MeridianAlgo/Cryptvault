@@ -9,14 +9,27 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Any, Dict, List, Optional
 
-from .theme import (
-    ACCENT_BLUE, BG_DEEP, BG_PANEL, BG_BORDER, BG_HOVER,
-    FONT_BODY, FONT_SMALL, FONT_TINY,
-    GREEN, RED, SIDEBAR_WIDTH, TEXT_MUTED, TEXT_PRIMARY, TEXT_SECONDARY,
-    TOPBAR_HEIGHT, YELLOW, apply_ttk_theme,
-)
-from .panels.chart_panel import ChartPanel
 from .panels.analysis_panel import AnalysisPanel
+from .panels.chart_panel import ChartPanel
+from .theme import (
+    ACCENT_BLUE,
+    BG_BORDER,
+    BG_DEEP,
+    BG_HOVER,
+    BG_PANEL,
+    FONT_BODY,
+    FONT_SMALL,
+    FONT_TINY,
+    GREEN,
+    RED,
+    SIDEBAR_WIDTH,
+    TEXT_MUTED,
+    TEXT_PRIMARY,
+    TEXT_SECONDARY,
+    TOPBAR_HEIGHT,
+    YELLOW,
+    apply_ttk_theme,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -283,7 +296,8 @@ class MainWindow:
 
         except Exception as e:
             logger.error("Analysis error: %s", e, exc_info=True)
-            self._root.after(0, lambda: self._on_analysis_error(str(e)))
+            err_msg = str(e)
+            self._root.after(0, lambda msg=err_msg: self._on_analysis_error(msg))
 
     def _detect_patterns(self, df) -> List[Dict[str, Any]]:
         """Run comprehensive pattern detection."""

@@ -7,10 +7,9 @@ Target: <0.5% MAPE through sophisticated techniques.
 
 import logging
 import warnings
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -19,12 +18,9 @@ from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
     RandomForestRegressor,
-    VotingRegressor,
 )
 from sklearn.linear_model import ElasticNet, HuberRegressor, Lasso, Ridge
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.feature_selection import SelectFromModel, RFE
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +28,7 @@ logger = logging.getLogger(__name__)
 class EnhancedProductionPredictor:
     """
     Enhanced production predictor with advanced techniques.
-    
+
     Improvements:
     - Optimized hyperparameters based on grid search
     - Feature selection to reduce noise
@@ -54,7 +50,7 @@ class EnhancedProductionPredictor:
 
     def _initialize_models(self):
         """Initialize models with enhanced hyperparameters."""
-        
+
         # HistGradientBoosting - Primary model
         self.models["hist_gb_1"] = HistGradientBoostingRegressor(
             max_iter=500,
@@ -157,11 +153,11 @@ class EnhancedProductionPredictor:
     def select_features(self, X_train: np.ndarray, y_train: np.ndarray) -> np.ndarray:
         """
         Select most important features using tree-based importance.
-        
+
         Args:
             X_train: Training features
             y_train: Training targets
-            
+
         Returns:
             Indices of selected features
         """
@@ -181,12 +177,12 @@ class EnhancedProductionPredictor:
 
         # Get feature importances
         importances = selector.feature_importances_
-        
+
         # Select top N features
         indices = np.argsort(importances)[::-1][:self.n_features_to_select]
-        
+
         logger.info(f"Selected {len(indices)} features with importance sum: {importances[indices].sum():.4f}")
-        
+
         return indices
 
     def train(
@@ -198,13 +194,13 @@ class EnhancedProductionPredictor:
     ) -> bool:
         """
         Train all models with validation-based weighting.
-        
+
         Args:
             X_train: Training features
             y_train: Training targets
             X_val: Validation features
             y_val: Validation targets
-            
+
         Returns:
             True if training successful
         """
@@ -225,32 +221,32 @@ class EnhancedProductionPredictor:
         for name, model in self.models.items():
             try:
                 logger.info(f"Training {name}...")
-                
+
                 # Train model
                 model.fit(X_train, y_train)
 
                 # Validate
                 if X_val is not None and y_val is not None:
                     val_pred = model.predict(X_val)
-                    
+
                     # Calculate multiple metrics
                     mape = mean_absolute_percentage_error(y_val, val_pred) * 100
                     rmse = np.sqrt(mean_squared_error(y_val, val_pred))
                     r2 = r2_score(y_val, val_pred)
-                    
+
                     # Combined score (lower MAPE and higher R2 is better)
                     # Weight MAPE heavily since that's our target
                     score = (1.0 / (1.0 + mape)) * 0.7 + max(0, r2) * 0.3
-                    
+
                     self.model_scores[name] = {
                         "mape": mape,
                         "rmse": rmse,
                         "r2": r2,
                         "score": score
                     }
-                    
+
                     total_score += score
-                    
+
                     logger.info(
                         f"{name}: MAPE={mape:.4f}%, RMSE={rmse:.4f}, R2={r2:.4f}, Score={score:.4f}"
                     )
@@ -286,10 +282,10 @@ class EnhancedProductionPredictor:
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
         Make weighted ensemble predictions.
-        
+
         Args:
             X: Features to predict
-            
+
         Returns:
             Predictions
         """
@@ -307,7 +303,7 @@ class EnhancedProductionPredictor:
             try:
                 pred = model.predict(X)
                 weight = self.model_weights.get(name, 0.0)
-                
+
                 if weight > 0:
                     all_predictions.append(pred)
                     weights.append(weight)
@@ -328,10 +324,10 @@ class EnhancedProductionPredictor:
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Make predictions with confidence intervals.
-        
+
         Args:
             X: Features to predict
-            
+
         Returns:
             (predictions, lower_bound, upper_bound)
         """
@@ -358,7 +354,7 @@ class EnhancedProductionPredictor:
         # Calculate statistics
         predictions = np.mean(all_predictions, axis=0)
         std = np.std(all_predictions, axis=0)
-        
+
         # 95% confidence interval (1.96 * std)
         lower_bound = predictions - 1.96 * std
         upper_bound = predictions + 1.96 * std
@@ -378,12 +374,12 @@ class EnhancedProductionPredictor:
                 try:
                     importances = model.feature_importances_
                     weight = self.model_weights.get(name, 0.0)
-                    
+
                     for i, imp in enumerate(importances):
                         if i not in importance_dict:
                             importance_dict[i] = 0.0
                         importance_dict[i] += imp * weight
-                    
+
                     count += 1
                 except Exception as e:
                     logger.warning(f"Could not get importance from {name}: {e}")

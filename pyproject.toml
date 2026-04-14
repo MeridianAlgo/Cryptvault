@@ -375,3 +375,26 @@ skips = ["B101", "B601"]
 [tool.setuptools_scm]
 write_to = "cryptvault/_version.py"
 write_to_template = '__version__ = "{version}"'
+
+# ============================================================================
+# Ruff Configuration
+# ============================================================================
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["models", "logs", ".pytest_cache", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+# Pragmatic ignores for research/ML codebase:
+# E402 - allow late imports (conditional imports for optional deps)
+# E722 - bare except acceptable in research code paths
+# E741 - 'l' is conventional for lows in OHLC data
+# F401 - unused imports are intentional in __init__.py re-exports
+# F841 - unused locals sometimes retained for debugging
+ignore = ["E402", "E722", "E741", "F401", "F841", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"tests/**" = ["F401", "F811", "E402"]

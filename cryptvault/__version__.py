@@ -10,8 +10,8 @@ Attributes:
     __license__: License type
 """
 
-__version__ = "5.1.0"
-__version_info__ = (5, 1, 0)
+__version__ = "6.1.0"
+__version_info__ = (6, 1, 0)
 __author__ = "MeridianAlgo Algorithmic Research Team (Quantum Meridian)"
 __license__ = "MIT"
 __copyright__ = "Copyright 2026 MeridianAlgo"

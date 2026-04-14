@@ -222,19 +222,6 @@ class PortfolioAnalyzer:
         running_max = np.maximum.accumulate(cumulative_returns)
         drawdowns = (cumulative_returns - running_max) / running_max
         return np.min(drawdowns)
-        # Correlation score (average correlation)
-        correlation_score = 0.5  # Placeholder
-        diversification_ratio = 0.7  # Placeholder
-
-        return PortfolioMetrics(
-            total_value=total_value,
-            daily_return=daily_return,
-            volatility=volatility,
-            sharpe_ratio=sharpe_ratio,
-            max_drawdown=max_drawdown,
-            correlation_score=correlation_score,
-            diversification_ratio=diversification_ratio,
-        )
 
     def _calculate_diversification_score(self, correlation_matrix: CorrelationMatrix) -> float:
         """Calculate diversification score based on asset correlations.

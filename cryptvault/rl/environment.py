@@ -5,7 +5,7 @@ Implements a Gym-compatible environment for crypto trading.
 """
 
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ class TradingEnvironment:
                 "Volume": [p.volume for p in data.data],
             }
             data = pd.DataFrame(df_data, index=[p.timestamp for p in data.data])
-        
+
         self.data = data
         self.initial_balance = initial_balance
         self.transaction_cost = transaction_cost
@@ -160,7 +160,7 @@ class TradingEnvironment:
         )
 
         observation = np.concatenate([price_features, portfolio_state])
-        
+
         # Replace any NaN or inf values
         observation = np.nan_to_num(observation, nan=0.0, posinf=1.0, neginf=-1.0)
 

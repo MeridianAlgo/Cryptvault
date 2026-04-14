@@ -14,7 +14,6 @@ from typing import List, Union
 import numpy as np
 
 
-
 def calculate_obv(
     closes: Union[List[float], np.ndarray], volumes: Union[List[float], np.ndarray]
 ) -> np.ndarray:

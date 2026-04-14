@@ -7,12 +7,23 @@ from tkinter import ttk
 from typing import Any, Dict, List, Optional
 
 from ..theme import (
-    ACCENT_BLUE, BG_BASE, BG_PANEL, BG_HOVER, BG_BORDER,
-    FONT_BODY, FONT_LABEL, FONT_MONO_L, FONT_SMALL, FONT_TINY, FONT_TITLE,
-    GREEN, GREEN_DIM, RED, RED_DIM, TEXT_MUTED, TEXT_PRIMARY, TEXT_SECONDARY,
-    YELLOW, PAD, PAD_SM,
+    ACCENT_BLUE,
+    BG_HOVER,
+    BG_PANEL,
+    FONT_LABEL,
+    FONT_SMALL,
+    FONT_TINY,
+    GREEN,
+    GREEN_DIM,
+    PAD,
+    PAD_SM,
+    RED,
+    RED_DIM,
+    TEXT_MUTED,
+    TEXT_PRIMARY,
+    TEXT_SECONDARY,
+    YELLOW,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper widgets
@@ -219,7 +230,7 @@ class PatternListPanel(_Card):
         elif bearish > bullish:
             self._lbl_signal.config(text=f"↓ {bullish}B / {bearish}S", foreground=RED)
         else:
-            self._lbl_signal.config(text=f"→ Mixed", foreground=YELLOW)
+            self._lbl_signal.config(text="→ Mixed", foreground=YELLOW)
 
         for pat in patterns:
             self._add_pattern_row(pat)

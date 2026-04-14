@@ -179,7 +179,7 @@ class DataPreprocessor:
         # Triple EMA
         ema_12 = df["Close"].ewm(span=12).mean()
         ema_26 = df["Close"].ewm(span=26).mean()
-        features["tema"] = (3 * ema_12 - 3 * ema_12.ewm(span=12).mean() + 
+        features["tema"] = (3 * ema_12 - 3 * ema_12.ewm(span=12).mean() +
                            ema_12.ewm(span=12).mean().ewm(span=12).mean()).values
 
         # Kaufman Adaptive Moving Average (KAMA)
@@ -228,13 +228,13 @@ class DataPreprocessor:
         high_9 = df["High"].rolling(9).max()
         low_9 = df["Low"].rolling(9).min()
         features["tenkan_sen"] = ((high_9 + low_9) / 2).values
-        
+
         high_26 = df["High"].rolling(26).max()
         low_26 = df["Low"].rolling(26).min()
         features["kijun_sen"] = ((high_26 + low_26) / 2).values
-        
+
         features["senkou_span_a"] = ((features["tenkan_sen"] + features["kijun_sen"]) / 2).values
-        
+
         high_52 = df["High"].rolling(52).max()
         low_52 = df["Low"].rolling(52).min()
         features["senkou_span_b"] = ((high_52 + low_52) / 2).values
@@ -257,7 +257,7 @@ class DataPreprocessor:
             lags = range(2, max_lag)
             tau = [np.std(np.subtract(ts[lag:], ts[:-lag])) for lag in lags]
             return np.polyfit(np.log(lags), np.log(tau), 1)[0]
-        
+
         features["hurst"] = df["Close"].rolling(50).apply(lambda x: hurst_exponent(x.values) if len(x) >= 20 else np.nan).values
 
         # Market regime indicators
