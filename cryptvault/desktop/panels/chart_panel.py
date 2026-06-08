@@ -39,7 +39,22 @@ from ..theme import (
 logger = logging.getLogger(__name__)
 
 CHART_ROWS = [6, 2, 2]   # price, volume, rsi
-TOP_PATTERNS = 6         # strongest patterns surfaced on the chart
+TOP_PATTERNS = 5         # strongest candlestick markers surfaced on the chart
+MAX_SHAPES = 6           # geometric chart patterns drawn as shapes
+
+
+def _pivots(values: np.ndarray, order: int = 5):
+    """Return (high_idx, low_idx) swing pivots via a simple local-extrema scan."""
+    highs_idx: List[int] = []
+    lows_idx: List[int] = []
+    n = len(values)
+    for i in range(order, n - order):
+        window = values[i - order:i + order + 1]
+        if values[i] == window.max():
+            highs_idx.append(i)
+        if values[i] == window.min():
+            lows_idx.append(i)
+    return highs_idx, lows_idx
 
 
 def _human_volume(value: float, _pos=None) -> str:
@@ -271,33 +286,51 @@ class ChartPanel(ttk.Frame):
         self, x: np.ndarray, df: pd.DataFrame,
         closes: np.ndarray, highs: np.ndarray, lows: np.ndarray,
     ) -> None:
-        """Draw the strongest patterns as clean markers plus a compact legend.
+        """Draw accurate geometric overlays on the price chart.
 
-        Rendering every detected pattern produced an unreadable wall of
-        overlapping labels, so we surface only the top few by strength on the
-        chart; the full list lives in the analysis panel.
+        Three layers, drawn back to front:
+          1. Always-on swing structure — pivot dots + support/resistance trendlines.
+          2. Every detected chart pattern that carries geometry (Double Top/Bottom,
+             H&S, Triangles, Wedges) drawn as its real shape on the exact pivots.
+          3. The strongest candlestick patterns as markers, plus a compact legend.
         """
         n = len(x)
+
+        # ── Layer 1: swing structure (always visible) ──────────────────
+        self._draw_swing_structure(x, highs, lows, n)
 
         valid = [
             p for p in self._patterns
             if isinstance(p.get("index"), int) and 0 <= p["index"] < n
         ]
-        valid.sort(key=lambda p: float(p.get("strength", p.get("confidence", 0)) or 0), reverse=True)
-        top = valid[:TOP_PATTERNS]
+
+        def strength_of(p):
+            return float(p.get("strength", p.get("confidence", 0)) or 0)
+
+        geometric = sorted((p for p in valid if p.get("extra")), key=strength_of, reverse=True)[:MAX_SHAPES]
+        candles = sorted((p for p in valid if not p.get("extra")), key=strength_of, reverse=True)[:TOP_PATTERNS]
 
         legend_lines: List[tuple] = []
-        for pat in top:
+
+        # ── Layer 2: geometric chart patterns (the real drawings) ──────
+        for pat in geometric:
             idx = pat["index"]
             name = pat.get("name", "?")
             bullish = pat.get("bullish", True)
             color = GREEN if bullish else RED
-            strength = float(pat.get("strength", pat.get("confidence", 0)) or 0)
-            extra = pat.get("extra") or {}
+            self._draw_shape(x, closes, highs, lows, n, name, idx, bullish, color, pat["extra"])
+            target = pat.get("target")
+            if target:
+                self._ax_price.axhline(float(target), color=color, lw=0.8, linestyle=":",
+                                       alpha=0.5, zorder=4)
+            arrow = "◆"
+            legend_lines.append((f"{arrow} {name}  {strength_of(pat) * 100:.0f}%", color))
 
-            if extra:
-                self._draw_shape(x, closes, highs, lows, n, name, idx, bullish, color, extra)
-
+        # ── Layer 3: candlestick markers ───────────────────────────────
+        for pat in candles:
+            idx = pat["index"]
+            bullish = pat.get("bullish", True)
+            color = GREEN if bullish else RED
             marker = "^" if bullish else "v"
             y_pos = lows[idx] * 0.99 if bullish else highs[idx] * 1.01
             self._ax_price.scatter(
@@ -305,24 +338,54 @@ class ChartPanel(ttk.Frame):
                 zorder=6, alpha=0.95, edgecolors=CHART_BG, linewidths=0.6,
             )
             arrow = "▲" if bullish else "▼"
-            legend_lines.append((f"{arrow} {name}  {strength * 100:.0f}%", color))
+            legend_lines.append((f"{arrow} {pat.get('name', '?')}  {strength_of(pat) * 100:.0f}%", color))
 
         # Compact, non-overlapping legend in the upper-left of the price axis.
-        for i, (text, color) in enumerate(legend_lines):
+        for i, (text, color) in enumerate(legend_lines[:10]):
             self._ax_price.text(
-                0.012, 0.945 - i * 0.05, text,
+                0.012, 0.945 - i * 0.045, text,
                 transform=self._ax_price.transAxes,
-                color=color, fontsize=8, va="top", ha="left", zorder=7,
+                color=color, fontsize=8, va="top", ha="left", zorder=8,
                 fontfamily="monospace",
                 bbox=dict(boxstyle="round,pad=0.25", facecolor=BG_PANEL,
-                          edgecolor="none", alpha=0.65),
+                          edgecolor="none", alpha=0.7),
             )
+
+    def _draw_swing_structure(self, x, highs, lows, n: int) -> None:
+        """Mark swing pivots and draw fitted support/resistance trendlines."""
+        if n < 15:
+            return
+        order = max(3, n // 30)
+        ph, pl = _pivots(highs, order)
+        ql_lows = _pivots(lows, order)[1]
+
+        # Pivot dots — pinpoint the exact swing highs (resistance) and lows (support).
+        for i in ph:
+            self._ax_price.scatter(x[i], highs[i], s=14, color=RED, alpha=0.55, zorder=3)
+        for i in ql_lows:
+            self._ax_price.scatter(x[i], lows[i], s=14, color=GREEN, alpha=0.55, zorder=3)
+
+        # Resistance trendline through the most recent swing highs.
+        if len(ph) >= 2:
+            sel = ph[-3:] if len(ph) >= 3 else ph[-2:]
+            coef = np.polyfit(sel, [highs[i] for i in sel], 1)
+            xs = np.array([sel[0], n - 1])
+            self._ax_price.plot(xs, np.polyval(coef, xs), color=RED, lw=1.1,
+                                linestyle="--", alpha=0.55, zorder=3)
+
+        # Support trendline through the most recent swing lows.
+        if len(ql_lows) >= 2:
+            sel = ql_lows[-3:] if len(ql_lows) >= 3 else ql_lows[-2:]
+            coef = np.polyfit(sel, [lows[i] for i in sel], 1)
+            xs = np.array([sel[0], n - 1])
+            self._ax_price.plot(xs, np.polyval(coef, xs), color=GREEN, lw=1.1,
+                                linestyle="--", alpha=0.55, zorder=3)
 
     def _draw_shape(
         self, x, closes, highs, lows, n,
         name: str, idx: int, bullish: bool, color: str, extra: Dict[str, Any],
     ) -> None:
-        """Draw the geometric shape for a chart pattern using stored key points."""
+        """Draw the geometric shape for a chart pattern using its stored pivots."""
 
         def xi(i: int) -> int:
             return x[max(0, min(n - 1, i))]
@@ -330,61 +393,81 @@ class ChartPanel(ttk.Frame):
         def safe_close(i: int) -> float:
             return float(closes[max(0, min(n - 1, i))])
 
-        lw = 1.2
-        alpha = 0.65
+        lw = 2.0
+        alpha = 0.9
+
+        def dot(i: int, y: float) -> None:
+            self._ax_price.scatter(xi(i), y, s=45, color=color, zorder=7,
+                                   edgecolors=CHART_BG, linewidths=0.8)
+
+        def label(i: int, y: float, text: str, below: bool = False) -> None:
+            self._ax_price.annotate(
+                text, xy=(xi(i), y), xytext=(0, -14 if below else 9),
+                textcoords="offset points", ha="center",
+                fontsize=7, fontweight="bold", color=color, zorder=8,
+                bbox=dict(boxstyle="round,pad=0.2", facecolor=CHART_BG,
+                          edgecolor=color, alpha=0.8, linewidth=0.6),
+            )
 
         if name == "Double Top" and "p1" in extra and "p2" in extra:
             p1, p2 = int(extra["p1"]), int(extra["p2"])
-            neck = float(extra.get("neck", min(closes[p1:p2+1]) if p1 < p2 else safe_close(p1)))
-            # Line connecting two peaks
+            neck = float(extra.get("neck", safe_close(p1)))
             self._ax_price.plot([xi(p1), xi(p2)], [safe_close(p1), safe_close(p2)],
-                                color=color, lw=lw, alpha=alpha, zorder=4)
-            # Neckline horizontal
+                                color=color, lw=lw, alpha=alpha, zorder=6)
+            dot(p1, safe_close(p1))
+            dot(p2, safe_close(p2))
             self._ax_price.hlines(neck, xi(p1), xi(min(idx + 5, n - 1)),
-                                  color=color, lw=lw, linestyle="--", alpha=alpha, zorder=4)
+                                  color=color, lw=1.4, linestyle="--", alpha=alpha, zorder=5)
+            label(p2, safe_close(p2), "Double Top")
 
         elif name == "Double Bottom" and "t1" in extra and "t2" in extra:
             t1, t2 = int(extra["t1"]), int(extra["t2"])
-            neck = float(extra.get("neck", max(closes[t1:t2+1]) if t1 < t2 else safe_close(t1)))
+            neck = float(extra.get("neck", safe_close(t1)))
             self._ax_price.plot([xi(t1), xi(t2)], [safe_close(t1), safe_close(t2)],
-                                color=color, lw=lw, alpha=alpha, zorder=4)
+                                color=color, lw=lw, alpha=alpha, zorder=6)
+            dot(t1, safe_close(t1))
+            dot(t2, safe_close(t2))
             self._ax_price.hlines(neck, xi(t1), xi(min(idx + 5, n - 1)),
-                                  color=color, lw=lw, linestyle="--", alpha=alpha, zorder=4)
+                                  color=color, lw=1.4, linestyle="--", alpha=alpha, zorder=5)
+            label(t2, safe_close(t2), "Double Bottom", below=True)
 
         elif name in ("Head & Shoulders", "Inverse Head & Shoulders") and "ls" in extra:
-            ls   = int(extra["ls"])
-            head = int(extra["head"])
-            rs   = int(extra["rs"])
+            ls, head, rs = int(extra["ls"]), int(extra["head"]), int(extra["rs"])
             neck = extra.get("neckline")
-            # Connect left shoulder → head → right shoulder
             self._ax_price.plot(
                 [xi(ls), xi(head), xi(rs)],
                 [safe_close(ls), safe_close(head), safe_close(rs)],
-                color=color, lw=lw, alpha=alpha, zorder=4,
+                color=color, lw=lw, alpha=alpha, zorder=6,
             )
+            for p in (ls, head, rs):
+                dot(p, safe_close(p))
             if neck is not None:
                 self._ax_price.hlines(float(neck), xi(ls), xi(min(idx + 5, n - 1)),
-                                      color=color, lw=lw, linestyle="--", alpha=alpha, zorder=4)
+                                      color=color, lw=1.4, linestyle="--", alpha=alpha, zorder=5)
+            label(head, safe_close(head), name.replace(" & ", "&"))
 
         elif name in ("Triple Top", "Triple Bottom") and "p1" in extra:
             pts = [extra.get("p1"), extra.get("p2"), extra.get("p3")]
-            valid = [int(p) for p in pts if p is not None and 0 <= int(p) < n]
-            if len(valid) >= 2:
-                xs = [xi(p) for p in valid]
-                ys = [safe_close(p) for p in valid]
-                self._ax_price.plot(xs, ys, color=color, lw=lw, alpha=alpha, zorder=4)
+            sel = [int(p) for p in pts if p is not None and 0 <= int(p) < n]
+            if len(sel) >= 2:
+                self._ax_price.plot([xi(p) for p in sel], [safe_close(p) for p in sel],
+                                    color=color, lw=lw, alpha=alpha, zorder=6)
+                for p in sel:
+                    dot(p, safe_close(p))
+                label(sel[-1], safe_close(sel[-1]), name, below="Bottom" in name)
 
         elif name in ("Symmetrical Triangle", "Ascending Triangle", "Descending Triangle",
                       "Rising Wedge", "Falling Wedge") and "start" in extra:
             start = int(extra["start"])
-            h_s   = float(extra.get("high_start", safe_close(start)))
-            h_e   = float(extra.get("high_end",   safe_close(idx)))
-            l_s   = float(extra.get("low_start",  safe_close(start)))
-            l_e   = float(extra.get("low_end",    safe_close(idx)))
+            h_s = float(extra.get("high_start", safe_close(start)))
+            h_e = float(extra.get("high_end", safe_close(idx)))
+            l_s = float(extra.get("low_start", safe_close(start)))
+            l_e = float(extra.get("low_end", safe_close(idx)))
             self._ax_price.plot([xi(start), xi(idx)], [h_s, h_e],
-                                color=color, lw=lw, alpha=alpha, zorder=4)
+                                color=color, lw=lw, alpha=alpha, zorder=6)
             self._ax_price.plot([xi(start), xi(idx)], [l_s, l_e],
-                                color=color, lw=lw, alpha=alpha, zorder=4)
+                                color=color, lw=lw, alpha=alpha, zorder=6)
+            label(idx, max(h_e, l_e), name)
 
     def _draw_placeholder(self) -> None:
         for ax in [self._ax_price, self._ax_vol, self._ax_rsi]:
