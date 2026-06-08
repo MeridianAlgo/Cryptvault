@@ -4,7 +4,6 @@ Interactive candlestick chart panel with indicators and pattern overlays.
 
 import logging
 import tkinter as tk
-from collections import defaultdict
 from tkinter import ttk
 from typing import Any, Dict, List, Optional
 
@@ -15,6 +14,7 @@ import pandas as pd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
+from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from ..theme import (
     ACCENT_BLUE,
@@ -39,6 +39,16 @@ from ..theme import (
 logger = logging.getLogger(__name__)
 
 CHART_ROWS = [6, 2, 2]   # price, volume, rsi
+TOP_PATTERNS = 6         # strongest patterns surfaced on the chart
+
+
+def _human_volume(value: float, _pos=None) -> str:
+    """Format large volume tick values as 1.2K / 3.4M / 5.6B."""
+    for unit in ("", "K", "M", "B", "T"):
+        if abs(value) < 1000:
+            return f"{value:.0f}{unit}" if unit else f"{value:.0f}"
+        value /= 1000.0
+    return f"{value:.0f}P"
 
 
 class ChartPanel(ttk.Frame):
@@ -210,6 +220,8 @@ class ChartPanel(ttk.Frame):
             vol_colors = [VOLUME_UP if closes[i] >= opens[i] else VOLUME_DOWN for i in range(len(df))]
             self._ax_vol.bar(x, vols, color=vol_colors, width=0.7, edgecolor="none")
             self._ax_vol.set_ylabel("Vol", color=TEXT_MUTED, fontsize=7)
+            self._ax_vol.yaxis.set_major_formatter(FuncFormatter(_human_volume))
+            self._ax_vol.yaxis.set_major_locator(MaxNLocator(nbins=3))
 
         # ── RSI ───────────────────────────────────────────────────────
         if self._show_rsi and len(df) >= 14:
@@ -259,53 +271,51 @@ class ChartPanel(ttk.Frame):
         self, x: np.ndarray, df: pd.DataFrame,
         closes: np.ndarray, highs: np.ndarray, lows: np.ndarray,
     ) -> None:
-        """Draw pattern markers and actual geometric shapes on the price chart."""
+        """Draw the strongest patterns as clean markers plus a compact legend.
+
+        Rendering every detected pattern produced an unreadable wall of
+        overlapping labels, so we surface only the top few by strength on the
+        chart; the full list lives in the analysis panel.
+        """
         n = len(x)
-        label_positions: Dict[int, List[str]] = defaultdict(list)
 
-        for pat in self._patterns[:30]:
-            idx = pat.get("index", -1)
-            if not isinstance(idx, int) or not (0 <= idx < n):
-                continue
+        valid = [
+            p for p in self._patterns
+            if isinstance(p.get("index"), int) and 0 <= p["index"] < n
+        ]
+        valid.sort(key=lambda p: float(p.get("strength", p.get("confidence", 0)) or 0), reverse=True)
+        top = valid[:TOP_PATTERNS]
 
-            name     = pat.get("name", "?")
-            bullish  = pat.get("bullish", True)
-            color    = GREEN if bullish else RED
-            category = pat.get("category", "")
-            extra    = pat.get("extra", {})
-            target   = pat.get("target")
+        legend_lines: List[tuple] = []
+        for pat in top:
+            idx = pat["index"]
+            name = pat.get("name", "?")
+            bullish = pat.get("bullish", True)
+            color = GREEN if bullish else RED
+            strength = float(pat.get("strength", pat.get("confidence", 0)) or 0)
+            extra = pat.get("extra") or {}
 
-            # Draw actual shape for chart/reversal/continuation patterns
             if extra:
                 self._draw_shape(x, closes, highs, lows, n, name, idx, bullish, color, extra)
 
-            # Marker triangle at pattern bar
             marker = "^" if bullish else "v"
-            y_pos = lows[idx] * 0.997 if bullish else highs[idx] * 1.003
+            y_pos = lows[idx] * 0.99 if bullish else highs[idx] * 1.01
             self._ax_price.scatter(
-                x[idx], y_pos, color=color, marker=marker, s=60, zorder=5, alpha=0.9
+                x[idx], y_pos, color=color, marker=marker, s=70,
+                zorder=6, alpha=0.95, edgecolors=CHART_BG, linewidths=0.6,
             )
-            label_positions[idx].append(name[:12])
+            arrow = "▲" if bullish else "▼"
+            legend_lines.append((f"{arrow} {name}  {strength * 100:.0f}%", color))
 
-            # Dashed target price line for chart patterns
-            if target is not None and idx >= n - 40:
-                self._ax_price.axhline(
-                    target, color=color, linewidth=0.8, linestyle=":",
-                    alpha=0.45, label=f"Target {target:.0f}",
-                )
-
-        # Text labels (stacked per bar)
-        for idx, names in list(label_positions.items())[:15]:
-            label = "\n".join(names[:3])
-            y_off = -14 if label_positions[idx] else 8
-            self._ax_price.annotate(
-                label,
-                xy=(x[idx], lows[idx]),
-                xytext=(2, y_off),
-                textcoords="offset points",
-                fontsize=5,
-                color=TEXT_SECONDARY,
-                alpha=0.85,
+        # Compact, non-overlapping legend in the upper-left of the price axis.
+        for i, (text, color) in enumerate(legend_lines):
+            self._ax_price.text(
+                0.012, 0.945 - i * 0.05, text,
+                transform=self._ax_price.transAxes,
+                color=color, fontsize=8, va="top", ha="left", zorder=7,
+                fontfamily="monospace",
+                bbox=dict(boxstyle="round,pad=0.25", facecolor=BG_PANEL,
+                          edgecolor="none", alpha=0.65),
             )
 
     def _draw_shape(

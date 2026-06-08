@@ -9,6 +9,9 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Any, Dict, List, Optional
 
+import numpy as np
+
+from ..__version__ import __version__
 from .panels.analysis_panel import AnalysisPanel
 from .panels.chart_panel import ChartPanel
 from .theme import (
@@ -43,19 +46,12 @@ TIMEFRAMES = [
     ("2Y",  "730d", "1wk"),
 ]
 
-NAV_ITEMS = [
-    ("Chart",    "chart"),
-    ("Analysis", "analysis"),
-]
-
-
 class MainWindow:
     """CryptVault main application window."""
 
     def __init__(self):
         self._current_symbol = "BTC-USD"
         self._current_tf_idx = 2       # "1M" default
-        self._active_panel = "chart"
         self._analysis_result: Optional[Dict[str, Any]] = None
 
         self._root = tk.Tk()
@@ -101,7 +97,6 @@ class MainWindow:
         self._build_sidebar(content)
         self._build_main(content)
         self._build_statusbar()
-        self._show_panel("chart", force=True)
 
     def _build_topbar(self) -> None:
         bar = tk.Frame(self._root, bg=BG_DEEP, height=TOPBAR_HEIGHT)
@@ -111,7 +106,7 @@ class MainWindow:
         # Logo
         tk.Label(bar, text="CryptVault", bg=BG_DEEP, fg=ACCENT_BLUE,
                  font=("Segoe UI", 16, "bold")).pack(side="left", padx=20)
-        tk.Label(bar, text="v6.0", bg=BG_DEEP, fg=TEXT_MUTED,
+        tk.Label(bar, text=f"v{__version__}", bg=BG_DEEP, fg=TEXT_MUTED,
                  font=FONT_TINY).pack(side="left")
 
         # Symbol search
@@ -167,25 +162,8 @@ class MainWindow:
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
-        tk.Label(sidebar, text="NAVIGATE", bg=BG_DEEP, fg=TEXT_MUTED,
-                 font=FONT_TINY).pack(anchor="w", padx=14, pady=(16, 4))
-
-        self._nav_btns: Dict[str, tk.Button] = {}
-        for label, key in NAV_ITEMS:
-            btn = tk.Button(
-                sidebar, text=label, anchor="w",
-                bg=BG_DEEP, fg=TEXT_SECONDARY,
-                activebackground=BG_HOVER, activeforeground=TEXT_PRIMARY,
-                relief="flat", font=FONT_BODY, cursor="hand2", bd=0,
-                command=lambda k=key: self._show_panel(k),
-            )
-            btn.pack(fill="x", padx=8, pady=1, ipady=8, ipadx=10)
-            self._nav_btns[key] = btn
-
-        tk.Frame(sidebar, bg=BG_BORDER, height=1).pack(fill="x", padx=14, pady=12)
-
-        tk.Label(sidebar, text="LAST ANALYSIS", bg=BG_DEEP, fg=TEXT_MUTED,
-                 font=FONT_TINY).pack(anchor="w", padx=14, pady=(0, 4))
+        tk.Label(sidebar, text="OVERVIEW", bg=BG_DEEP, fg=TEXT_MUTED,
+                 font=FONT_TINY).pack(anchor="w", padx=14, pady=(16, 6))
 
         self._stat_labels: Dict[str, tk.Label] = {}
         for key in ("Symbol", "Price", "Change", "Patterns", "Signal"):
@@ -221,23 +199,8 @@ class MainWindow:
         self._status_lbl = tk.Label(bar, text="Ready", bg=BG_DEEP, fg=TEXT_MUTED, font=FONT_TINY)
         self._status_lbl.pack(side="left", padx=10)
 
-        tk.Label(bar, text="CryptVault v6.0  |  MeridianAlgo",
+        tk.Label(bar, text=f"CryptVault v{__version__}  |  MeridianAlgo",
                  bg=BG_DEEP, fg=TEXT_MUTED, font=FONT_TINY).pack(side="right", padx=10)
-
-    # ------------------------------------------------------------------
-    # Navigation
-    # ------------------------------------------------------------------
-
-    def _show_panel(self, key: str, force: bool = False) -> None:
-        if key == self._active_panel and not force:
-            return
-        self._active_panel = key
-
-        for k, btn in self._nav_btns.items():
-            btn.config(
-                bg=BG_PANEL if k == key else BG_DEEP,
-                fg=ACCENT_BLUE if k == key else TEXT_SECONDARY,
-            )
 
     # ------------------------------------------------------------------
     # Timeframe
@@ -310,32 +273,40 @@ class MainWindow:
             return []
 
     def _run_prediction(self, df) -> Optional[Dict[str, Any]]:
-        """Run ML prediction with momentum fallback."""
-        try:
-            from ..ml.production_predictor import ProductionPredictor
-            predictor = ProductionPredictor()
-            result = predictor.predict(df)
-            if result and isinstance(result, dict):
-                return result
-        except Exception as e:
-            logger.debug("Production predictor failed: %s", e)
+        """Short-horizon trend forecast from recent momentum and volatility.
 
-        # Momentum fallback
+        The trained ensemble used by the CLI requires a fully built
+        ``PriceDataFrame`` pipeline; here we surface a lightweight, honest
+        trend estimate so the panel always shows a meaningful signal.
+        """
         closes = df["close"].values
-        if len(closes) < 5:
+        if len(closes) < 10:
             return None
 
-        recent = closes[-5:]
+        recent = closes[-10:]
         momentum = (recent[-1] - recent[0]) / recent[0]
-        pred_price = closes[-1] * (1 + momentum * 0.3)
-        direction = "UP" if momentum > 0.001 else ("DOWN" if momentum < -0.001 else "NEUTRAL")
+        window = closes[-21:] if len(closes) >= 21 else recent
+        returns = np.diff(window) / window[:-1]
+        volatility = float(np.std(returns)) if len(returns) else 0.0
+
+        pred_price = float(closes[-1] * (1 + momentum * 0.3))
+        if momentum > 0.005:
+            direction = "UP"
+        elif momentum < -0.005:
+            direction = "DOWN"
+        else:
+            direction = "NEUTRAL"
+
+        # Stronger momentum relative to noise → higher confidence.
+        signal = abs(momentum) / (volatility + 1e-6)
+        confidence = float(max(0.4, min(0.9, 0.45 + signal * 0.05)))
 
         return {
             "predicted_price": pred_price,
             "direction": direction,
-            "confidence": min(0.95, abs(momentum) * 10 + 0.5),
+            "confidence": confidence,
             "horizon": TIMEFRAMES[self._current_tf_idx][0],
-            "model": "Momentum",
+            "model": "Trend",
         }
 
     def _on_analysis_done(self, symbol: str, df, patterns: List, prediction: Optional[Dict]) -> None:
