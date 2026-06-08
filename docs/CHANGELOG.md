@@ -5,6 +5,22 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0] - 2026-06-08
+
+### Fixed
+- **Broken `DataCache` import** — `cryptvault.config` module was shadowed by the `config/` package, making `get_config()` unreachable. Merged the legacy config into the package (`config/legacy.py`) and re-exported its API; caching now initializes correctly.
+- **`cryptvault.portfolio` import crash** — corrected `package_fetcher` import path (`data.models.package_fetcher`). Portfolio analysis works end-to-end again.
+- **`--live` referenced a non-existent module** — replaced the phantom `websocket_stream` import with a working interval-based polling analyzer.
+- **Default analysis failed** — the bare CLI default (`days=30`) was below the analyzer's 50-point minimum; bumped defaults to 100 so `python cryptvault_cli.py BTC` works out of the box.
+- **Version drift** — demo banner and `constants.py` hard-coded `4.0.0`; both now read from the single `__version__` source.
+- **Test suite** — `test_real_market_data.py` now handles yfinance's MultiIndex (2D) columns; full suite is green (18/18).
+
+### Removed
+- Deprecated `cryptvault/analyzer.py` shim, the `NotImplementedError` `patterns/detector.py` stub (and its dead public export), and a stray duplicate `docs/security` file.
+
+### Changed
+- Consolidated root docs into `docs/` (`CODE_OF_CONDUCT.md`); added `graphify-out/` and local tooling artifacts to `.gitignore`.
+
 ## [6.1.0] - 2026-04-13
 
 ### Added

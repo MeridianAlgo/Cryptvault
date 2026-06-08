@@ -281,8 +281,10 @@ def show_demo() -> None:
     try:
         analyzer = PatternAnalyzer()
 
+        from cryptvault.__version__ import __version__
+
         print("\n" + "=" * 70)
-        print("CryptVault v4.0.0 Demo")
+        print(f"CryptVault v{__version__} Demo")
         print("=" * 70)
 
         # Search functionality demo
@@ -503,24 +505,28 @@ def start_live_analysis(symbol: str, verbose: bool = False) -> None:
     Example:
         >>> start_live_analysis('BTC')
     """
+    import time
+
+    refresh_seconds = 60
+
     try:
         # Validate symbol
         analyzer = PatternAnalyzer()
         supported_tickers = analyzer.get_supported_tickers()
         symbol = validate_ticker(symbol, supported_tickers)
 
-        from cryptvault.data.websocket_stream import LiveAnalyzer
-
         print(format_info(f"Starting live analysis for {symbol}"))
-        print(format_info("Press Ctrl+C to stop"))
+        print(format_info(f"Refreshing every {refresh_seconds}s. Press Ctrl+C to stop."))
 
-        live_analyzer = LiveAnalyzer()
-        live_analyzer.start_live_analysis(symbol)
+        while True:
+            print("\n" + "=" * 70)
+            print(format_info(f"Live update for {symbol} ({time.strftime('%Y-%m-%d %H:%M:%S')})"))
+            print("=" * 70)
+            analyze_ticker(symbol, days=100, interval="1d", verbose=verbose, no_chart=True)
+            time.sleep(refresh_seconds)
 
     except ValidationError as e:
         print(format_error(str(e)))
-    except ImportError:
-        print(format_error("Live analysis requires websockets: pip install websockets"))
     except KeyboardInterrupt:
         print(format_info("\nLive analysis stopped"))
     except Exception as e:

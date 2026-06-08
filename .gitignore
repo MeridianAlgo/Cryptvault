@@ -9,6 +9,15 @@ temp_chart_data_*.json
 .cryptvault_cache/
 .cryptvault_predictions/
 
+# graphify knowledge-graph output
+graphify-out/
+
+# Local agent / editor tooling
+.claude/
+_importcheck.py
+_cache.py
+test_chart.png
+
 # C extensions
 *.so
 

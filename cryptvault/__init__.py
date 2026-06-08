@@ -17,7 +17,6 @@ from cryptvault.__version__ import (
 
 from .core.analyzer import PatternAnalyzer
 from .data.models import PriceDataFrame, PricePoint
-from .patterns.detector import PatternDetector
 
 # Optional dependency utilities
 from .utils.optional_deps import (
@@ -41,7 +40,6 @@ __all__ = [
     # Core classes
     "PricePoint",
     "PriceDataFrame",
-    "PatternDetector",
     "PatternAnalyzer",
     "TerminalChart",
     # Optional dependency utilities

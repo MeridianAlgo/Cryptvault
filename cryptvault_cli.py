@@ -132,7 +132,7 @@ def interactive_mode():
             elif cmd == "analyze":
                 if len(parts) >= 2:
                     ticker = parts[1]
-                    days = int(parts[2]) if len(parts) > 2 else 30
+                    days = int(parts[2]) if len(parts) > 2 else 100
                     interval = parts[3] if len(parts) > 3 else "1d"
                     analyze_ticker(ticker, days, interval)
                 else:
@@ -203,7 +203,7 @@ Aliases:
         "ticker", nargs="?", default="BTC", help="Cryptocurrency ticker symbol (default: BTC)"
     )
     parser.add_argument(
-        "days", nargs="?", type=int, default=30, help="Number of days of data (default: 30)"
+        "days", nargs="?", type=int, default=100, help="Number of days of data (default: 100)"
     )
     parser.add_argument(
         "interval", nargs="?", default="1d", help="Data interval: 1h, 4h, 1d (default: 1d)"

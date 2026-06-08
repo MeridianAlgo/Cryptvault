@@ -12,9 +12,11 @@ Example:
 
 from typing import Dict, List
 
+from cryptvault.__version__ import __version__, __version_info__
+
 # Version Information
-VERSION = "4.0.0"
-VERSION_INFO = (4, 0, 0)
+VERSION = __version__
+VERSION_INFO = __version_info__
 
 # Application Metadata
 APP_NAME = "CryptVault"

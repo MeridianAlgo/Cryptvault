@@ -5,7 +5,7 @@
 ### AI-powered cryptocurrency & stock analysis — desktop, CLI, and Python API.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-6.1.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
+[![Version](https://img.shields.io/badge/version-6.2.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml)
 [![Lint](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml)
@@ -35,15 +35,15 @@ CryptVault is a research-grade analysis platform for crypto and equities that co
 
 ---
 
-## ✨ Highlights (v6.1.0)
+## ✨ Highlights (v6.2.0)
 
 | Area | What's new |
 |---|---|
-| **CI/CD** | Ruff-first lint pipeline, zero-flake rules, faster parallel tests (`pytest -n auto`). |
-| **Code quality** | Fixed latent `F821` / `F402` bugs; project is now **ruff-clean**. |
-| **README & docs** | Scannable layout, badge row, pattern quick reference, one-page install. |
-| **Pattern rendering** | Double Top/Bottom, H&S, Triangles, Wedges drawn as lines/necklines on chart. |
-| **Desktop UX** | Analysis panel always visible; no stale tabs; cleaner indicator stack. |
+| **Reliability** | Fixed broken `DataCache` / `portfolio` imports and a phantom `--live` module — caching, portfolio, and live analysis all work again. |
+| **Out-of-the-box** | Sensible CLI defaults (`days=100`) so `python cryptvault_cli.py BTC` runs with no extra args. |
+| **Versioning** | Single source of truth for the version — no more drift between demo, constants, and package. |
+| **Cleanup** | Removed dead shims/stubs and stray duplicate docs; consolidated docs under `docs/`. |
+| **Tests** | yfinance MultiIndex handling fixed; full suite green (18/18), `cryptvault/` stays ruff-clean. |
 
 Full history: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -294,6 +294,7 @@ The project is **ruff-clean** as of v6.1.0 — CI blocks on ruff violations.
 | [Security](docs/SECURITY.md) | Disclosure policy |
 | [Changelog](docs/CHANGELOG.md) | Version history |
 | [Contributing](docs/CONTRIBUTING.md) | How to contribute |
+| [Code of Conduct](docs/CODE_OF_CONDUCT.md) | Community standards |
 
 ---
 
@@ -305,7 +306,7 @@ The project is **ruff-clean** as of v6.1.0 — CI blocks on ruff violations.
 4. `ruff check` must pass.
 5. Open a PR with a clear description.
 
-See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) and [`docs/CODE_OF_CONDUCT.md`](docs/CODE_OF_CONDUCT.md).
 
 ---
 
@@ -325,6 +326,6 @@ Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research
 
 <div align="center">
 
-**Version 6.1.0** · Last updated April 2026 · Built for researchers, by researchers.
+**Version 6.2.0** · Last updated June 2026 · Built for researchers, by researchers.
 
 </div>

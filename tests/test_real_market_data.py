@@ -4,14 +4,15 @@ Real Market Data Testing - Validate ML Models with Actual Cryptocurrency Prices
 Tests models against real historical data and ensures predictions are within 0.5% accuracy.
 """
 
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
 import logging
 import sys
 import time
-from typing import Dict, List, Tuple
 import warnings
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple
+
+import numpy as np
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -30,9 +31,9 @@ except ImportError:
 
 # Import models
 try:
+    from cryptvault.ml.features.technical_features import TechnicalFeatureExtractor
     from cryptvault.ml.models.ensemble_predictor import EnhancedEnsemblePredictor
     from cryptvault.ml.models.linear_models import LinearPredictor
-    from cryptvault.ml.features.technical_features import TechnicalFeatureExtractor
 
     MODELS_AVAILABLE = True
 except ImportError as e:
@@ -62,7 +63,9 @@ def fetch_crypto_data(symbol: str, days: int = 60) -> pd.DataFrame:
 
 def prepare_features(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Prepare features and targets from price data."""
-    close_prices = df["Close"].values
+    # yfinance may return columns as a MultiIndex (e.g. single-symbol downloads),
+    # which makes df["Close"].values 2D. Flatten to a 1D float array of closes.
+    close_prices = np.asarray(df["Close"].values, dtype=np.float64).ravel()
 
     # Calculate technical indicators as features
     features = []

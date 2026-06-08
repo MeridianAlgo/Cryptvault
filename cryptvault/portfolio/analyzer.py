@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from ..analyzer import PatternAnalyzer
+from ..core.analyzer import PatternAnalyzer
 from ..data.models import PriceDataFrame
-from ..data.package_fetcher import PackageDataFetcher
+from ..data.models.package_fetcher import PackageDataFetcher
 
 
 @dataclass
