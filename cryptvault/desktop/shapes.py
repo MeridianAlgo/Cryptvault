@@ -164,8 +164,27 @@ def group_key(pattern: Dict[str, Any]) -> str:
 
 
 def _money(v: float) -> str:
-    step = 2 if abs(v) >= 100 else (3 if abs(v) >= 1 else 6)
-    return f"{v:,.{step}f}"
+    """Decimals by magnitude, matching the chart's own price scale.
+
+    A sub-dollar coin printed to three places rounds the entire move away.
+    """
+    a = abs(v)
+    if a >= 100:
+        dp = 2
+    elif a >= 1:
+        dp = 4
+    elif a >= 0.01:
+        dp = 6
+    elif a >= 0.0001:
+        dp = 8
+    else:
+        dp = 10
+    s = f"{v:,.{dp}f}"
+    if dp > 2 and "." in s:
+        whole, frac = s.split(".")
+        frac = frac.rstrip("0").ljust(2, "0")   # trailing zeros are noise, ".5" is not a price
+        s = f"{whole}.{frac}"
+    return s
 
 
 # ─────────────────────────────────────────────────────────────────────────────

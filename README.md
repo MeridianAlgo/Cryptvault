@@ -5,7 +5,7 @@
 ### AI-powered cryptocurrency & stock analysis — desktop, CLI, and Python API.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-6.5.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
+[![Version](https://img.shields.io/badge/version-6.5.1-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml)
 [![Lint](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml)
@@ -375,6 +375,6 @@ Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research
 
 <div align="center">
 
-Version 6.5.0 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
+Version 6.5.1 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
 
 </div>

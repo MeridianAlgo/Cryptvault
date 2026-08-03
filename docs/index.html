@@ -3,10 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CryptVault — chart patterns, drawn properly</title>
-<meta name="description" content="CryptVault detects 50+ classical chart patterns and draws each one as real geometry on a trading-vue-js chart. Open source, MIT, Python.">
-<meta property="og:title" content="CryptVault — chart patterns, drawn properly">
-<meta property="og:description" content="50+ classical chart patterns, drawn as real geometry welded to the candles. Open source Python.">
+<title>CryptVault &mdash; every chart pattern, drawn and projected</title>
+<meta name="description" content="CryptVault detects 70+ classical chart patterns, draws every one as real geometry on live Hyperliquid candles, and projects where each one points. Open source, MIT, Python.">
+<meta property="og:title" content="CryptVault &mdash; every chart pattern, drawn and projected">
+<meta property="og:description" content="70+ chart patterns drawn as real geometry on live candles, each projected to its target. Open source Python.">
+<meta property="og:image" content="https://meridianalgo.github.io/Cryptvault/assets/desktop.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#e9ecf1">
+<link rel="canonical" href="https://meridianalgo.github.io/Cryptvault/">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,9 +174,15 @@
   footer{border-top:1px solid var(--ink);padding:38px 0 60px;font-size:14px;color:var(--ink-2)}
   footer .wrap{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline}
   footer .sp{margin-left:auto}
+  /* The disclaimer is a stamped notice on the drafting sheet, not a callout
+     card with a coloured tab down its side. */
   .warn{
-    border:1px solid var(--rule);border-left:3px solid var(--bear);
-    background:var(--plate);padding:14px 16px;font-size:14px;color:var(--ink-2);margin-top:26px
+    border:1px solid var(--bear);background:var(--plate);
+    padding:14px 16px;font-size:14px;color:var(--ink-2);margin-top:26px
+  }
+  .warn b{
+    display:block;font-family:var(--mono);font-size:10.5px;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--bear);margin-bottom:5px
   }
 
   /* ── draw-on animation ────────────────────────────────── */
@@ -194,7 +204,7 @@
 <header class="mast">
   <div class="wrap">
     <span class="mark">Crypt<b>Vault</b></span>
-    <span class="eyebrow">v6.4.0 &nbsp;/&nbsp; MIT</span>
+    <span class="eyebrow">v6.5.1 &nbsp;/&nbsp; MIT</span>
     <nav>
       <a href="#how">How it works</a>
       <a href="#patterns">Patterns</a>
@@ -209,11 +219,12 @@
 <section class="hero flush">
   <div class="wrap">
     <span class="eyebrow">Open-source technical analysis / Python</span>
-    <h1>Chart patterns, <em>drawn</em> — not just labelled.</h1>
+    <h1>Every pattern <em>drawn</em>. And where it points.</h1>
     <p class="lede">
       Most libraries tell you a Head &amp; Shoulders exists and hand you a bar index.
-      CryptVault computes the geometry — shoulders, armpits, the sloped neckline, the
-      projected target — and draws it onto the candles, where you can actually judge it.
+      CryptVault computes the geometry &mdash; shoulders, armpits, the sloped neckline &mdash;
+      draws it onto live candles, and carries it past the last bar to the measured target.
+      Nothing is listed that cannot be shown.
     </p>
     <div class="cta">
       <a class="btn" href="#install">Get started</a>
@@ -246,7 +257,7 @@
       <div class="step">
         <span class="n">Step 1</span>
         <h3>Fetch</h3>
-        <p>OHLCV for any Yahoo Finance symbol — crypto, equities, indices.</p>
+        <p>Live candles from the Hyperliquid venue, Yahoo for everything else.</p>
       </div>
       <div class="step">
         <span class="n">Step 2</span>
@@ -279,7 +290,7 @@
       <h2>Every family gets its own construction.</h2>
       <p>
         These figures are not illustrations. Each one is rendered from the output of
-        <code>cryptvault.desktop.shapes</code> — the same function the desktop chart calls.
+        <code>cryptvault.desktop.shapes</code> &mdash; the same function the desktop chart calls.
       </p>
     </div>
     <div class="gallery" id="gallery"></div>
@@ -311,9 +322,9 @@
         </table>
         <ul class="plain">
           <li><b>Grouped.</b> Every primitive is tagged <code>name@bar</code>, so two detections of the same pattern stay separate.</li>
-          <li><b>Selective.</b> The three strongest draw on load; clicking a pattern isolates it.</li>
-          <li><b>Resilient.</b> A malformed pivot payload is skipped, never raised — a bad pattern cannot blank the chart.</li>
-          <li><b>Forecast, in beta.</b> The same four primitives draw the projection past the last bar: a dashed path to the target inside a volatility envelope. A cone, not a calibrated interval — hence beta.</li>
+          <li><b>Stackable.</b> A few draw on load; click any pattern to add its diagram and scroll to it, click again to drop it.</li>
+          <li><b>Resilient.</b> A malformed pivot payload falls back to bracketing the candles, never raises &mdash; a bad pattern cannot blank the chart.</li>
+          <li><b>Projected.</b> The same four primitives carry a pattern past the last bar: its trigger level, the measured move, the target and the stop &mdash; dashed, always, so a hypothesis never looks like history.</li>
         </ul>
       </div>
       <div>
@@ -340,6 +351,50 @@
   </div>
 </section>
 
+<section id="live">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Live, and forward</span>
+      <h2>The last bar is the one still forming.</h2>
+      <p>
+        Candles come from the <a href="https://hyperliquid.xyz">Hyperliquid</a> public
+        endpoint &mdash; the venue the price is formed on, not a delayed vendor copy. The
+        chart polls the mid every few seconds and rescans for patterns in the background,
+        without moving the view out from under whatever you are reading.
+      </p>
+    </div>
+
+    <div class="split">
+      <div>
+        <ul class="plain">
+          <li><b>Pattern targets.</b> Any measured move draws its trigger level carried
+            past the last bar, the path to target, and the stop &mdash; placed as far ahead
+            as the pattern took to form.</li>
+          <li><b>Forming patterns.</b> Structures that have <em>not</em> completed are
+            detected separately and drawn with their missing pivots projected: a right
+            shoulder that has not printed, the second peak of a double top, or the apex a
+            triangle is converging on.</li>
+          <li><b>Both outcomes.</b> A pending apex has no direction yet, so both breakout
+            legs are drawn and measured. One arrow would be a claim the data cannot support.</li>
+        </ul>
+      </div>
+      <div>
+<pre><span class="c"># what a forming pattern carries</span>
+{
+  <span class="s">"name"</span>:   <span class="s">"Head &amp; Shoulders (forming)"</span>,
+  <span class="s">"have"</span>:   [[<span class="s">412</span>, <span class="s">63750.0</span>], [<span class="s">430</span>, <span class="s">62100.0</span>], [<span class="s">448</span>, <span class="s">65200.0</span>]],
+  <span class="s">"future"</span>: [[<span class="s">484</span>, <span class="s">63750.0</span>]],   <span class="c"># the shoulder still to come</span>
+  <span class="s">"level"</span>:  <span class="s">62100.0</span>,             <span class="c"># neckline</span>
+  <span class="s">"target"</span>: <span class="s">59000.0</span>
+}
+
+<span class="c"># `have` draws solid. `future` draws dashed.</span>
+<span class="c"># The viewer never has to guess which is which.</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="app">
   <div class="wrap">
     <div class="sec-head">
@@ -348,13 +403,14 @@
       <p>
         <code>python launch_desktop.py</code> starts an <code>http.server</code> on
         127.0.0.1 and opens a native window if <code>pywebview</code> is installed, your
-        browser otherwise. Charts render with
+        browser otherwise. A live market rail, one authoritative price readout, and a
+        pattern panel grouped by category. Charts render with
         <a href="https://github.com/tvjsx/trading-vue-js">trading-vue-js</a>; Vue and the
         chart bundle are pinned and cached on first launch, so the interface runs offline
         afterwards. No Electron, no npm.
       </p>
     </div>
-    <img class="shot" src="assets/desktop.png" alt="The CryptVault desktop terminal showing BTC-USD over six months with an Inverse Head and Shoulders, Triple Top and Double Bottom drawn on the candles." loading="lazy" width="1600" height="900">
+    <img class="shot" src="assets/desktop.png" alt="The CryptVault desktop terminal showing BTC-USD on hourly candles, with a forming Triple Bottom and its projected pivot drawn past the last bar." loading="lazy" width="1600" height="900">
   </div>
 </section>
 
@@ -369,6 +425,7 @@
           instead of a browser tab.
         </p>
         <div class="warn">
+          <b>Notice</b>
           Educational and research use only. CryptVault is not financial advice and must
           not be used for live trading decisions.
         </div>
@@ -384,8 +441,8 @@ python launch_desktop.py
 <span class="c"># or the command line</span>
 python cryptvault_cli.py BTC 90 1d</pre>
         <ul class="plain">
-          <li><b>Nine timeframes</b> from 1-minute bars to weekly, intraday included.</li>
-          <li><b>50+ patterns</b> across reversal, continuation, candlestick, harmonic and divergence families.</li>
+          <li><b>Seven timeframes</b> from 1-minute bars to weekly, every label a bar interval.</li>
+          <li><b>70+ patterns</b> across forming, reversal, continuation, candlestick, harmonic and divergence families.</li>
           <li><b>ML ensemble</b> at 1.6&ndash;2.4% MAPE on major pairs, weighted by rolling out-of-fold validation.</li>
           <li><b>Python API and CLI</b> for portfolio analysis, comparison and batch runs.</li>
         </ul>
@@ -462,7 +519,7 @@ python cryptvault_cli.py BTC 90 1d</pre>
     defs.appendChild(cp);
     svg.appendChild(defs);
 
-    // baseline rules — drafting reference, not decoration
+    // baseline rules: drafting reference, not decoration
     var rules = el('g', { stroke: '#d9e0e9', 'stroke-width': 1 });
     [0.25, 0.5, 0.75].forEach(function (f) {
       rules.appendChild(el('line', { x1: pad.l, x2: w - pad.r,

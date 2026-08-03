@@ -5,6 +5,18 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.1] - 2026-08-03
+
+### Fixed
+- **The price scale stayed locked to the previous coin.** Dragging the price scale sets `auto: false` on the grid's y transform, and that transform outlived the data — so loading SOL, dragging once, then switching to BTC left the chart pinned to a 70-dollar band with the candles 60,000 above the top of the pane. The only way back was to zoom out by hand across three orders of magnitude. A symbol or timeframe change now calls `resetChart()` so the scale auto-fits the new market.
+- **Vertical zoom appeared stuck on cheap coins.** Same root cause: once the transform was locked to an absolute price band, no amount of zooming showed the decimal increments on a sub-dollar coin. With the scale back on auto, the pane fits the visible candles and the axis resolves to eight decimal places where the price needs them.
+- **`Reset view` was disabled unless a pattern was selected**, which made it useless for the one job the user needed it for — undoing a bad manual zoom. It is now enabled whenever there is a chart, and it puts the price scale back on auto.
+- **The market rail turned permanently red.** The per-tick colour hint was applied on every poll and never cleared, so within a minute every row was tinted and red stopped meaning "the price fell" — it just meant "this moved at some point". The tint now fades after 600 ms, like the main price readout.
+- **Prices lost significant digits.** Formatting used three decimals below $1, which rounds the entire move away on a coin trading at 0.070382. Both formatters now scale decimals with magnitude to match the chart's own price scale, and trim trailing zeros without dropping below two places.
+
+### Changed
+- A bare ticker resolves to a quoted pair: typing `btc` leaves `BTC-USD` in the field and the header, so the symbol on screen always says what the price is denominated in. The payload carries `display` for the label and `coin` for identity, so the market rail keeps its highlight either way.
+
 ## [6.5.0] - 2026-08-03
 
 ### Fixed

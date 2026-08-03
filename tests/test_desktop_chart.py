@@ -238,6 +238,38 @@ def test_symbol_mapping_is_forgiving():
         hyperliquid._universe, hyperliquid._universe_at = [], 0.0
 
 
+def test_bare_ticker_resolves_to_a_quoted_pair(frame, monkeypatch):
+    """`BTC` alone does not say what it is priced in; the UI echoes the pair back."""
+    from cryptvault.desktop import api
+
+    frame.attrs["source"] = "Hyperliquid"
+    frame.attrs["coin"] = "BTC"
+    monkeypatch.setattr(api, "fetch", lambda symbol, timeframe: frame)
+
+    payload = api.analyze("btc", "1H")
+    assert payload["display"] == "BTC-USD"
+    assert payload["coin"] == "BTC"          # the rail matches on this, not the display
+
+    # Feeding the display form straight back must resolve to the same book.
+    assert api.analyze("BTC-USD", "1H")["display"] == "BTC-USD"
+
+    # A Yahoo symbol has no Hyperliquid coin, so it is left exactly as typed.
+    del frame.attrs["coin"]
+    frame.attrs["source"] = "Yahoo"
+    plain = api.analyze("AAPL", "1H")
+    assert plain["display"] == "AAPL" and plain["coin"] is None
+
+
+def test_money_keeps_enough_decimals_for_cheap_coins():
+    """Three decimals on a sub-dollar coin rounds the entire move away."""
+    assert shapes._money(63901.5) == "63,901.50"
+    assert shapes._money(74.0295) == "74.0295"
+    assert shapes._money(0.070382) == "0.070382"
+    assert shapes._money(0.00008412) == "0.00008412"
+    # A label must never collapse two distinct prices into the same string.
+    assert shapes._money(0.070382) != shapes._money(0.070399)
+
+
 def test_payload_matches_trading_vue_schema(frame, monkeypatch):
     from cryptvault.desktop import api
 
@@ -262,7 +294,7 @@ def test_payload_matches_trading_vue_schema(frame, monkeypatch):
 
     overlay = next(o for o in payload["onchart"] if o["name"] == "Patterns")
     assert overlay["settings"]["shapes"]
-    assert overlay["settings"]["only"] is None      # the UI mutates these
+    assert overlay["settings"]["only"] == []        # the UI mutates these
     assert overlay["settings"]["all"] is False
     assert len(overlay["settings"]["defaults"]) <= shapes.SHOWN_BY_DEFAULT
 

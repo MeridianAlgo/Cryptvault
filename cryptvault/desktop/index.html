@@ -291,7 +291,7 @@
         <div class="delta num" :class="stats.change >= 0 ? 'up' : 'down'">
           {{ stats.change >= 0 ? '+' : '' }}{{ stats.change.toFixed(2) }}%
         </div>
-        <div class="meta">{{ result.symbol }} · {{ timeframe }} · {{ result.source }}</div>
+        <div class="meta">{{ result.display || result.symbol }} · {{ timeframe }} · {{ result.source }}</div>
       </div>
     </div>
 
@@ -316,7 +316,7 @@
     <nav class="rail" aria-label="Markets">
       <div class="rail-h">Markets</div>
       <button class="mkt" v-for="m in markets" :key="m.symbol"
-              :class="{on: result && m.symbol === result.symbol}" @click="pick(m.symbol)">
+              :class="{on: result && m.symbol === result.coin}" @click="pick(m.symbol)">
         <span class="s">{{ m.symbol }}</span>
         <span class="p num" :class="m.lift">{{ money(m.price) }}</span>
       </button>
@@ -379,14 +379,18 @@
         <button :class="{on: showAll}" @click="toggleAll" :aria-pressed="String(showAll)">
           {{ showAll ? 'Drawing all' : 'Draw all' }}
         </button>
-        <button @click="clearSel" :disabled="!only && !showAll">Reset view</button>
+        <!-- Enabled whenever there is a chart: it also puts the price scale back
+             on auto, which is the only way out of a bad manual zoom. -->
+        <button @click="clearSel" :disabled="!result">
+          Reset view<template v-if="sel.length"> ({{ sel.length }})</template>
+        </button>
       </div>
 
       <div class="list">
         <template v-for="g in grouped">
           <div class="group" :key="g.name">{{ g.name }} · {{ g.rows.length }}</div>
           <button class="pat" v-for="p in g.rows" :key="p.group"
-                  :class="{on: only === p.group}" @click="focus(p)"
+                  :class="{on: sel.indexOf(p.group) >= 0}" @click="focus(p)"
                   :title="p.description">
             <span class="top">
               <span class="dir" :style="{background: p.bullish ? c.up : c.down}"></span>
@@ -415,7 +419,7 @@
       </div>
 
       <div class="foot">
-        <span>Click a pattern to isolate it</span>
+        <span>{{ sel.length ? sel.length + ' drawn · click to drop' : 'Click patterns to layer them' }}</span>
         <b v-if="result">{{ result.source }}</b>
       </div>
     </aside>
@@ -453,8 +457,9 @@
         var layout = this.$props.layout;
         var st = this.$props.settings || {};
         var list = st.shapes || [];
-        // `null` means draw everything; otherwise only these groups.
-        var visible = st.only ? [st.only] : (st.all ? null : (st.defaults || []));
+        // `null` means draw everything; otherwise just these groups.
+        var picked = st.only && st.only.length ? st.only : null;
+        var visible = picked || (st.all ? null : (st.defaults || []));
         var X = function (t) { return layout.t2screen(t); };
         var Y = function (p) { return layout.$2screen(p); };
 
@@ -477,7 +482,7 @@
         }
         // With every group drawn at once the labels alone would be a wall of
         // text, so they are dropped and the diagrams speak for themselves.
-        if (!st.all || st.only) {
+        if (!st.all || picked) {
           for (var j = 0; j < labels.length; j++) this.label(ctx, labels[j], X, Y);
         }
 
@@ -605,7 +610,7 @@
       markets: [],
       overlays: [CVShapes],
       result: null,
-      only: null,
+      sel: [],
       showAll: false,
       q: '',
       forecast: true,
@@ -680,6 +685,8 @@
     },
     beforeDestroy: function () {
       (this.timers || []).forEach(clearInterval);
+      clearTimeout(this._liftT);
+      clearTimeout(this._railT);
     },
     methods: {
       resize: function () {
@@ -688,10 +695,16 @@
         this.w = el.clientWidth;
         this.h = el.clientHeight;
       },
+      // Decimals track magnitude the way the chart's own price scale does, so a
+      // panel figure and an axis label never disagree. Three decimals on a
+      // sub-dollar coin rounds the whole move away.
       money: function (v) {
         if (v == null || !isFinite(v)) return '—';
-        var dp = Math.abs(v) >= 100 ? 2 : Math.abs(v) >= 1 ? 3 : 6;
-        return v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+        var a = Math.abs(v);
+        var dp = a >= 100 ? 2 : a >= 1 ? 4 : a >= 0.01 ? 6 : a >= 0.0001 ? 8 : 10;
+        // Floor of 2 so a price never renders as "0.5"; ceiling by magnitude so
+        // it never renders as "0.070000" either.
+        return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: dp });
       },
       when: function (t) {
         if (!t) return '';
@@ -759,7 +772,17 @@
                 symbol: m.symbol, price: p, lift: p > m.price ? 'lift-up' : 'lift-down'
               });
             });
+            // The tint marks *this* tick. Left on, every row ends up coloured
+            // and red stops meaning the price fell — it just means it moved.
+            clearTimeout(self._railT);
+            self._railT = setTimeout(self.fadeRail, 600);
           }).catch(function () {});
+      },
+      fadeRail: function () {
+        var self = this;
+        this.markets.forEach(function (m, i) {
+          if (m.lift) self.$set(self.markets, i, { symbol: m.symbol, price: m.price, lift: '' });
+        });
       },
       refresh: function () {
         if (this.live && this.result && !this.busy) this.analyze(true);
@@ -780,56 +803,101 @@
       // the moment the selection is cleared.
       syncForecast: function () {
         var ov = this.overlay('Forecast (beta)');
-        if (ov) ov.settings.display = this.forecast && !this.only;  // deep-watched
+        if (ov) ov.settings.display = this.forecast && !this.sel.length;  // deep-watched
       },
       toggleAll: function () {
         this.showAll = !this.showAll;
-        this.only = null;
+        this.sel = [];
         var ov = this.shapesOverlay();
-        if (ov) { ov.settings.all = this.showAll; ov.settings.only = null; }
+        if (ov) { ov.settings.all = this.showAll; ov.settings.only = []; }
         this.syncForecast();
         if (this.showAll) this.fitRange();
       },
       clearSel: function () {
-        this.only = null;
+        this.sel = [];
         this.showAll = false;
         var ov = this.shapesOverlay();
-        if (ov) { ov.settings.only = null; ov.settings.all = false; }
+        if (ov) { ov.settings.only = []; ov.settings.all = false; }
         this.syncForecast();
+        this.rescale();
+      },
+      // Dragging the price scale sets `auto: false` on the grid's y transform,
+      // and that transform outlives the data. Load SOL, drag once, switch to
+      // BTC, and the chart stays pinned to a 70-dollar band with the candles
+      // 60,000 above the top of the pane — you have to zoom out by hand to find
+      // them. resetChart() drops the transform so the scale auto-fits the new
+      // symbol, which is also what unsticks vertical zoom on sub-dollar coins.
+      rescale: function () {
+        var tv = this.$refs.tv;
+        if (tv && tv.resetChart) {
+          try { tv.resetChart(); } catch (e) {}
+        }
         this.fitRange();
       },
-      // Isolating a pattern is only half the job: a Double Top from 300 bars
+      // Selecting a pattern is only half the job: a Double Top from 300 bars
       // back is still off-screen. Scroll to it too, or "show me this pattern"
       // quietly does nothing.
+      //
+      // Clicking accumulates. Comparing two setups against each other is the
+      // reason to look at a list of sixty, and forcing one-at-a-time made that
+      // impossible. Click a selected row again to drop it.
       focus: function (p) {
         var ov = this.shapesOverlay();
         if (!ov) return;
-        if (this.only === p.group) return this.clearSel();
-        this.only = p.group;
+        var i = this.sel.indexOf(p.group);
+        if (i >= 0) this.sel.splice(i, 1);
+        else this.sel.push(p.group);
         this.showAll = false;
-        ov.settings.only = p.group;
+        ov.settings.only = this.sel.slice();
         ov.settings.all = false;
         this.syncForecast();
-        this.scrollTo(p);
+        if (this.sel.length) this.scrollTo();
+        else this.fitRange();
       },
       barStep: function () {
         var d = this.result.chart.data;
         if (!d || d.length < 2) return 3600000;
         return (d[d.length - 1][0] - d[0][0]) / (d.length - 1);
       },
-      scrollTo: function (p) {
+      // Time span the selected geometry actually occupies, projections included.
+      extent: function () {
+        var ov = this.shapesOverlay();
+        if (!ov) return null;
+        var sel = this.sel, lo = Infinity, hi = -Infinity;
+        ov.settings.shapes.forEach(function (s) {
+          if (sel.indexOf(s.g) < 0) return;
+          (s.pts || [s.pt]).forEach(function (pt) {
+            if (pt[0] < lo) lo = pt[0];
+            if (pt[0] > hi) hi = pt[0];
+          });
+        });
+        return isFinite(lo) ? [lo, hi] : null;
+      },
+      scrollTo: function () {
         var self = this;
         setTimeout(function () {
           if (!self.$refs.tv || !self.result) return;
-          var d = self.result.chart.data;
+          var ext = self.extent();
+          if (!ext) return;
           var step = self.barStep();
+          // Frame the drawing itself. Padding a fixed number of bars either side
+          // used to run far past the last candle, leaving half the plot empty
+          // and the candles squeezed into the corner.
+          var pad = Math.max(step * 6, (ext[1] - ext[0]) * 0.12);
+          var a = ext[0] - pad, b = ext[1] + pad;
+          var min = step * 30;                 // a two-bar pattern still needs context
+          if (b - a < min) {
+            var mid = (a + b) / 2;
+            a = mid - min / 2;
+            b = mid + min / 2;
+          }
+          // A measured move can be projected eighty bars out. Framing it tightly
+          // would hand half the plot to empty future and squeeze the candles
+          // into the corner, so reach further back instead of cropping it.
+          var d = self.result.chart.data;
           var last = d[d.length - 1][0];
-          var a = p.at - step * 70;
-          // A projection lives past the last bar, so the window has to reach
-          // into the future or the whole point of it is cropped away.
-          var b = (p.projected || p.target) ? Math.max(self.result.draw_end, last) + step * 4
-                                            : p.at + step * 70;
-          if (b - a < step * 60) b = a + step * 60;
+          var future = Math.max(0, b - last);
+          if (future > 0 && last - a < future * 1.6) a = last - future * 1.6;
           try { self.$refs.tv.setRange(a, b); } catch (e) {}
         }, 60);
       },
@@ -868,7 +936,7 @@
         this.busy = true;
         if (!quiet) this.error = '';
 
-        var keep = quiet ? { only: this.only, all: this.showAll } : null;
+        var keep = quiet ? { sel: this.sel.slice(), all: this.showAll } : null;
 
         fetch('/api/analyze?symbol=' + encodeURIComponent(sym) + '&tf=' + this.timeframe)
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
@@ -877,24 +945,31 @@
             self.error = '';
             self.livePrice = null;
             self.result = res.j;
+            // Echo back the resolved pair, so typing `btc` leaves BTC-USD in the
+            // box and the field always shows what is actually on screen.
+            if (res.j.display) self.symbol = res.j.display;
 
             // A background refresh must not yank the view out from under
             // someone who is reading one pattern.
             var ov = self.shapesOverlay();
             if (keep && ov) {
-              var stillThere = ov.settings.groups.indexOf(keep.only) >= 0;
-              self.only = stillThere ? keep.only : null;
+              // A rescan renumbers groups; keep only the ones that survived.
+              self.sel = keep.sel.filter(function (g) {
+                return ov.settings.groups.indexOf(g) >= 0;
+              });
               self.showAll = keep.all;
-              ov.settings.only = self.only;
+              ov.settings.only = self.sel.slice();
               ov.settings.all = keep.all;
             } else {
-              self.only = null;
+              self.sel = [];
               self.showAll = false;
             }
             self.syncForecast();
             self.$nextTick(function () {
               self.resize();
-              if (!quiet) self.fitRange();
+              // A background refresh keeps the view; a new symbol or timeframe
+              // gets a clean scale.
+              if (!quiet) self.rescale();
             });
           })
           .catch(function (e) { if (!quiet) { self.error = e.message; self.result = null; } })

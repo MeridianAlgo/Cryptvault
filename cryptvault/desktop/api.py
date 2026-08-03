@@ -256,9 +256,9 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
     geometry = shapes.build(df, patterns)
     onchart.append({
         "name": "Patterns", "type": "CVShapes", "data": [],
-        # `only` is mutated by the UI to isolate a single pattern; it must exist
-        # up front so Vue tracks it.
-        "settings": {**geometry, "only": None, "all": False, "z-index": 1, "legend": False},
+        # `only` is the list of groups the UI has selected; it must exist up
+        # front so Vue tracks it.
+        "settings": {**geometry, "only": [], "all": False, "z-index": 1, "legend": False},
     })
 
     # Horizon is a bar count, not the bar interval — say so in the panel.
@@ -270,7 +270,7 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
     onchart.append({
         "name": "Forecast (beta)", "type": "CVShapes", "data": [],
         "settings": {"shapes": projection["shapes"], "defaults": [], "groups": [],
-                     "only": None, "all": True, "display": True,
+                     "only": [], "all": True, "display": True,
                      "z-index": 2, "legend": False},
     })
 
@@ -302,8 +302,15 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
     forming = [p for p in patterns if p["projected"]]
     end = max(t for t in (geometry["end"], projection["end"], times[-1]) if t)
 
+    # Hyperliquid names its books by the base asset alone, but "BTC" alone does
+    # not say what it is priced in. These are all USD-quoted, so say so.
+    coin = df.attrs.get("coin")
+    display = f"{coin}-USD" if coin else symbol
+
     return {
         "symbol": symbol,
+        "display": display,
+        "coin": coin,
         "timeframe": timeframe,
         "source": df.attrs.get("source", "Yahoo"),
         "live": df.attrs.get("source") == "Hyperliquid",
