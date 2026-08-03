@@ -14,6 +14,11 @@ Primitive kinds:
     dot   {"k":"dot",  "pt":[t,p], "c":color, "r":radius}
     text  {"k":"text", "pt":[t,p], "s":string, "c":color, "up":bool}
     mark  {"k":"mark", "pt":[t,p], "c":color, "up":bool}
+
+Every primitive carries a group tag ``g`` — the pattern it belongs to, or ``""``
+for the always-on swing structure. The chart draws a handful of groups by
+default and isolates one when you click it in the sidebar; drawing all of them
+at once is unreadable spaghetti.
 """
 
 from __future__ import annotations
@@ -27,7 +32,8 @@ GREEN = "#26a69a"
 RED = "#ef5350"
 NEUTRAL = "#8b95a7"
 SNAP = 2          # bars either side to snap a pivot onto the real high/low
-MAX_SHAPED = 6    # geometric patterns drawn as diagrams
+MAX_SHAPED = 8    # geometric patterns with geometry sent to the chart
+SHOWN_BY_DEFAULT = 3   # ... of which this many are drawn until one is selected
 MAX_MARKERS = 8   # candlestick patterns drawn as markers
 DASH = [6, 4]
 DOT_DASH = [2, 4]
@@ -111,6 +117,12 @@ def _mark(pt, color, up=True) -> Dict[str, Any]:
 
 def _line_at(f: _Frame, price: float, i_from: int, i_to: int, color: str, dash=DASH):
     return _poly([[f.time(i_from), price], [f.time(i_to), price]], color, 1.4, dash)
+
+
+def group_key(pattern: Dict[str, Any]) -> str:
+    """Unique id for one detected instance — the name alone collides when the
+    same pattern is found twice at different pivots."""
+    return f"{pattern.get('name', '?')}@{int(pattern.get('index', -1))}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -316,10 +328,14 @@ def swing_structure(f: _Frame, order: Optional[int] = None) -> List[Dict]:
     return out
 
 
-def build(df, patterns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Return the full shape list for a dataframe + detected patterns."""
+def build(df, patterns: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return ``{"shapes": [...], "groups": [...], "defaults": [...]}``.
+
+    ``groups`` lists every pattern that produced geometry, ``defaults`` the few
+    drawn before the user picks one.
+    """
     if df is None or df.empty:
-        return []
+        return {"shapes": [], "groups": [], "defaults": []}
 
     times = [int(ts.value // 1_000_000) for ts in df.index]
     col = lambda name: df[name].values if name in df.columns else df["close"].values  # noqa: E731
@@ -333,37 +349,55 @@ def build(df, patterns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     shaped = sorted((p for p in valid if p.get("extra")), key=strength, reverse=True)[:MAX_SHAPED]
     markers = sorted((p for p in valid if not p.get("extra")), key=strength, reverse=True)[:MAX_MARKERS]
 
+    groups: List[str] = []
     for p in shaped:
         name, idx = p.get("name", "?"), int(p["index"])
         color = GREEN if p.get("bullish", True) else RED
         extra = p["extra"]
         try:
             if name in _DIAGRAMS:
-                shapes += _DIAGRAMS[name](f, extra, idx, color, name)
+                drawn = _DIAGRAMS[name](f, extra, idx, color, name)
             elif name in _CHANNELS:
-                shapes += _channel(f, extra, idx, color, name)
+                drawn = _channel(f, extra, idx, color, name)
             elif "xabcd" in extra:
-                shapes += _harmonic(f, extra, color, name)
+                drawn = _harmonic(f, extra, color, name)
             elif "div" in extra:
-                shapes += _divergence(f, extra, color, name)
+                drawn = _divergence(f, extra, color, name)
+            else:
+                continue
         except (KeyError, ValueError, IndexError, TypeError):
             continue    # a malformed pivot payload must never blank the chart
 
+        if not drawn:
+            continue
+
         target = p.get("target")
         if target and math.isfinite(float(target)):
-            shapes.append(_poly(
+            drawn.append(_poly(
                 [[f.time(idx), float(target)], [f.time(f.n - 1), float(target)]],
                 color, 1.0, DOT_DASH,
             ))
+
+        key = group_key(p)
+        for s in drawn:
+            s["g"] = key
+        shapes += drawn
+        if key not in groups:
+            groups.append(key)
 
     for p in markers:
         idx = int(p["index"])
         bull = p.get("bullish", True)
         color = GREEN if bull else RED
         y = float(f.l[idx]) * 0.995 if bull else float(f.h[idx]) * 1.005
-        shapes.append(_mark([f.t[idx], y], color, up=bull))
+        mark = _mark([f.t[idx], y], color, up=bull)
+        mark["g"] = ""
+        shapes.append(mark)
 
-    return shapes
+    for s in shapes:
+        s.setdefault("g", "")
+
+    return {"shapes": shapes, "groups": groups, "defaults": groups[:SHOWN_BY_DEFAULT]}
 
 
 def demo() -> None:
@@ -395,13 +429,17 @@ def demo() -> None:
         {"name": "Hammer", "index": 100, "bullish": True, "strength": 0.6},
     ]
 
-    shapes = build(df, pats)
+    out = build(df, pats)
+    shapes, groups = out["shapes"], out["groups"]
     assert shapes, "no shapes produced"
+    assert len(groups) >= 4, f"expected a group per drawn pattern, got {groups}"
+    assert out["defaults"] == groups[:SHOWN_BY_DEFAULT], "defaults must be the strongest groups"
 
     t_min, t_max = min(int(t.value // 1_000_000) for t in idx), max(int(t.value // 1_000_000) for t in idx)
     kinds = set()
     for s in shapes:
         kinds.add(s["k"])
+        assert s["g"] == "" or s["g"] in groups, f"primitive tagged with unknown group: {s}"
         pts = s.get("pts") or ([s["pt"]] if "pt" in s else [])
         assert pts, f"primitive with no points: {s}"
         for t, price in pts:
@@ -415,7 +453,7 @@ def demo() -> None:
     peak = f.peak(60)
     assert peak[1] == float(df["high"].values[f.snap_high(60)]), "pivot not snapped to swing high"
 
-    print(f"OK — {len(shapes)} primitives, kinds={sorted(kinds)}")
+    print(f"OK — {len(shapes)} primitives, kinds={sorted(kinds)}, groups={groups}")
 
 
 if __name__ == "__main__":

@@ -80,18 +80,7 @@ python launch_desktop.py          # add `pip install pywebview` for a native win
 A dark trading terminal rendered by **[trading-vue-js](https://github.com/tvjsx/trading-vue-js)**.
 Python computes; the chart engine draws.
 
-```
-┌───────────────────────────────────────────────────────────────────────┐
-│ CryptVault  [BTC-USD] [Analyze]  BTC ETH SOL …    1D 5D 1M 3M 6M 1Y   │
-├──────────────────────────────────────────────┬────────────────────────┤
-│                                              │  Overview              │
-│   Candles + Bollinger channel                │   price · change       │
-│   Pattern diagrams (CVShapes overlay)        │   range · bars         │
-│   Volume                                     │   signal               │
-│   ───────────────────────────────────────    │  Forecast              │
-│   RSI 14                                     │  Patterns (ranked)     │
-└──────────────────────────────────────────────┴────────────────────────┘
-```
+![CryptVault desktop terminal](docs/assets/desktop.png)
 
 Pan, zoom, crosshair, log scale and pane splitters come from the chart engine.
 A local `http.server` on `127.0.0.1` serves the page and the analysis JSON —
@@ -102,6 +91,9 @@ no Electron, no build step, no npm.
 Every diagram lives in `[timestamp, price]` space, so it stays welded to the
 candles through any pan or zoom — and pivots snap to the real swing high/low so
 lines touch the wicks, not the closes.
+
+The three strongest diagrams are drawn by default; **click any pattern in the
+sidebar to isolate it** on the chart.
 
 | Pattern | Rendered as |
 |---|---|

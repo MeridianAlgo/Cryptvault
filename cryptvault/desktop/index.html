@@ -87,7 +87,11 @@
     display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px;
     border-left:2px solid transparent; margin-bottom:3px; background:var(--bg);
   }
-  .pat:hover{background:var(--hover)}
+  .pat.drawable{cursor:pointer}
+  .pat.drawable:hover{background:var(--hover)}
+  .pat.live .cat{color:var(--blue)}
+  .pat.sel{background:var(--hover); box-shadow:inset 0 0 0 1px var(--blue)}
+  .clear{float:right; color:var(--blue); cursor:pointer; letter-spacing:0; text-transform:none; font-weight:600}
   .pat .nm{flex:1; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .pat .cat{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px}
   .pat .st{font-size:11px; font-variant-numeric:tabular-nums; color:var(--text-2)}
@@ -114,7 +118,7 @@
 
   <div class="body">
     <div class="chart-wrap" ref="wrap">
-      <trading-vue v-if="chart"
+      <trading-vue v-if="chart" ref="tv"
         :data="chart" :width="w" :height="h" :title-txt="title"
         :overlays="overlays" :toolbar="false"
         :color-back="c.bg" :color-grid="c.grid" :color-text="c.muted"
@@ -159,13 +163,22 @@
         <div class="empty" v-else>Run an analysis to see the forecast.</div>
       </div>
 
-      <h3>Patterns <span v-if="patterns.length">({{ patterns.length }})</span></h3>
+      <h3>
+        Patterns <span v-if="patterns.length">({{ patterns.length }})</span>
+        <a v-if="only" class="clear" @click="only = null">show top 3</a>
+      </h3>
       <div v-if="patterns.length">
         <div class="pat" v-for="(p, i) in patterns" :key="i"
-             :style="{borderLeftColor: p.bullish ? c.green : c.red}">
+             :class="{drawable: p.drawn, sel: only === p.group, live: isDrawn(p)}"
+             :style="{borderLeftColor: p.bullish ? c.green : c.red}"
+             @click="isolate(p)">
           <div style="min-width:0;flex:1">
             <div class="nm">{{ p.name }}</div>
-            <div class="cat">{{ p.category }}<span v-if="p.extra"> · drawn</span></div>
+            <div class="cat">
+              {{ p.category }}
+              <span v-if="isDrawn(p)"> · on chart</span>
+              <span v-else-if="p.drawn"> · click to draw</span>
+            </div>
           </div>
           <div class="st">{{ (p.strength * 100).toFixed(0) }}%</div>
         </div>
@@ -204,7 +217,9 @@
       legend: function () { return []; },
       draw: function (ctx) {
         var layout = this.$props.layout;
-        var list = (this.$props.settings || {}).shapes || [];
+        var st = this.$props.settings || {};
+        var list = st.shapes || [];
+        var visible = st.only ? [st.only] : (st.defaults || []);
         var X = function (t) { return layout.t2screen(t); };
         var Y = function (p) { return layout.$2screen(p); };
 
@@ -212,15 +227,37 @@
         ctx.lineCap = 'round';
         ctx.font = FONT;
 
+        // Labels are painted last so diagram lines never cover them, and each
+        // one is nudged clear of the labels already placed.
+        var labels = [];
+        this.boxes = [];
+
         for (var i = 0; i < list.length; i++) {
           var s = list[i];
+          if (s.g && visible.indexOf(s.g) < 0) continue;
           if (s.k === 'poly') this.poly(ctx, s, X, Y);
           else if (s.k === 'dot') this.dot(ctx, s, X, Y);
           else if (s.k === 'mark') this.mark(ctx, s, X, Y);
-          else if (s.k === 'text') this.label(ctx, s, X, Y);
+          else if (s.k === 'text') labels.push(s);
         }
+        for (var j = 0; j < labels.length; j++) this.label(ctx, labels[j], X, Y);
+
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
+      },
+
+      // Returns a y offset that clears already-placed labels, or null to skip.
+      place: function (x, y, w) {
+        var h = 16;
+        for (var step = 0; step < 6; step++) {
+          var dy = y + (step % 2 ? step + 1 : -step) * 9;
+          var box = [x - w / 2, dy - h / 2, x + w / 2, dy + h / 2];
+          var hit = this.boxes.some(function (b) {
+            return !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]);
+          });
+          if (!hit) { this.boxes.push(box); return dy; }
+        }
+        return null;
       },
 
       poly: function (ctx, s, X, Y) {
@@ -276,7 +313,11 @@
         if (!isFinite(x) || !isFinite(y)) return;
         var pad = 5, hh = 8;
         var w = ctx.measureText(s.s).width + pad * 2;
-        var cy = y + (s.up ? -16 : 16);
+        // Keep the box inside the grid — a label clipped by the edge is unreadable.
+        var wide = this.$props.layout.width;
+        x = Math.max(w / 2 + 2, Math.min(wide - w / 2 - 2, x));
+        var cy = this.place(x, y + (s.up ? -16 : 16), w);
+        if (cy === null) return;
         ctx.globalAlpha = 0.88;
         ctx.fillStyle = C.bg;
         this.roundRect(ctx, x - w / 2, cy - hh, w, hh * 2);
@@ -316,6 +357,7 @@
       quick: ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'],
       overlays: [CVShapes],
       result: null,
+      only: null,
       busy: false,
       error: '',
       status: 'Ready',
@@ -333,6 +375,12 @@
       stats: function () { return this.result ? this.result.stats : null; },
       prediction: function () { return this.result ? this.result.prediction : null; },
       patterns: function () { return this.result ? this.result.patterns : []; },
+      drawnNow: function () {
+        if (!this.result) return [];
+        if (this.only) return [this.only];
+        var ov = this.result.onchart.filter(function (o) { return o.type === 'CVShapes'; })[0];
+        return ov ? ov.settings.defaults : [];
+      },
       title: function () { return this.result ? this.result.symbol + '  ·  ' + this.timeframe : 'CryptVault'; },
       dirClass: function () {
         if (!this.prediction) return '';
@@ -364,6 +412,24 @@
         return '$' + v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
       },
       pick: function (q) { this.symbol = q + '-USD'; this.analyze(); },
+      // Patterns can span the whole series, but trading-vue opens on the last
+      // ~50 candles — so fit the range to the data or half a diagram is off-screen.
+      fitRange: function () {
+        var self = this;
+        setTimeout(function () {
+          var d = self.result && self.result.chart.data;
+          if (!d || d.length < 2 || !self.$refs.tv) return;
+          var pad = (d[d.length - 1][0] - d[0][0]) * 0.02;
+          try { self.$refs.tv.setRange(d[0][0] - pad, d[d.length - 1][0] + pad); } catch (e) {}
+        }, 120);
+      },
+      isDrawn: function (p) { return this.drawnNow.indexOf(p.group) >= 0; },
+      isolate: function (p) {
+        if (!p.drawn || !this.result) return;
+        this.only = this.only === p.group ? null : p.group;
+        var ov = this.result.onchart.filter(function (o) { return o.type === 'CVShapes'; })[0];
+        if (ov) ov.settings.only = this.only;   // deep-watched by the overlay
+      },
       setTf: function (tf) {
         if (tf === this.timeframe) return;
         this.timeframe = tf;
@@ -382,9 +448,10 @@
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (res) {
             if (!res.ok || res.j.error) throw new Error(res.j.error || 'Request failed');
+            self.only = null;
             self.result = res.j;
             self.status = res.j.stats.bars + ' bars · ' + res.j.stats.patterns + ' patterns';
-            self.$nextTick(self.resize);
+            self.$nextTick(function () { self.resize(); self.fitRange(); });
           })
           .catch(function (e) { self.error = e.message; })
           .then(function () { self.busy = false; });

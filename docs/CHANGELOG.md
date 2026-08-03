@@ -20,8 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `cryptvault/desktop/api.py` and `server.py` — analysis payload builder and the three-route local server (`/`, `/vendor/<file>`, `/api/analyze`).
 - `tests/test_desktop_chart.py` — geometry bounds, wick snapping, malformed-pivot resilience, and trading-vue payload schema.
 
+- Pattern diagrams are **grouped and selectable**: the three strongest are drawn on load, and clicking a pattern in the sidebar isolates it. Drawing every detection at once was unreadable.
+- The chart fits its range to the full series on load — trading-vue opens on the last ~50 candles, which cut the left shoulder off patterns that span the window.
+
 ### Fixed
 - `Pattern.to_dict()` leaked numpy scalars (`np.bool_`, `np.float64`), which are not JSON-serializable; all fields are now coerced to plain Python types.
+- Two detections of the same pattern shared a group, so isolating one drew both; group keys are now `name@bar`.
+- Diagram labels overlapped each other and were clipped at the chart edge; they are now nudged clear of already-placed labels and clamped inside the grid.
+- Suppressed the empty `n/a` legend rows for the Bollinger and pattern overlays, and toned down the volume bars.
 
 ### Removed
 - `desktop/main_window.py`, `desktop/theme.py`, and `desktop/panels/` (~1,400 lines of Tk/Matplotlib UI), replaced by ~700 lines plus one HTML page.

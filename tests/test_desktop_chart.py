@@ -40,13 +40,15 @@ def test_shapes_are_json_serializable_and_in_range(frame):
 
     patterns = ComprehensivePatternDetector().detect_all(frame)
     out = shapes.build(frame, patterns)
-    assert out, "expected at least the swing structure"
+    assert out["shapes"], "expected at least the swing structure"
+    assert out["defaults"] == out["groups"][: shapes.SHOWN_BY_DEFAULT]
 
     json.dumps(out)  # must survive the wire
 
     lo = int(frame.index[0].value // 1_000_000)
     hi = int(frame.index[-1].value // 1_000_000)
-    for s in out:
+    for s in out["shapes"]:
+        assert s["g"] == "" or s["g"] in out["groups"]
         pts = s.get("pts") or [s["pt"]]
         for t, price in pts:
             assert lo <= t <= hi
@@ -75,7 +77,9 @@ def test_malformed_extra_does_not_break_the_chart(frame):
         {"name": "Head & Shoulders", "index": 60, "bullish": False, "strength": 0.9,
          "extra": {}},
     ]
-    assert shapes.build(frame, bad)  # swing structure still there
+    out = shapes.build(frame, bad)
+    assert out["shapes"]      # swing structure still there
+    assert out["groups"] == []   # neither bad pattern produced a diagram
 
 
 def test_payload_matches_trading_vue_schema(frame, monkeypatch):
@@ -93,5 +97,16 @@ def test_payload_matches_trading_vue_schema(frame, monkeypatch):
 
     overlay = next(o for o in payload["onchart"] if o["type"] == "CVShapes")
     assert overlay["settings"]["shapes"]
+    assert overlay["settings"]["only"] is None      # the UI mutates this to isolate
+    assert len(overlay["settings"]["defaults"]) <= shapes.SHOWN_BY_DEFAULT
+
+    drawable = set(overlay["settings"]["groups"])
+    for p in payload["patterns"]:
+        assert p["drawn"] is (p["group"] in drawable)
+
+    # Two instances of the same pattern must not share a group, or isolating
+    # one would draw both.
+    keys = [p["group"] for p in payload["patterns"]]
+    assert len(keys) == len(set(keys))
 
     json.dumps(payload)  # the server sends this verbatim

@@ -143,12 +143,16 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
         if band:
             onchart.append({
                 "name": "Bollinger 20/2", "type": "Channel", "data": band,
-                "settings": {"color": "#6c7ae0", "backColor": "#6c7ae012", "lineWidth": 0.8},
+                "settings": {"color": "#6c7ae0", "backColor": "#6c7ae012",
+                             "lineWidth": 0.8, "legend": False},
             })
 
+    geometry = shapes.build(df, patterns)
     onchart.append({
         "name": "Patterns", "type": "CVShapes", "data": [],
-        "settings": {"shapes": shapes.build(df, patterns), "z-index": 1},
+        # `only` is mutated by the UI to isolate a single pattern; it must exist
+        # up front so Vue tracks it.
+        "settings": {**geometry, "only": None, "z-index": 1, "legend": False},
     })
 
     offchart: List[Dict[str, Any]] = []
@@ -165,6 +169,13 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
     bull = sum(1 for p in patterns if p.get("bullish"))
     bear = len(patterns) - bull
 
+    # Only patterns that actually produced geometry are clickable in the sidebar.
+    drawable = set(geometry["groups"])
+    listed = patterns[:40]
+    for p in listed:
+        p["group"] = shapes.group_key(p)
+        p["drawn"] = p["group"] in drawable
+
     return {
         "symbol": symbol,
         "timeframe": timeframe,
@@ -174,12 +185,12 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
             "settings": {
                 "colorCandleUp": GREEN, "colorCandleDw": RED,
                 "colorWickUp": GREEN, "colorWickDw": RED,
-                "colorVolUp": GREEN + "55", "colorVolDw": RED + "55",
+                "colorVolUp": GREEN + "2e", "colorVolDw": RED + "2e",
             },
         },
         "onchart": onchart,
         "offchart": offchart,
-        "patterns": patterns[:40],
+        "patterns": listed,
         "prediction": _predict(closes, timeframe),
         "stats": {
             "price": float(closes[-1]),

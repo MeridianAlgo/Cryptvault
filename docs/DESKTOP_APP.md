@@ -51,10 +51,18 @@ from trading-vue-js.
 
 ## Pattern Diagrams
 
+![CryptVault desktop terminal](assets/desktop.png)
+
 Pattern geometry is computed in Python and handed to the chart as primitives in
 `[timestamp, price]` space, so every diagram stays locked to the candles through
 any pan or zoom. Pivots are **snapped to the real swing high/low** within ±2
 bars, so lines touch the wicks instead of floating at the close.
+
+Every primitive is tagged with a group — the pattern instance it belongs to,
+keyed `name@bar` so two detections of the same pattern stay distinct. The three
+strongest are drawn on load; clicking a pattern in the sidebar isolates it.
+Drawing all of them at once is unreadable, which is the whole reason for the
+grouping.
 
 | Pattern | Drawn as |
 |---|---|
@@ -113,8 +121,12 @@ diagram is a Python change only — no JavaScript:
 |---|---|
 | `poly` | polyline, optionally dashed and/or filled |
 | `dot` | pivot marker |
-| `text` | boxed label |
+| `text` | boxed label — collision-avoided and clamped inside the grid |
 | `mark` | directional triangle |
+
+Each primitive also carries `g`, its group key (`""` = always-on swing
+structure). The overlay draws `settings.only` when set, otherwise
+`settings.defaults`.
 
 ## Vendored assets
 
