@@ -82,6 +82,46 @@ def test_malformed_extra_does_not_break_the_chart(frame):
     assert out["groups"] == []   # neither bad pattern produced a diagram
 
 
+def test_forecast_projects_past_the_last_bar(frame):
+    from cryptvault.desktop import api
+
+    prediction = api._predict(frame["close"].values, "3M")
+    out = shapes.forecast(frame, prediction, steps=10)
+
+    assert out["shapes"]
+    last_bar = int(frame.index[-1].value // 1_000_000)
+    assert out["end"] > last_bar, "the projection must extend beyond the data"
+
+    # every primitive belongs to the overlay as a whole, never a pattern group
+    assert all(s["g"] == "" for s in out["shapes"])
+
+    # the cone widens with the horizon
+    cone = out["shapes"][0]
+    n = len(cone["pts"]) // 2
+    upper, lower = cone["pts"][:n], cone["pts"][n:][::-1]
+    assert upper[0][1] - lower[0][1] < upper[-1][1] - lower[-1][1]
+
+    json.dumps(out)
+
+
+def test_forecast_is_empty_without_a_prediction(frame):
+    assert shapes.forecast(frame, None)["shapes"] == []
+    assert shapes.forecast(frame.iloc[:5], {"predicted_price": 1.0})["shapes"] == []
+
+
+def test_every_timeframe_has_a_valid_yahoo_window():
+    from cryptvault.desktop import api
+
+    # Yahoo caps intraday history; a window past the cap returns nothing at all.
+    caps = {"1m": 7, "5m": 60, "15m": 60, "1h": 730}
+    for label, (period, interval) in api.TIMEFRAMES.items():
+        assert period.endswith(("d", "wk", "mo", "y")), label
+        if interval in caps:
+            days = int(period.rstrip("d"))
+            assert days <= caps[interval], f"{label}: {days}d exceeds the {interval} cap"
+    assert api.DEFAULT_TF in api.TIMEFRAMES
+
+
 def test_payload_matches_trading_vue_schema(frame, monkeypatch):
     from cryptvault.desktop import api
 
@@ -95,7 +135,13 @@ def test_payload_matches_trading_vue_schema(frame, monkeypatch):
     assert {"Channel", "CVShapes"} <= types
     assert payload["offchart"][0]["type"] == "Range"
 
-    overlay = next(o for o in payload["onchart"] if o["type"] == "CVShapes")
+    forecast = next(o for o in payload["onchart"] if o["name"] == "Forecast (beta)")
+    assert forecast["settings"]["display"] is True     # the UI toggles this
+    assert forecast["settings"]["shapes"]
+    assert payload["forecast_end"] > payload["chart"]["data"][-1][0]
+    assert "x" in payload["prediction"]["horizon"]     # e.g. "9 x 3M"
+
+    overlay = next(o for o in payload["onchart"] if o["name"] == "Patterns")
     assert overlay["settings"]["shapes"]
     assert overlay["settings"]["only"] is None      # the UI mutates this to isolate
     assert len(overlay["settings"]["defaults"]) <= shapes.SHOWN_BY_DEFAULT

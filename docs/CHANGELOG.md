@@ -5,6 +5,17 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.4.0] - 2026-08-03
+
+### Added
+- **Intraday timeframes** — `1m`, `5m`, `15m` and `1H`. Timeframe labels are now the bar interval rather than a date range, each carrying a window that stays inside Yahoo's intraday history caps (1m to 7 days, 5m/15m to 60, 1h to 730). The redundant `1D` and `5D` range buttons are gone, superseded by `5m` and `1H`.
+- **Forecast overlay (beta)** — `shapes.forecast()` projects the trend estimate past the last bar: a dashed path to the predicted price, a volatility envelope that widens with the square root of the horizon and with the model's lack of confidence, and a dotted divider at the last real bar. It is a separate `CVShapes` overlay, toggled from the top bar. The envelope is a volatility cone, not a calibrated prediction interval, and the estimate is momentum-based rather than the trained ensemble — hence beta.
+- `forecast_end` in the payload, so the chart widens its range to include the projection instead of rendering it off-screen.
+
+### Changed
+- The chart opens on the most recent 400 bars. Intraday windows reach ~1,400 bars, at which point every pattern diagram is a few pixels wide.
+- Forecast horizon is reported as a bar count (`30 x 15m`) instead of repeating the bar interval.
+
 ## [6.3.0] - 2026-08-03
 
 ### Changed

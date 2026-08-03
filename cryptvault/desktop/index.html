@@ -44,6 +44,11 @@
   button.on{background:var(--panel); color:var(--blue); font-weight:600}
   button:disabled{opacity:.45; cursor:default}
   .chip{font-size:12px; padding:5px 9px}
+  .chip.beta i{
+    font-style:normal; font-size:9px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--yellow); border:1px solid var(--yellow); border-radius:3px;
+    padding:1px 3px; margin-left:3px; vertical-align:1px
+  }
   .spacer{flex:1}
   .status{font-size:11px; color:var(--muted); white-space:nowrap}
   .status.err{color:var(--red)}
@@ -110,6 +115,11 @@
     <span class="sep"></span>
     <button class="chip" v-for="q in quick" :key="q" @click="pick(q)">{{ q }}</button>
     <span class="spacer"></span>
+    <button class="chip beta" :class="{on: forecast}" @click="toggleForecast"
+            title="Project the trend estimate past the last bar">
+      Forecast <i>beta</i>
+    </button>
+    <span class="sep"></span>
     <span class="status" :class="{err:error, busy:busy}">{{ error || status }}</span>
     <span class="sep"></span>
     <button class="chip" v-for="tf in timeframes" :key="tf"
@@ -353,11 +363,12 @@
       version: '—',
       symbol: 'BTC-USD',
       timeframe: '3M',
-      timeframes: ['1D', '5D', '1M', '3M', '6M', '1Y', '2Y'],
+      timeframes: ['1m', '5m', '15m', '1H', '1M', '3M', '6M', '1Y', '2Y'],
       quick: ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'],
       overlays: [CVShapes],
       result: null,
       only: null,
+      forecast: true,
       busy: false,
       error: '',
       status: 'Ready',
@@ -419,11 +430,27 @@
         setTimeout(function () {
           var d = self.result && self.result.chart.data;
           if (!d || d.length < 2 || !self.$refs.tv) return;
-          var pad = (d[d.length - 1][0] - d[0][0]) * 0.02;
-          try { self.$refs.tv.setRange(d[0][0] - pad, d[d.length - 1][0] + pad); } catch (e) {}
+          // Intraday windows run to ~1400 bars; showing every one of them
+          // shrinks the pattern diagrams to nothing. Open on the recent slice.
+          var first = Math.max(0, d.length - 400);
+          var end = d[d.length - 1][0];
+          if (self.forecast && self.result.forecast_end) {
+            end = Math.max(end, self.result.forecast_end);
+          }
+          var pad = (end - d[first][0]) * 0.02;
+          try { self.$refs.tv.setRange(d[first][0] - pad, end + pad); } catch (e) {}
         }, 120);
       },
       isDrawn: function (p) { return this.drawnNow.indexOf(p.group) >= 0; },
+      overlay: function (name) {
+        if (!this.result) return null;
+        return this.result.onchart.filter(function (o) { return o.name === name; })[0] || null;
+      },
+      toggleForecast: function () {
+        this.forecast = !this.forecast;
+        var ov = this.overlay('Forecast (beta)');
+        if (ov) ov.settings.display = this.forecast;   // deep-watched by the overlay
+      },
       isolate: function (p) {
         if (!p.drawn || !this.result) return;
         this.only = this.only === p.group ? null : p.group;
@@ -450,6 +477,8 @@
             if (!res.ok || res.j.error) throw new Error(res.j.error || 'Request failed');
             self.only = null;
             self.result = res.j;
+            var fc = self.overlay('Forecast (beta)');
+            if (fc) fc.settings.display = self.forecast;
             self.status = res.j.stats.bars + ' bars · ' + res.j.stats.patterns + ' patterns';
             self.$nextTick(function () { self.resize(); self.fitRange(); });
           })

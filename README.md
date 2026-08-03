@@ -5,7 +5,7 @@
 ### AI-powered cryptocurrency & stock analysis — desktop, CLI, and Python API.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-6.3.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
+[![Version](https://img.shields.io/badge/version-6.4.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml)
 [![Lint](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml)
@@ -37,15 +37,15 @@ CryptVault is a research-grade analysis platform for crypto and equities that co
 
 ---
 
-## What's new in 6.3.0
+## What's new in 6.4.0
 
 | Area | What's new |
 |---|---|
-| **Charting** | Dropped the hand-rolled Matplotlib canvas for **trading-vue-js** — real pan/zoom/crosshair, log scale, resizable panes. |
-| **Diagrams** | Pattern geometry is now drawn in chart coordinates and **snapped to swing wicks**: sloped H&S necklines, parabolic Cup & Handle, XABCD harmonics, divergence lines, shaded triangles. |
-| **Less code** | ~1,400 lines of Tk/Matplotlib UI replaced by ~700 lines and one HTML page. |
-| **Extensible** | One custom overlay (`CVShapes`) renders 4 primitives — new pattern diagrams are a Python change, no JavaScript. |
-| **Tests** | New geometry + payload suite; full suite green (23/23), `cryptvault/` stays ruff-clean. |
+| **Intraday** | New `1m`, `5m`, `15m` and `1H` timeframes. Labels are now the bar interval, each with a window that stays inside Yahoo's intraday history caps. |
+| **Forecast (beta)** | The trend estimate is projected onto the chart — a dashed path to the target, a volatility envelope that widens with the horizon, and a divider at the last bar. Toggle it in the top bar. |
+| **Charting** | Charts render with **trading-vue-js**: real pan, zoom, crosshair, log scale and resizable panes *(6.3.0)*. |
+| **Diagrams** | Pattern geometry is drawn in chart coordinates and **snapped to swing wicks** — sloped H&S necklines, parabolic Cup & Handle, XABCD harmonics, divergence lines, shaded triangles *(6.3.0)*. |
+| **Tests** | Forecast and timeframe coverage added; full suite green (26/26), `cryptvault/` stays ruff-clean. |
 
 Full history: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -109,6 +109,7 @@ sidebar to isolate it** on the chart.
 | Any pattern with a target | Dotted horizontal target line |
 | Candlestick | Triangle marker pointing at the bar |
 | Always on | Swing pivot dots + fitted support/resistance |
+| Forecast *(beta)* | Dashed path to the predicted price inside a widening volatility envelope |
 
 See [`docs/DESKTOP_APP.md`](docs/DESKTOP_APP.md).
 
@@ -335,6 +336,6 @@ Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research
 
 <div align="center">
 
-Version 6.3.0 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
+Version 6.4.0 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
 
 </div>

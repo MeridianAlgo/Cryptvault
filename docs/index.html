@@ -194,7 +194,7 @@
 <header class="mast">
   <div class="wrap">
     <span class="mark">Crypt<b>Vault</b></span>
-    <span class="eyebrow">v6.3.0 &nbsp;/&nbsp; MIT</span>
+    <span class="eyebrow">v6.4.0 &nbsp;/&nbsp; MIT</span>
     <nav>
       <a href="#how">How it works</a>
       <a href="#patterns">Patterns</a>
@@ -313,6 +313,7 @@
           <li><b>Grouped.</b> Every primitive is tagged <code>name@bar</code>, so two detections of the same pattern stay separate.</li>
           <li><b>Selective.</b> The three strongest draw on load; clicking a pattern isolates it.</li>
           <li><b>Resilient.</b> A malformed pivot payload is skipped, never raised — a bad pattern cannot blank the chart.</li>
+          <li><b>Forecast, in beta.</b> The same four primitives draw the projection past the last bar: a dashed path to the target inside a volatility envelope. A cone, not a calibrated interval — hence beta.</li>
         </ul>
       </div>
       <div>
@@ -383,6 +384,7 @@ python launch_desktop.py
 <span class="c"># or the command line</span>
 python cryptvault_cli.py BTC 90 1d</pre>
         <ul class="plain">
+          <li><b>Nine timeframes</b> from 1-minute bars to weekly, intraday included.</li>
           <li><b>50+ patterns</b> across reversal, continuation, candlestick, harmonic and divergence families.</li>
           <li><b>ML ensemble</b> at 1.6&ndash;2.4% MAPE on major pairs, weighted by rolling out-of-fold validation.</li>
           <li><b>Python API and CLI</b> for portfolio analysis, comparison and batch runs.</li>

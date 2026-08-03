@@ -25,9 +25,15 @@ from . import shapes
 logger = logging.getLogger(__name__)
 
 # label → (yfinance period, interval)
+#
+# The label is the bar interval, and each one carries a window that keeps the
+# bar count sane. Yahoo caps intraday history: 1m to 7 days, 5m/15m to 60,
+# 1h to 730 — the windows below stay inside those limits.
 TIMEFRAMES: Dict[str, Tuple[str, str]] = {
-    "1D": ("2d", "5m"),
-    "5D": ("5d", "1h"),
+    "1m": ("1d", "1m"),
+    "5m": ("5d", "5m"),
+    "15m": ("10d", "15m"),
+    "1H": ("30d", "1h"),
     "1M": ("30d", "1d"),
     "3M": ("90d", "1d"),
     "6M": ("180d", "1d"),
@@ -155,6 +161,18 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
         "settings": {**geometry, "only": None, "z-index": 1, "legend": False},
     })
 
+    # Horizon is a bar count, not the bar interval — say so in the panel.
+    steps = max(6, min(30, len(closes) // 10))
+    prediction = _predict(closes, timeframe)
+    if prediction:
+        prediction["horizon"] = f"{steps} x {timeframe}"
+    projection = shapes.forecast(df, prediction, steps)
+    onchart.append({
+        "name": "Forecast (beta)", "type": "CVShapes", "data": [],
+        "settings": {"shapes": projection["shapes"], "defaults": [], "groups": [],
+                     "only": None, "display": True, "z-index": 2, "legend": False},
+    })
+
     offchart: List[Dict[str, Any]] = []
     if len(closes) >= 15:
         rsi = _rsi(closes)
@@ -191,7 +209,9 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
         "onchart": onchart,
         "offchart": offchart,
         "patterns": listed,
-        "prediction": _predict(closes, timeframe),
+        "prediction": prediction,
+        # so the chart can widen its range to include the projection
+        "forecast_end": projection["end"],
         "stats": {
             "price": float(closes[-1]),
             "change": change,

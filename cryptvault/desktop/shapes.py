@@ -328,6 +328,67 @@ def swing_structure(f: _Frame, order: Optional[int] = None) -> List[Dict]:
     return out
 
 
+def forecast(df, prediction: Optional[Dict[str, Any]], steps: Optional[int] = None) -> Dict[str, Any]:
+    """Project the prediction forward from the last bar.
+
+    Returns ``{"shapes": [...], "end": <last timestamp drawn>}``. The cone is a
+    volatility envelope, not a calibrated prediction interval — it widens with
+    the square root of the horizon and with the model's own lack of confidence.
+    This is why the chart labels the overlay beta.
+    """
+    empty: Dict[str, Any] = {"shapes": [], "end": None}
+    if df is None or df.empty or not prediction:
+        return empty
+
+    closes = df["close"].values
+    n = len(closes)
+    if n < 10:
+        return empty
+
+    times = [int(ts.value // 1_000_000) for ts in df.index]
+    step = int(np.median(np.diff(times))) if n > 2 else 86_400_000
+    if step <= 0:
+        return empty
+    steps = steps or max(6, min(30, n // 10))
+
+    last_t, last_c = times[-1], float(closes[-1])
+    target = float(prediction.get("predicted_price", last_c))
+    conf = float(prediction.get("confidence", 0.5))
+    direction = prediction.get("direction", "NEUTRAL")
+    color = {"UP": GREEN, "DOWN": RED}.get(direction, NEUTRAL)
+
+    window = closes[-31:]
+    rets = np.diff(window) / window[:-1] if len(window) > 1 else np.array([0.0])
+    sigma = float(np.std(rets)) or 0.005
+    spread = 1.0 + (1.0 - conf) * 0.8      # less confident, wider cone
+
+    path, upper, lower = [], [], []
+    for k in range(steps + 1):
+        t = last_t + step * k
+        p = last_c + (target - last_c) * (k / steps)
+        band = last_c * sigma * math.sqrt(k) * spread
+        path.append([t, p])
+        upper.append([t, p + band])
+        lower.append([t, p - band])
+
+    lo = float(np.min(df["low"].values if "low" in df.columns else closes))
+    hi = float(np.max(df["high"].values if "high" in df.columns else closes))
+
+    shapes = [
+        # An outlined envelope reads as a range; a solid wedge just reads as a blob.
+        _poly(upper + lower[::-1], color, 0, fill=color),
+        _poly(upper, color, 1.0, DOT_DASH),
+        _poly(lower, color, 1.0, DOT_DASH),
+        _poly([[last_t, lo], [last_t, hi]], NEUTRAL, 1.0, DOT_DASH),  # now divider
+        _poly(path, color, 1.8, DASH),
+        _dot(path[-1], color, 4.0),
+        _text(path[-1], f"{direction} {target:,.2f}", color, up=target >= last_c),
+    ]
+    for s in shapes:
+        s["g"] = ""            # the forecast overlay is toggled as a whole
+    return {"shapes": shapes, "end": path[-1][0]}
+
+
 def build(df, patterns: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Return ``{"shapes": [...], "groups": [...], "defaults": [...]}``.
 

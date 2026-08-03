@@ -33,7 +33,7 @@ pip install pywebview
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│ CryptVault  [BTC-USD] [Analyze]  BTC ETH SOL …    1D 5D 1M 3M 6M 1Y   │
+│ CryptVault [BTC-USD] [Analyze] BTC ETH …  Forecast  1m 5m 15m 1H 1M … │
 ├──────────────────────────────────────────────┬────────────────────────┤
 │                                              │  Overview              │
 │   Candles + Bollinger channel                │   price / change       │
@@ -80,6 +80,43 @@ grouping.
 
 Green = bullish, red = bearish.
 
+## Timeframes
+
+Each label is the **bar interval**; the window attached to it keeps the bar
+count workable and stays inside Yahoo's intraday history caps (1m to 7 days,
+5m and 15m to 60, 1h to 730).
+
+| Label | Window | Interval | Approx. bars (crypto) |
+|---|---|---|---|
+| `1m` | 1 day | 1 minute | 1,440 |
+| `5m` | 5 days | 5 minutes | 1,440 |
+| `15m` | 10 days | 15 minutes | 960 |
+| `1H` | 30 days | 1 hour | 720 |
+| `1M` | 30 days | 1 day | 30 |
+| `3M` | 90 days | 1 day | 90 |
+| `6M` | 180 days | 1 day | 180 |
+| `1Y` | 365 days | 1 day | 365 |
+| `2Y` | 730 days | 1 week | 104 |
+
+Patterns are detected across the whole window, but the chart opens on the most
+recent 400 bars — at 1,400 bars every diagram would be a few pixels wide. Zoom
+out to see the rest.
+
+## Forecast (beta)
+
+The trend estimate is drawn past the last bar as its own overlay, toggled from
+the top bar:
+
+- a **dashed path** from the last close to the predicted price
+- a **volatility envelope** around it, widening with the square root of the
+  horizon and with the model's own lack of confidence
+- a dotted **divider** at the last real bar, so projection is never mistaken for
+  history
+
+The envelope is a volatility cone, **not a calibrated prediction interval**, and
+the underlying estimate is momentum-based rather than the trained ensemble. That
+is why it ships as beta. Horizon is reported as a bar count, e.g. `30 x 15m`.
+
 ## Architecture
 
 ```
@@ -87,7 +124,7 @@ cryptvault/desktop/
     app.py        entry point — starts the server, opens the window
     server.py     stdlib http.server: page, vendored JS, /api/analyze
     api.py        fetch → patterns → forecast → trading-vue payload
-    shapes.py     pattern pivots → drawing primitives (the diagram engine)
+    shapes.py     pattern pivots → drawing primitives, plus the forecast cone
     index.html    the UI + the custom `CVShapes` trading-vue overlay
 ```
 
@@ -100,13 +137,17 @@ cryptvault/desktop/
 | `GET /api/meta` | version and available timeframes |
 | `GET /api/analyze?symbol=&tf=` | the full analysis payload |
 
+The payload carries `forecast_end` so the chart can widen its range to include
+the projection instead of rendering it off-screen.
+
 ### Payload
 
 ```jsonc
 {
   "chart":    { "type": "Candles", "data": [[t, o, h, l, c, v], ...] },
   "onchart":  [ { "type": "Channel",  "name": "Bollinger 20/2" },
-                { "type": "CVShapes", "settings": { "shapes": [ ... ] } } ],
+                { "type": "CVShapes", "name": "Patterns",        "settings": { ... } },
+                { "type": "CVShapes", "name": "Forecast (beta)", "settings": { ... } } ],
   "offchart": [ { "type": "Range", "name": "RSI 14" } ],
   "patterns": [ ... ], "prediction": { ... }, "stats": { ... }
 }
