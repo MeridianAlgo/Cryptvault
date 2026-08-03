@@ -5,6 +5,34 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.0] - 2026-08-03
+
+### Fixed
+- **Every detected pattern is now drawable.** Only the eight strongest geometric patterns previously received chart geometry; the rest were listed in the sidebar and did nothing when clicked. `shapes.build()` now builds geometry for the whole list — structures get their diagram and candlestick signals get a bracket around the exact candles the signal is made of, sized by a new `span` field. This was the single most confusing behaviour in the app: being told a pattern exists and then not being shown it.
+- **Selecting a pattern scrolls the chart to it.** Isolating a diagram that sits 300 bars off the left edge left it just as invisible as before. `focus()` now sets the visible range around the pattern, and reaches into the future when the pattern has a projection.
+- **Duplicate patterns no longer flood the list.** The pivot loops fire on every consecutive pair, so a long series produced dozens of near-identical Double Tops stretching back months (49 "reversal" hits on a single BTC hourly window), burying everything worth reading. Repeats are capped at three per name and results are ranked by category rather than a flat cut.
+- A user-triggered analysis whose request failed showed no error at all: Vue passes the DOM event to a bare method reference in a template, so `analyze` treated every form submit as a silent background refresh.
+
+### Added
+- **Hyperliquid market data** (`cryptvault/desktop/hyperliquid.py`) — candles and live mids from the venue's public `/info` endpoint over the standard library alone. The last bar is the one still forming rather than a delayed vendor copy. Yahoo remains the fallback for anything Hyperliquid does not list, and the payload reports which source fed the chart.
+- **Live mode.** `/api/tick` returns the live mid and the forming bar on a ~4s poll; patterns are rescanned in the background every 90s without moving the view out from under a selected pattern. `/api/markets` feeds a live market rail.
+- **Pattern projection.** Any pattern with a target now draws its future: the trigger level carried past the last bar, the measured move as a dashed path, the stop, and the target marked where and roughly when it would be reached — placed as far ahead as the pattern took to form. Trendline patterns keep converging past the right edge.
+- **Forming-pattern detection** (`_FormingDetector`) — structures that have *not* completed yet, with the missing pivots projected into future index space: a right shoulder that has not printed, the second peak of a double top, the third of a triple, and the apex a triangle is converging on with both breakout legs and their measured distance. The payload separates `have` (real pivots) from `future` (projected) so the chart can draw confirmed geometry solid and hypotheses dashed.
+- **New chart patterns**: Rectangle, Rounding Top, Rounding Bottom, Broadening Formation, Diamond Top, Diamond Bottom, Three Drives (top and bottom), Island Reversal (top and bottom).
+- **New candlestick patterns**: Three Inside Up/Down, Three Outside Up/Down, Rising/Falling Three Methods, Bullish/Bearish Kicker, Bullish/Bearish Belt Hold, Tri-Star Top/Bottom.
+- `_Frame.at()` extrapolates the time axis past the last bar, so projected pivots land at real timestamps instead of clamping onto the right edge.
+- A **Draw all** mode and a pattern filter in the panel.
+
+### Changed
+- **Redesigned desktop shell.** Three columns: a live market rail, one authoritative price readout that lifts in colour on each tick, and a pattern panel grouped by category with targets, stops and timestamps per row. Green and red are now reserved for the market; every piece of application state — selection, focus, live status, a pending apex — speaks in amber, so a green number always means the market moved.
+- Timeframes are `1m · 5m · 15m · 1H · 4H · 1D · 1W`, all bar intervals. The previous set mixed intervals (`15m`) with date ranges (`3M`) in one control strip, so two identical-looking buttons did completely different things.
+- Bollinger bands and RSI are toned down and the RSI pane takes a fifth of the height; they were louder than the pattern geometry they exist to support.
+- The forecast cone is fainter, and hides while a pattern is isolated — it is a different claim about the future and swept across the same space.
+- The chart's built-in legend only appears under the cursor; at rest it read `On/a Hn/a Ln/a`.
+
+### Tests
+- Coverage for drawability of every detected pattern, candlestick span bracketing, forward projection, forming-pattern solid/dashed separation, future-index extrapolation, and symbol mapping. Full suite green (32/32).
+
 ## [6.4.0] - 2026-08-03
 
 ### Added

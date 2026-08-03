@@ -6,41 +6,54 @@ shapes everything into the object the trading-vue chart consumes:
 
     {
       "chart":    {"type": "Candles", "data": [[t,o,h,l,c,v], ...]},
-      "onchart":  [Bollinger channel, CVShapes overlay],
+      "onchart":  [Bollinger channel, CVShapes overlay, Forecast overlay],
       "offchart": [RSI],
       "patterns": [...], "prediction": {...}, "stats": {...}
     }
+
+Prices come from Hyperliquid — the venue itself, so the newest bar is the one
+still forming rather than a delayed vendor copy. Anything Hyperliquid does not
+list falls back to Yahoo, and the payload always says which was used.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+import time
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
-from . import shapes
+from . import hyperliquid, shapes
 
 logger = logging.getLogger(__name__)
 
-# label → (yfinance period, interval)
+
+class TF(NamedTuple):
+    """One timeframe: the venue interval, how much history, and a Yahoo fallback."""
+
+    hl: str                       # Hyperliquid interval
+    bars: int                     # bars requested
+    yf: Tuple[str, str]           # (yfinance period, yfinance interval)
+
+
+# Every label is a *bar interval*, never a date range. The previous mix of the
+# two ("15m" next to "3M") meant two controls that looked identical did
+# completely different things.
 #
-# The label is the bar interval, and each one carries a window that keeps the
-# bar count sane. Yahoo caps intraday history: 1m to 7 days, 5m/15m to 60,
-# 1h to 730 — the windows below stay inside those limits.
-TIMEFRAMES: Dict[str, Tuple[str, str]] = {
-    "1m": ("1d", "1m"),
-    "5m": ("5d", "5m"),
-    "15m": ("10d", "15m"),
-    "1H": ("30d", "1h"),
-    "1M": ("30d", "1d"),
-    "3M": ("90d", "1d"),
-    "6M": ("180d", "1d"),
-    "1Y": ("365d", "1d"),
-    "2Y": ("730d", "1wk"),
+# Yahoo caps intraday history — 1m to 7 days, 5m/15m to 60, 1h to 730 — so each
+# fallback window stays inside its own limit.
+TIMEFRAMES: Dict[str, TF] = {
+    "1m":  TF("1m",  720, ("1d",    "1m")),
+    "5m":  TF("5m",  576, ("5d",    "5m")),
+    "15m": TF("15m", 672, ("60d",   "15m")),
+    "1H":  TF("1h",  720, ("60d",   "1h")),
+    "4H":  TF("4h",  540, ("360d",  "1h")),
+    "1D":  TF("1d",  365, ("365d",  "1d")),
+    "1W":  TF("1w",  208, ("1460d", "1wk")),
 }
-DEFAULT_TF = "3M"
+DEFAULT_TF = "1H"
 
 GREEN, RED = shapes.GREEN, shapes.RED
 
@@ -95,12 +108,10 @@ def _detect(df: pd.DataFrame) -> List[Dict[str, Any]]:
         return []
 
 
-def fetch(symbol: str, timeframe: str = DEFAULT_TF) -> pd.DataFrame:
-    """Download OHLCV for ``symbol``. Raises ValueError when there is no data."""
-    period, interval = TIMEFRAMES.get(timeframe, TIMEFRAMES[DEFAULT_TF])
-
+def _from_yahoo(symbol: str, tf: TF) -> pd.DataFrame:
     import yfinance as yf
 
+    period, interval = tf.yf
     df = yf.Ticker(symbol).history(period=period, interval=interval)
     if df is None or df.empty:
         raise ValueError(f"No data for {symbol}")
@@ -112,6 +123,93 @@ def fetch(symbol: str, timeframe: str = DEFAULT_TF) -> pd.DataFrame:
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index)
     return df
+
+
+def fetch(symbol: str, timeframe: str = DEFAULT_TF) -> pd.DataFrame:
+    """Download OHLCV for ``symbol``.
+
+    Hyperliquid first, Yahoo second. The frame carries ``attrs['source']`` so the
+    UI can say where the numbers came from — the two feeds do not always agree,
+    and a chart that hides which one it is showing is not trustworthy.
+
+    Raises ValueError when neither source has anything.
+    """
+    tf = TIMEFRAMES.get(timeframe, TIMEFRAMES[DEFAULT_TF])
+
+    coin = hyperliquid.coin_for(symbol)
+    if coin:
+        try:
+            df = hyperliquid.candles(coin, tf.hl, tf.bars)
+            df.attrs["source"] = "Hyperliquid"
+            df.attrs["coin"] = coin
+            return df
+        except hyperliquid.HyperliquidError as e:
+            logger.warning("Hyperliquid failed for %s, falling back to Yahoo: %s", symbol, e)
+
+    try:
+        df = _from_yahoo(symbol, tf)
+    except ImportError as e:
+        raise ValueError(
+            f"{symbol} is not listed on Hyperliquid, and the Yahoo fallback needs "
+            f"yfinance installed. Run: pip install yfinance"
+        ) from e
+    except ValueError as e:
+        # Name the recovery, not just the failure — "no data" alone leaves the
+        # user guessing whether they mistyped or the feed is down.
+        if coin is None:
+            raise ValueError(
+                f"No market called {symbol}. Hyperliquid lists {len(hyperliquid.universe() or [])} "
+                f"tickers — try BTC, ETH or SOL, or pick one from the rail."
+            ) from e
+        raise
+    df.attrs["source"] = "Yahoo"
+    return df
+
+
+def tick(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
+    """Live price and the bar currently forming — the cheap poll for live mode.
+
+    Deliberately does no pattern work: this runs every few seconds, and a full
+    re-analysis on that cadence would burn CPU to redraw geometry that has not
+    meaningfully changed.
+    """
+    symbol = (symbol or "").strip().upper()
+    tf = TIMEFRAMES.get(timeframe, TIMEFRAMES[DEFAULT_TF])
+    coin = hyperliquid.coin_for(symbol)
+    if not coin:
+        raise ValueError(f"{symbol} is not listed on Hyperliquid — live mode is unavailable")
+
+    df = hyperliquid.candles(coin, tf.hl, 3)
+    last = df.iloc[-1]
+    price = hyperliquid.mid(coin) or float(last["close"])
+    bar = [
+        int(df.index[-1].value // 1_000_000),
+        float(last["open"]),
+        max(float(last["high"]), price),
+        min(float(last["low"]), price),
+        price,                                  # the forming bar closes at the live mid
+        float(last["volume"]),
+    ]
+    prev = float(df.iloc[-2]["close"]) if len(df) > 1 else float(last["open"])
+    return {
+        "symbol": symbol,
+        "price": price,
+        "bar": bar,
+        "change_bar": (price - prev) / prev * 100 if prev else 0.0,
+        "source": "Hyperliquid",
+        "asof": int(time.time() * 1000),
+    }
+
+
+def markets(limit: int = 12) -> List[Dict[str, Any]]:
+    """Live mids for a short watchlist — what the market rail shows."""
+    preferred = ["BTC", "ETH", "SOL", "BNB", "XRP", "DOGE", "AVAX", "LINK",
+                 "SUI", "APT", "ARB", "OP"]
+    try:
+        live = hyperliquid.mids()
+    except hyperliquid.HyperliquidError:
+        return []
+    return [{"symbol": c, "price": live[c]} for c in preferred if c in live][:limit]
 
 
 def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
@@ -147,10 +245,12 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
             if np.isfinite(mid[i]) and np.isfinite(sd[i])
         ]
         if band:
+            # Context, not content. The bands used to be the loudest thing on
+            # the chart and the pattern geometry read as decoration over them.
             onchart.append({
                 "name": "Bollinger 20/2", "type": "Channel", "data": band,
-                "settings": {"color": "#6c7ae0", "backColor": "#6c7ae012",
-                             "lineWidth": 0.8, "legend": False},
+                "settings": {"color": "#3d4761", "backColor": "#3d476109",
+                             "lineWidth": 0.7, "legend": False},
             })
 
     geometry = shapes.build(df, patterns)
@@ -158,7 +258,7 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
         "name": "Patterns", "type": "CVShapes", "data": [],
         # `only` is mutated by the UI to isolate a single pattern; it must exist
         # up front so Vue tracks it.
-        "settings": {**geometry, "only": None, "z-index": 1, "legend": False},
+        "settings": {**geometry, "only": None, "all": False, "z-index": 1, "legend": False},
     })
 
     # Horizon is a bar count, not the bar interval — say so in the panel.
@@ -170,7 +270,8 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
     onchart.append({
         "name": "Forecast (beta)", "type": "CVShapes", "data": [],
         "settings": {"shapes": projection["shapes"], "defaults": [], "groups": [],
-                     "only": None, "display": True, "z-index": 2, "legend": False},
+                     "only": None, "all": True, "display": True,
+                     "z-index": 2, "legend": False},
     })
 
     offchart: List[Dict[str, Any]] = []
@@ -179,24 +280,34 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
         offchart.append({
             "name": "RSI 14", "type": "Range",
             "data": [[times[i], float(rsi[i])] for i in range(len(closes))],
-            "settings": {"color": "#3f8cff", "backColor": "#3f8cff08",
-                         "bandColor": "#4a5568", "upper": 70, "lower": 30},
+            # A fifth of the window is enough for a bounded oscillator; the
+            # candles and their geometry need the rest.
+            "grid": {"height": 0.2},
+            "settings": {"color": "#7b8db0", "backColor": "#7b8db008",
+                         "bandColor": "#2a3444", "upper": 70, "lower": 30},
         })
 
     change = float((closes[-1] - closes[0]) / closes[0] * 100) if closes[0] else 0.0
     bull = sum(1 for p in patterns if p.get("bullish"))
     bear = len(patterns) - bull
 
-    # Only patterns that actually produced geometry are clickable in the sidebar.
     drawable = set(geometry["groups"])
-    listed = patterns[:40]
-    for p in listed:
+    for p in patterns:
         p["group"] = shapes.group_key(p)
         p["drawn"] = p["group"] in drawable
+        p["projected"] = bool((p.get("extra") or {}).get("projected"))
+        p["at"] = times[min(int(p.get("index", 0)), len(times) - 1)]
+        p.pop("extra", None)     # geometry is already built; the payload stays lean
+
+    forming = [p for p in patterns if p["projected"]]
+    end = max(t for t in (geometry["end"], projection["end"], times[-1]) if t)
 
     return {
         "symbol": symbol,
         "timeframe": timeframe,
+        "source": df.attrs.get("source", "Yahoo"),
+        "live": df.attrs.get("source") == "Hyperliquid",
+        "asof": int(time.time() * 1000),
         "chart": {
             "type": "Candles",
             "data": ohlcv,
@@ -208,19 +319,22 @@ def analyze(symbol: str, timeframe: str = DEFAULT_TF) -> Dict[str, Any]:
         },
         "onchart": onchart,
         "offchart": offchart,
-        "patterns": listed,
+        "patterns": patterns,
         "prediction": prediction,
-        # so the chart can widen its range to include the projection
+        # so the chart can widen its range to include every projection
         "forecast_end": projection["end"],
+        "draw_end": end,
         "stats": {
             "price": float(closes[-1]),
             "change": change,
             "bars": len(df),
             "patterns": len(patterns),
+            "forming": len(forming),
             "bullish": bull,
             "bearish": bear,
             "signal": "Bullish" if bull > bear else ("Bearish" if bear > bull else "Neutral"),
             "high": float(np.max(highs)),
             "low": float(np.min(lows)),
+            "volume": float(np.sum(vols)),
         },
     }

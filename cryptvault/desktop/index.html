@@ -5,197 +5,419 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CryptVault</title>
 <style>
+  /* ═══════════════════════════════════════════════════════════════════════
+     CryptVault — an instrument, not a dashboard.
+
+     One rule governs colour: green and red belong to the market and nothing
+     else. Every piece of application state — selection, focus, live status,
+     a pending breakout — speaks in amber. When a number turns green here it
+     is because the market moved, never because a button is active.
+
+     Dark surface is chosen for the scene, not the category: this runs for
+     hours at a time in a dim room, and a bright field behind the candles
+     washes out the only colour coding that carries meaning.
+     ═══════════════════════════════════════════════════════════════════════ */
   :root{
-    --bg:#0b0e14; --panel:#111621; --border:#1e2635; --hover:#1a2130;
-    --text:#e6ebf5; --text-2:#9aa7bd; --muted:#5f6b80;
-    --blue:#3f8cff; --green:#26a69a; --red:#ef5350; --yellow:#f0b90b;
-    --topbar:52px; --side:290px;
+    --bg:#080a0e;
+    --surface:#0d1116;
+    --raised:#131922;
+    --hover:#1a2231;
+    --line:#1e2632;
+    --line-soft:#161d27;
+
+    --ink:#e8edf5;
+    --ink-2:#93a1b5;      /* tinted from the surface hue — 7.5:1 on --bg */
+    --ink-3:#6e7e94;      /* 4.8:1 — the floor for anything readable */
+
+    --amber:#f0a935;      /* the application's voice */
+    --amber-soft:#f0a9351f;
+    --up:#26a69a;
+    --down:#ef5350;
+
+    --head:56px;
+    --rail:132px;
+    --panel:320px;
+
+    --r:7px;
+    --shadow:0 8px 24px -8px rgba(0,0,0,.8), 0 2px 6px -2px rgba(0,0,0,.6);
+    --tick:180ms;
   }
+  @media (prefers-reduced-motion: reduce){ :root{ --tick:0ms } }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; background:var(--bg); color:var(--text); overflow:hidden;
-    font:13px/1.45 "Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    margin:0; background:var(--bg); color:var(--ink); overflow:hidden;
+    font:13px/1.5 "Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
+  .num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
   #app{display:flex; flex-direction:column; height:100vh}
 
-  /* ── Top bar ───────────────────────────────────────────────── */
-  .topbar{
-    height:var(--topbar); flex:0 0 auto; display:flex; align-items:center; gap:8px;
-    padding:0 16px; background:var(--bg); border-bottom:1px solid var(--border);
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px; border-radius:3px}
+  ::selection{background:var(--amber-soft); color:var(--ink)}
+
+  /* ── Header ──────────────────────────────────────────────────────────── */
+  header{
+    height:var(--head); flex:0 0 auto; display:flex; align-items:center; gap:14px;
+    padding:0 14px 0 16px; background:var(--surface);
+    border-bottom:1px solid var(--line);
   }
-  .brand{font-size:16px; font-weight:700; color:var(--blue); letter-spacing:-.2px}
-  .ver{font-size:10px; color:var(--muted); margin-left:2px}
-  .sep{width:1px; height:22px; background:var(--border); margin:0 6px}
+  .mark{
+    display:flex; align-items:baseline; gap:5px; padding-right:14px;
+    border-right:1px solid var(--line); align-self:stretch;
+  }
+  .mark b{font-size:14px; font-weight:700; letter-spacing:-.2px; align-self:center}
+  .mark i{font-style:normal; font-size:10px; color:var(--ink-3); align-self:center}
+
+  form.find{display:flex; align-items:center; gap:6px}
   input.sym{
-    width:130px; padding:7px 10px; border:1px solid var(--border); border-radius:6px;
-    background:var(--hover); color:var(--text); font:inherit; outline:none;
+    width:112px; height:31px; padding:0 10px; border:1px solid var(--line);
+    border-radius:var(--r); background:var(--bg); color:var(--ink);
+    font:inherit; font-weight:600; letter-spacing:.4px; outline:none;
     text-transform:uppercase;
   }
-  input.sym:focus{border-color:var(--blue)}
-  button{
-    padding:6px 11px; border:1px solid transparent; border-radius:6px; cursor:pointer;
-    background:transparent; color:var(--text-2); font:inherit; transition:.12s;
-  }
-  button:hover{background:var(--hover); color:var(--text)}
-  button.primary{background:var(--blue); color:#fff; font-weight:600}
-  button.primary:hover{background:#5a9dff}
-  button.on{background:var(--panel); color:var(--blue); font-weight:600}
-  button:disabled{opacity:.45; cursor:default}
-  .chip{font-size:12px; padding:5px 9px}
-  .chip.beta i{
-    font-style:normal; font-size:9px; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--yellow); border:1px solid var(--yellow); border-radius:3px;
-    padding:1px 3px; margin-left:3px; vertical-align:1px
-  }
-  .spacer{flex:1}
-  .status{font-size:11px; color:var(--muted); white-space:nowrap}
-  .status.err{color:var(--red)}
-  .status.busy{color:var(--yellow)}
+  input.sym::placeholder{color:var(--ink-3); font-weight:400; letter-spacing:0}
+  input.sym:hover{border-color:#2a3444}
+  input.sym:focus{border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-soft)}
 
-  /* ── Body ──────────────────────────────────────────────────── */
-  .body{flex:1; display:flex; min-height:0}
-  .chart-wrap{flex:1; min-width:0; position:relative; background:var(--bg)}
-  .placeholder{
-    position:absolute; inset:0; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:10px; color:var(--muted);
+  /* The authoritative readout. Everything else in the header defers to it. */
+  .quote{display:flex; align-items:center; gap:12px; min-width:0}
+  .quote .price{
+    font-size:25px; font-weight:650; letter-spacing:-.6px; line-height:1;
+    transition:color var(--tick) ease-out;
   }
-  .placeholder h2{margin:0; font-size:15px; font-weight:600; color:var(--text-2)}
+  .quote .price.lift-up{color:var(--up)}
+  .quote .price.lift-down{color:var(--down)}
+  .quote .delta{font-size:13px; font-weight:600; line-height:1}
+  .quote .meta{font-size:10.5px; color:var(--ink-3); line-height:1.35}
+  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-2)}
+  .spacer{flex:1}
+
+  /* ── Controls ────────────────────────────────────────────────────────── */
+  button{
+    height:29px; padding:0 10px; border:1px solid transparent; border-radius:var(--r);
+    background:transparent; color:var(--ink-2); font:inherit; font-size:12px;
+    cursor:pointer; transition:background .12s, color .12s, border-color .12s;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  button:hover:not(:disabled){background:var(--hover); color:var(--ink)}
+  button:disabled{opacity:.4; cursor:not-allowed}
+  button.on{background:var(--amber-soft); color:var(--amber); border-color:#f0a93540; font-weight:600}
+  button.go{background:var(--amber); color:#1a1204; font-weight:650; border-color:var(--amber)}
+  button.go:hover:not(:disabled){background:#ffbc4d}
+
+  .seg{display:flex; gap:1px; padding:2px; background:var(--bg); border:1px solid var(--line); border-radius:9px}
+  .seg button{height:25px; padding:0 9px; font-size:11.5px; font-weight:600; border-radius:6px}
+  .seg button.on{background:var(--raised); color:var(--amber); border-color:transparent}
+
+  /* Live state has to be readable without colour alone — hence the label. */
+  .live{
+    display:inline-flex; align-items:center; gap:6px; height:29px; padding:0 10px;
+    border:1px solid var(--line); border-radius:var(--r); background:var(--bg);
+    font-size:11px; font-weight:650; letter-spacing:.5px; color:var(--ink-3);
+    cursor:pointer;
+  }
+  .live:hover{border-color:#2a3444; color:var(--ink-2)}
+  .live.on{color:var(--amber); border-color:#f0a93540; background:var(--amber-soft)}
+  .live .led{width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.45}
+  .live.on .led{opacity:1; animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  @media (prefers-reduced-motion: reduce){ .live.on .led{animation:none} }
+
+  /* ── Body ────────────────────────────────────────────────────────────── */
+  .body{flex:1; display:flex; min-height:0}
+
+  /* ── Market rail ─────────────────────────────────────────────────────── */
+  .rail{
+    width:var(--rail); flex:0 0 var(--rail); background:var(--surface);
+    border-right:1px solid var(--line); overflow-y:auto; padding:6px;
+  }
+  .rail-h{
+    font-size:10px; font-weight:700; color:var(--ink-3); letter-spacing:.4px;
+    padding:6px 8px 8px;
+  }
+  .mkt{
+    width:100%; height:auto; display:block; padding:6px 8px; border-radius:var(--r);
+    text-align:left; border:1px solid transparent; margin-bottom:1px;
+  }
+  .mkt:hover{background:var(--hover)}
+  .mkt.on{background:var(--raised); border-color:#f0a93533}
+  .mkt .s{font-size:12px; font-weight:650; color:var(--ink); display:block}
+  .mkt.on .s{color:var(--amber)}
+  .mkt .p{font-size:11px; color:var(--ink-2); display:block; transition:color var(--tick) ease-out}
+  .mkt .p.lift-up{color:var(--up)} .mkt .p.lift-down{color:var(--down)}
+
+  /* ── Chart ───────────────────────────────────────────────────────────── */
+  .chart{flex:1; min-width:0; position:relative; background:var(--bg)}
+  .veil{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:12px; padding:24px;
+    text-align:center; background:var(--bg);
+  }
+  .veil h2{margin:0; font-size:15px; font-weight:600; color:var(--ink)}
+  .veil p{margin:0; font-size:12.5px; color:var(--ink-2); max-width:46ch; line-height:1.6}
+  .veil.bad h2{color:var(--down)}
   .spin{
-    width:22px; height:22px; border:2px solid var(--border);
-    border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite;
+    width:20px; height:20px; border:2px solid var(--line);
+    border-top-color:var(--amber); border-radius:50%; animation:spin .7s linear infinite;
   }
   @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){ .spin{animation-duration:2s} }
 
-  /* ── Sidebar ───────────────────────────────────────────────── */
+  /* trading-vue's built-in legend reads "On/a Hn/a Ln/a" whenever the cursor is
+     away, which is most of the time. It only has real values under the pointer,
+     so that is the only time it shows. */
+  .trading-vue-legend{
+    opacity:0; transition:opacity .12s ease-out;
+    transform:translateY(28px);   /* clears the key, which is always there */
+  }
+  .chart:hover .trading-vue-legend{opacity:.9}
+
+  /* Legend for what dashed geometry means — the projection is the one thing
+     a new viewer will otherwise misread as confirmed price action. Anchored to
+     the top: the bottom of the chart belongs to the RSI pane. */
+  .key{
+    position:absolute; left:12px; top:10px; display:flex; gap:14px;
+    padding:6px 10px; background:#0d1116e0; border:1px solid var(--line);
+    border-radius:var(--r); font-size:10.5px; color:var(--ink-2);
+    pointer-events:none; backdrop-filter:blur(3px);
+  }
+  .key span{display:flex; align-items:center; gap:5px}
+  .key u{width:14px; height:0; border-top:2px solid currentColor; text-decoration:none}
+  .key u.dash{border-top-style:dashed; opacity:.85}
+
+  /* ── Pattern panel ───────────────────────────────────────────────────── */
   aside{
-    width:var(--side); flex:0 0 var(--side); background:var(--panel);
-    border-left:1px solid var(--border); overflow-y:auto; padding:14px;
+    width:var(--panel); flex:0 0 var(--panel); background:var(--surface);
+    border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0;
   }
-  aside::-webkit-scrollbar{width:8px}
-  aside::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px}
-  h3{
-    margin:0 0 8px; font-size:10px; font-weight:700; letter-spacing:.9px;
-    text-transform:uppercase; color:var(--muted);
+  .stats{
+    display:grid; grid-template-columns:1fr 1fr; gap:1px;
+    background:var(--line-soft); border-bottom:1px solid var(--line);
   }
-  .card{background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:11px; margin-bottom:14px}
-  .row{display:flex; justify-content:space-between; align-items:baseline; padding:3px 0; font-size:12px}
-  .row span:first-child{color:var(--muted)}
-  .row b{font-weight:600; font-variant-numeric:tabular-nums}
-  .big{font-size:22px; font-weight:700; letter-spacing:-.5px; font-variant-numeric:tabular-nums}
-  .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--yellow)}
-  .bar{height:4px; border-radius:2px; background:var(--border); overflow:hidden; margin-top:7px}
-  .bar>i{display:block; height:100%; background:var(--blue)}
+  .stat{background:var(--surface); padding:9px 12px}
+  .stat dt{font-size:10px; color:var(--ink-3); margin:0 0 3px}
+  .stat dd{margin:0; font-size:13px; font-weight:600; color:var(--ink)}
+  .stat .aside{display:block; font-size:10px; font-weight:400; color:var(--ink-3); margin-top:1px}
+  .stat .dim{font-weight:400; color:var(--ink-3)}
+
+  .panel-h{
+    display:flex; align-items:center; gap:8px; padding:10px 12px 8px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .panel-h h2{margin:0; font-size:12px; font-weight:650; color:var(--ink)}
+  .panel-h .n{font-size:11px; color:var(--ink-3); font-weight:500}
+  .filter{
+    flex:1; min-width:0; height:26px; padding:0 9px; border:1px solid var(--line);
+    border-radius:var(--r); background:var(--bg); color:var(--ink);
+    font:inherit; font-size:12px; outline:none;
+  }
+  .filter::placeholder{color:var(--ink-3)}
+  .filter:focus{border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-soft)}
+  .tools{display:flex; gap:4px; padding:0 12px 8px; border-bottom:1px solid var(--line-soft)}
+  .tools button{height:25px; font-size:11px; flex:1; justify-content:center; border:1px solid var(--line)}
+
+  .list{flex:1; overflow-y:auto; padding:6px}
+  .list::-webkit-scrollbar, .rail::-webkit-scrollbar{width:9px}
+  .list::-webkit-scrollbar-thumb, .rail::-webkit-scrollbar-thumb{
+    background:#222c3a; border-radius:5px; border:2px solid var(--surface);
+  }
+  .list::-webkit-scrollbar-thumb:hover, .rail::-webkit-scrollbar-thumb:hover{background:#2e3a4c}
+
+  .group{font-size:10px; font-weight:700; color:var(--ink-3); padding:10px 6px 5px}
+  .group:first-child{padding-top:2px}
 
   .pat{
-    display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px;
-    border-left:2px solid transparent; margin-bottom:3px; background:var(--bg);
+    width:100%; height:auto; display:block; text-align:left; padding:7px 9px;
+    border-radius:var(--r); border:1px solid transparent; margin-bottom:2px;
+    background:var(--raised);
   }
-  .pat.drawable{cursor:pointer}
-  .pat.drawable:hover{background:var(--hover)}
-  .pat.live .cat{color:var(--blue)}
-  .pat.sel{background:var(--hover); box-shadow:inset 0 0 0 1px var(--blue)}
-  .clear{float:right; color:var(--blue); cursor:pointer; letter-spacing:0; text-transform:none; font-weight:600}
-  .pat .nm{flex:1; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .pat .cat{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px}
-  .pat .st{font-size:11px; font-variant-numeric:tabular-nums; color:var(--text-2)}
-  .empty{color:var(--muted); font-size:12px; padding:6px 2px}
-  .foot{color:var(--muted); font-size:10px; text-align:center; padding-top:6px}
+  .pat:hover{background:var(--hover)}
+  .pat.on{border-color:var(--amber); background:var(--hover)}
+  .pat .top{display:flex; align-items:center; gap:7px}
+  .pat .dir{width:3px; height:13px; border-radius:2px; flex:0 0 3px}
+  .pat .nm{
+    flex:1; min-width:0; font-size:12px; font-weight:600; color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .pat.on .nm{color:var(--amber)}
+  .pat .st{font-size:11px; color:var(--ink-2); flex:0 0 auto}
+  .pat .sub{
+    display:flex; gap:8px; padding-left:10px; margin-top:2px;
+    font-size:10.5px; color:var(--ink-3);
+  }
+  .pat .sub b{font-weight:600; color:var(--ink-2)}
+  .tag{
+    font-size:9px; font-weight:700; letter-spacing:.4px; padding:1px 4px;
+    border-radius:3px; background:var(--amber-soft); color:var(--amber); flex:0 0 auto;
+  }
+  .none{padding:20px 10px; text-align:center; font-size:12px; color:var(--ink-3); line-height:1.6}
+
+  .foot{
+    padding:7px 12px; border-top:1px solid var(--line); font-size:10px;
+    color:var(--ink-3); display:flex; justify-content:space-between; gap:8px;
+  }
+  .foot b{font-weight:600; color:var(--ink-2)}
+
+  /* Below this the three columns cannot all hold their minimum width, so the
+     rail folds away first — the chart is what the window is for. */
+  @media (max-width:1180px){ :root{ --panel:284px } .rail{display:none} }
+  @media (max-width:900px){
+    aside{display:none}
+    .quote .price{font-size:20px}
+  }
 </style>
 </head>
 <body>
 
 <div id="app">
-  <div class="topbar">
-    <span class="brand">CryptVault</span><span class="ver">v{{ version }}</span>
-    <span class="sep"></span>
-    <input class="sym" v-model="symbol" @keyup.enter="analyze" spellcheck="false" placeholder="BTC-USD">
-    <button class="primary" @click="analyze" :disabled="busy">Analyze</button>
-    <span class="sep"></span>
-    <button class="chip" v-for="q in quick" :key="q" @click="pick(q)">{{ q }}</button>
+  <header>
+    <div class="mark"><b>CryptVault</b><i>{{ version }}</i></div>
+
+    <form class="find" @submit.prevent="analyze">
+      <input class="sym" v-model="symbol" spellcheck="false" placeholder="BTC"
+             aria-label="Market symbol">
+      <button class="go" type="submit" :disabled="busy">
+        {{ busy ? 'Loading' : 'Analyze' }}
+      </button>
+    </form>
+
+    <div class="quote" v-if="stats">
+      <div>
+        <div class="price num" :class="liftClass">{{ money(price) }}</div>
+      </div>
+      <div>
+        <div class="delta num" :class="stats.change >= 0 ? 'up' : 'down'">
+          {{ stats.change >= 0 ? '+' : '' }}{{ stats.change.toFixed(2) }}%
+        </div>
+        <div class="meta">{{ result.symbol }} · {{ timeframe }} · {{ result.source }}</div>
+      </div>
+    </div>
+
     <span class="spacer"></span>
-    <button class="chip beta" :class="{on: forecast}" @click="toggleForecast"
-            title="Project the trend estimate past the last bar">
-      Forecast <i>beta</i>
+
+    <button class="live" :class="{on: live}" @click="toggleLive"
+            :aria-pressed="String(live)"
+            :title="live ? 'Streaming from Hyperliquid — click to pause' : 'Poll Hyperliquid for the forming bar'">
+      <span class="led"></span>{{ live ? 'LIVE' : 'PAUSED' }}
     </button>
-    <span class="sep"></span>
-    <span class="status" :class="{err:error, busy:busy}">{{ error || status }}</span>
-    <span class="sep"></span>
-    <button class="chip" v-for="tf in timeframes" :key="tf"
-            :class="{on: tf === timeframe}" @click="setTf(tf)">{{ tf }}</button>
-  </div>
+
+    <button :class="{on: forecast}" @click="toggleForecast" :aria-pressed="String(forecast)"
+            title="Project the trend estimate past the last bar">Forecast</button>
+
+    <div class="seg" role="group" aria-label="Timeframe">
+      <button v-for="tf in timeframes" :key="tf" :class="{on: tf === timeframe}"
+              :aria-pressed="String(tf === timeframe)" @click="setTf(tf)">{{ tf }}</button>
+    </div>
+  </header>
 
   <div class="body">
-    <div class="chart-wrap" ref="wrap">
+    <nav class="rail" aria-label="Markets">
+      <div class="rail-h">Markets</div>
+      <button class="mkt" v-for="m in markets" :key="m.symbol"
+              :class="{on: result && m.symbol === result.symbol}" @click="pick(m.symbol)">
+        <span class="s">{{ m.symbol }}</span>
+        <span class="p num" :class="m.lift">{{ money(m.price) }}</span>
+      </button>
+      <div class="none" v-if="!markets.length" style="padding:12px 6px">Offline</div>
+    </nav>
+
+    <div class="chart" ref="wrap">
       <trading-vue v-if="chart" ref="tv"
-        :data="chart" :width="w" :height="h" :title-txt="title"
+        :data="chart" :width="w" :height="h" title-txt=""
         :overlays="overlays" :toolbar="false"
-        :color-back="c.bg" :color-grid="c.grid" :color-text="c.muted"
-        :color-title="c.text" :color-cross="c.text2" :color-scale="c.border"
-        :color-panel="c.panel" :color-text-h-l="c.text"
+        :color-back="c.bg" :color-grid="c.grid" :color-text="c.ink3"
+        :color-title="c.ink" :color-cross="c.ink2" :color-scale="c.line"
+        :color-panel="c.raised" :color-text-h-l="c.ink"
         font='11px "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif'>
       </trading-vue>
-      <div class="placeholder" v-if="!chart">
-        <div class="spin" v-if="busy"></div>
-        <h2 v-else>Enter a symbol and press Analyze</h2>
-        <div v-if="!busy" style="font-size:12px">Charts by trading-vue-js · patterns by CryptVault</div>
+
+      <div class="key" v-if="chart">
+        <span><u></u> confirmed</span>
+        <span :style="{color: c.amber}"><u class="dash"></u> projected</span>
+      </div>
+
+      <div class="veil bad" v-if="error">
+        <h2>Could not load {{ symbol }}</h2>
+        <p>{{ error }}</p>
+        <button class="go" @click="analyze">Try again</button>
+      </div>
+      <div class="veil" v-else-if="!chart">
+        <template v-if="busy">
+          <div class="spin"></div>
+          <p>Fetching {{ symbol }} and scanning for patterns…</p>
+        </template>
+        <template v-else>
+          <h2>Pick a market to begin</h2>
+          <p>Type a symbol or choose one from the rail. CryptVault reads the
+             candles, draws every pattern it finds, and projects where each one
+             points.</p>
+        </template>
       </div>
     </div>
 
     <aside>
-      <h3>Overview</h3>
-      <div class="card">
-        <div class="big" :class="dirClass">{{ stats ? fmt(stats.price) : '—' }}</div>
-        <div class="row" style="padding-top:2px">
-          <span>{{ result ? result.symbol : 'No symbol' }}</span>
-          <b :class="stats && stats.change >= 0 ? 'up' : 'down'" v-if="stats">
-            {{ stats.change >= 0 ? '+' : '' }}{{ stats.change.toFixed(2) }}%
-          </b>
-        </div>
-        <template v-if="stats">
-          <div class="row"><span>Range</span><b>{{ fmt(stats.low) }} – {{ fmt(stats.high) }}</b></div>
-          <div class="row"><span>Bars</span><b>{{ stats.bars }}</b></div>
-          <div class="row"><span>Signal</span><b :class="signalClass">{{ stats.signal }}</b></div>
-          <div class="row"><span>Bull / Bear</span><b><span class="up">{{ stats.bullish }}</span> / <span class="down">{{ stats.bearish }}</span></b></div>
+      <dl class="stats" v-if="stats">
+        <div class="stat"><dt>Range · {{ stats.bars }} bars</dt>
+          <dd class="num">{{ money(stats.low) }} – {{ money(stats.high) }}</dd></div>
+        <div class="stat"><dt>Pattern bias</dt>
+          <dd :class="signalClass">{{ stats.signal }}<span class="aside num">{{ stats.bullish }} bull · {{ stats.bearish }} bear</span></dd></div>
+        <div class="stat"><dt>Forecast<template v-if="prediction"> · {{ prediction.horizon }}</template></dt>
+          <dd v-if="prediction" :class="dirClass" class="num">{{ money(prediction.predicted_price) }}<span class="aside">{{ (prediction.confidence * 100).toFixed(0) }}% confidence</span></dd>
+          <dd v-else class="dim">Not enough bars</dd></div>
+        <div class="stat"><dt>Forming now</dt>
+          <dd class="num">{{ stats.forming }}<span class="aside">of {{ stats.patterns }} patterns</span></dd></div>
+      </dl>
+
+      <div class="panel-h">
+        <h2>Patterns</h2>
+        <span class="n num">{{ shown.length }}<template v-if="shown.length !== patterns.length">/{{ patterns.length }}</template></span>
+        <input class="filter" v-model="q" placeholder="Filter…" aria-label="Filter patterns">
+      </div>
+      <div class="tools" v-if="patterns.length">
+        <button :class="{on: showAll}" @click="toggleAll" :aria-pressed="String(showAll)">
+          {{ showAll ? 'Drawing all' : 'Draw all' }}
+        </button>
+        <button @click="clearSel" :disabled="!only && !showAll">Reset view</button>
+      </div>
+
+      <div class="list">
+        <template v-for="g in grouped">
+          <div class="group" :key="g.name">{{ g.name }} · {{ g.rows.length }}</div>
+          <button class="pat" v-for="p in g.rows" :key="p.group"
+                  :class="{on: only === p.group}" @click="focus(p)"
+                  :title="p.description">
+            <span class="top">
+              <span class="dir" :style="{background: p.bullish ? c.up : c.down}"></span>
+              <span class="nm">{{ p.name }}</span>
+              <span class="tag" v-if="p.projected">SOON</span>
+              <span class="st num">{{ (p.strength * 100).toFixed(0) }}%</span>
+            </span>
+            <span class="sub">
+              <span class="num">{{ when(p.at) }}</span>
+              <span v-if="p.target">target <b class="num">{{ money(p.target) }}</b></span>
+              <span v-if="p.stop_loss">stop <b class="num">{{ money(p.stop_loss) }}</b></span>
+            </span>
+          </button>
         </template>
-      </div>
 
-      <h3>Forecast</h3>
-      <div class="card">
-        <template v-if="prediction">
-          <div class="row"><span>Direction</span><b :class="dirClass">{{ prediction.direction }}</b></div>
-          <div class="row"><span>Target</span><b>{{ fmt(prediction.predicted_price) }}</b></div>
-          <div class="row"><span>Horizon</span><b>{{ prediction.horizon }}</b></div>
-          <div class="row"><span>Confidence</span><b>{{ (prediction.confidence * 100).toFixed(0) }}%</b></div>
-          <div class="bar"><i :style="{width: (prediction.confidence * 100) + '%'}"></i></div>
-        </template>
-        <div class="empty" v-else>Run an analysis to see the forecast.</div>
-      </div>
-
-      <h3>
-        Patterns <span v-if="patterns.length">({{ patterns.length }})</span>
-        <a v-if="only" class="clear" @click="only = null">show top 3</a>
-      </h3>
-      <div v-if="patterns.length">
-        <div class="pat" v-for="(p, i) in patterns" :key="i"
-             :class="{drawable: p.drawn, sel: only === p.group, live: isDrawn(p)}"
-             :style="{borderLeftColor: p.bullish ? c.green : c.red}"
-             @click="isolate(p)">
-          <div style="min-width:0;flex:1">
-            <div class="nm">{{ p.name }}</div>
-            <div class="cat">
-              {{ p.category }}
-              <span v-if="isDrawn(p)"> · on chart</span>
-              <span v-else-if="p.drawn"> · click to draw</span>
-            </div>
-          </div>
-          <div class="st">{{ (p.strength * 100).toFixed(0) }}%</div>
+        <!-- With no result at all there is nothing to say about patterns; the
+             chart is already explaining what went wrong. -->
+        <div class="none" v-if="!result"></div>
+        <div class="none" v-else-if="!patterns.length">
+          No patterns in this window. Try a longer timeframe — structure needs
+          bars to form.
+        </div>
+        <div class="none" v-else-if="!shown.length">
+          Nothing matches “{{ q }}”.
         </div>
       </div>
-      <div class="empty" v-else>No patterns detected yet.</div>
 
-      <div class="foot">CryptVault v{{ version }} · MeridianAlgo</div>
+      <div class="foot">
+        <span>Click a pattern to isolate it</span>
+        <b v-if="result">{{ result.source }}</b>
+      </div>
     </aside>
   </div>
 </div>
@@ -206,11 +428,13 @@
 (function () {
   var lib = window.TradingVueLib || window.TradingVueJs;
   var C = {
-    bg: '#0b0e14', panel: '#111621', grid: '#1a2130', border: '#1e2635',
-    text: '#e6ebf5', text2: '#9aa7bd', muted: '#5f6b80',
-    blue: '#3f8cff', green: '#26a69a', red: '#ef5350'
+    bg: '#080a0e', surface: '#0d1116', raised: '#131922', grid: '#161d27',
+    line: '#1e2632', ink: '#e8edf5', ink2: '#93a1b5', ink3: '#6e7e94',
+    amber: '#f0a935', up: '#26a69a', down: '#ef5350'
   };
   var FONT = '11px "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif';
+  var TICK_MS = 4000;        // live price poll
+  var REANALYZE_MS = 90000;  // full pattern rescan while live
 
   // ── Custom overlay: renders the geometry Python computed ──────────────
   // Every shape is expressed as [timestamp, price] pairs, so the diagram
@@ -220,16 +444,17 @@
     mixins: [lib.Overlay],
     methods: {
       meta_info: function () {
-        return { author: 'MeridianAlgo', version: '1.0.0', desc: 'CryptVault pattern geometry' };
+        return { author: 'MeridianAlgo', version: '2.0.0', desc: 'CryptVault pattern geometry' };
       },
       use_for: function () { return ['CVShapes']; },
-      data_colors: function () { return [C.text2]; },
+      data_colors: function () { return [C.ink2]; },
       legend: function () { return []; },
       draw: function (ctx) {
         var layout = this.$props.layout;
         var st = this.$props.settings || {};
         var list = st.shapes || [];
-        var visible = st.only ? [st.only] : (st.defaults || []);
+        // `null` means draw everything; otherwise only these groups.
+        var visible = st.only ? [st.only] : (st.all ? null : (st.defaults || []));
         var X = function (t) { return layout.t2screen(t); };
         var Y = function (p) { return layout.$2screen(p); };
 
@@ -244,13 +469,17 @@
 
         for (var i = 0; i < list.length; i++) {
           var s = list[i];
-          if (s.g && visible.indexOf(s.g) < 0) continue;
+          if (s.g && visible && visible.indexOf(s.g) < 0) continue;
           if (s.k === 'poly') this.poly(ctx, s, X, Y);
           else if (s.k === 'dot') this.dot(ctx, s, X, Y);
           else if (s.k === 'mark') this.mark(ctx, s, X, Y);
           else if (s.k === 'text') labels.push(s);
         }
-        for (var j = 0; j < labels.length; j++) this.label(ctx, labels[j], X, Y);
+        // With every group drawn at once the labels alone would be a wall of
+        // text, so they are dropped and the diagrams speak for themselves.
+        if (!st.all || st.only) {
+          for (var j = 0; j < labels.length; j++) this.label(ctx, labels[j], X, Y);
+        }
 
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
@@ -280,7 +509,7 @@
         }
         if (s.f) {
           ctx.closePath();
-          ctx.globalAlpha = 0.09;
+          ctx.globalAlpha = s.a != null ? s.a : 0.09;
           ctx.fillStyle = s.f;
           ctx.fill();
           ctx.globalAlpha = 1;
@@ -356,22 +585,35 @@
     computed: { sett: function () { return this.$props.settings; } }
   };
 
+  var CATEGORY = [
+    ['forming', 'Forming now'],
+    ['reversal', 'Reversal'],
+    ['continuation', 'Continuation'],
+    ['harmonic', 'Harmonic'],
+    ['divergence', 'Divergence'],
+    ['candlestick', 'Candlestick']
+  ];
+
   new Vue({
     el: '#app',
     data: {
       c: C,
       version: '—',
-      symbol: 'BTC-USD',
-      timeframe: '3M',
-      timeframes: ['1m', '5m', '15m', '1H', '1M', '3M', '6M', '1Y', '2Y'],
-      quick: ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'],
+      symbol: 'BTC',
+      timeframe: '1H',
+      timeframes: ['1m', '5m', '15m', '1H', '4H', '1D', '1W'],
+      markets: [],
       overlays: [CVShapes],
       result: null,
       only: null,
+      showAll: false,
+      q: '',
       forecast: true,
+      live: true,
+      livePrice: null,
+      lift: '',
       busy: false,
       error: '',
-      status: 'Ready',
       w: 800, h: 600
     },
     computed: {
@@ -386,13 +628,30 @@
       stats: function () { return this.result ? this.result.stats : null; },
       prediction: function () { return this.result ? this.result.prediction : null; },
       patterns: function () { return this.result ? this.result.patterns : []; },
-      drawnNow: function () {
-        if (!this.result) return [];
-        if (this.only) return [this.only];
-        var ov = this.result.onchart.filter(function (o) { return o.type === 'CVShapes'; })[0];
-        return ov ? ov.settings.defaults : [];
+      price: function () {
+        if (this.livePrice != null) return this.livePrice;
+        return this.stats ? this.stats.price : null;
       },
-      title: function () { return this.result ? this.result.symbol + '  ·  ' + this.timeframe : 'CryptVault'; },
+      liftClass: function () { return this.lift ? 'lift-' + this.lift : ''; },
+      shown: function () {
+        var q = this.q.trim().toLowerCase();
+        if (!q) return this.patterns;
+        return this.patterns.filter(function (p) {
+          return (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0;
+        });
+      },
+      grouped: function () {
+        var rows = this.shown, out = [];
+        CATEGORY.forEach(function (pair) {
+          var hit = rows.filter(function (p) { return p.category === pair[0]; });
+          if (hit.length) out.push({ name: pair[1], rows: hit });
+        });
+        // Anything with an unexpected category still has to appear somewhere.
+        var known = CATEGORY.map(function (p) { return p[0]; });
+        var rest = rows.filter(function (p) { return known.indexOf(p.category) < 0; });
+        if (rest.length) out.push({ name: 'Other', rows: rest });
+        return out;
+      },
       dirClass: function () {
         if (!this.prediction) return '';
         return { UP: 'up', DOWN: 'down' }[this.prediction.direction] || 'flat';
@@ -407,8 +666,20 @@
       this.resize();
       window.addEventListener('resize', this.resize);
       fetch('/api/meta').then(function (r) { return r.json(); })
-        .then(function (m) { self.version = m.version; }).catch(function () {});
+        .then(function (m) {
+          self.version = m.version;
+          if (m.timeframes && m.timeframes.length) self.timeframes = m.timeframes;
+          self.markets = (m.markets || []).map(function (x) { return { symbol: x.symbol, price: x.price, lift: '' }; });
+        }).catch(function () {});
       this.analyze();
+      this.timers = [
+        setInterval(this.pollTick, TICK_MS),
+        setInterval(this.pollMarkets, TICK_MS * 3),
+        setInterval(this.refresh, REANALYZE_MS)
+      ];
+    },
+    beforeDestroy: function () {
+      (this.timers || []).forEach(clearInterval);
     },
     methods: {
       resize: function () {
@@ -417,72 +688,216 @@
         this.w = el.clientWidth;
         this.h = el.clientHeight;
       },
-      fmt: function (v) {
+      money: function (v) {
         if (v == null || !isFinite(v)) return '—';
         var dp = Math.abs(v) >= 100 ? 2 : Math.abs(v) >= 1 ? 3 : 6;
-        return '$' + v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+        return v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
       },
-      pick: function (q) { this.symbol = q + '-USD'; this.analyze(); },
+      when: function (t) {
+        if (!t) return '';
+        var d = new Date(t), now = Date.now();
+        var opts = (now - t) < 3 * 86400000
+          ? { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+          : { year: '2-digit', month: 'short', day: 'numeric' };
+        return d.toLocaleString(undefined, opts);
+      },
+      pick: function (s) { this.symbol = s; this.analyze(); },
+      setTf: function (tf) {
+        if (tf === this.timeframe) return;
+        this.timeframe = tf;
+        this.analyze();
+      },
+
+      // ── Live mode ─────────────────────────────────────────────────────
+      toggleLive: function () {
+        this.live = !this.live;
+        if (this.live) this.pollTick();
+      },
+      // A brief colour lift is the whole motion budget: it makes a new tick
+      // legible without anything on screen moving.
+      flash: function (dir) {
+        var self = this;
+        this.lift = dir;
+        clearTimeout(this._liftT);
+        this._liftT = setTimeout(function () { self.lift = ''; }, 550);
+      },
+      pollTick: function () {
+        var self = this;
+        if (!this.live || !this.result || this.busy || !this.result.live) return;
+        fetch('/api/tick?symbol=' + encodeURIComponent(this.result.symbol) +
+              '&tf=' + this.timeframe)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (t) {
+            if (!t || !t.price || !self.result) return;
+            var prev = self.price;
+            self.livePrice = t.price;
+            if (prev != null && t.price !== prev) self.flash(t.price > prev ? 'up' : 'down');
+            self.applyBar(t.bar);
+          })
+          .catch(function () {});
+      },
+      // Splice, never index-assign: Vue 2 cannot see `arr[i] = v`, and the chart
+      // would keep drawing the stale bar.
+      applyBar: function (bar) {
+        var d = this.result.chart.data;
+        if (!d.length || !bar) return;
+        if (bar[0] === d[d.length - 1][0]) d.splice(d.length - 1, 1, bar);
+        else if (bar[0] > d[d.length - 1][0]) d.push(bar);
+      },
+      pollMarkets: function () {
+        var self = this;
+        if (!this.live || !this.markets.length) return;
+        fetch('/api/markets').then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            if (!j) return;
+            var by = {};
+            (j.markets || []).forEach(function (m) { by[m.symbol] = m.price; });
+            self.markets.forEach(function (m, i) {
+              var p = by[m.symbol];
+              if (p == null || p === m.price) return;
+              self.$set(self.markets, i, {
+                symbol: m.symbol, price: p, lift: p > m.price ? 'lift-up' : 'lift-down'
+              });
+            });
+          }).catch(function () {});
+      },
+      refresh: function () {
+        if (this.live && this.result && !this.busy) this.analyze(true);
+      },
+
+      // ── Pattern selection ─────────────────────────────────────────────
+      overlay: function (name) {
+        if (!this.result) return null;
+        return this.result.onchart.filter(function (o) { return o.name === name; })[0] || null;
+      },
+      shapesOverlay: function () { return this.overlay('Patterns'); },
+      toggleForecast: function () {
+        this.forecast = !this.forecast;
+        this.syncForecast();
+      },
+      // Isolating a pattern means isolating it: the trend cone is a different
+      // claim about the future and sweeps across the same space. It comes back
+      // the moment the selection is cleared.
+      syncForecast: function () {
+        var ov = this.overlay('Forecast (beta)');
+        if (ov) ov.settings.display = this.forecast && !this.only;  // deep-watched
+      },
+      toggleAll: function () {
+        this.showAll = !this.showAll;
+        this.only = null;
+        var ov = this.shapesOverlay();
+        if (ov) { ov.settings.all = this.showAll; ov.settings.only = null; }
+        this.syncForecast();
+        if (this.showAll) this.fitRange();
+      },
+      clearSel: function () {
+        this.only = null;
+        this.showAll = false;
+        var ov = this.shapesOverlay();
+        if (ov) { ov.settings.only = null; ov.settings.all = false; }
+        this.syncForecast();
+        this.fitRange();
+      },
+      // Isolating a pattern is only half the job: a Double Top from 300 bars
+      // back is still off-screen. Scroll to it too, or "show me this pattern"
+      // quietly does nothing.
+      focus: function (p) {
+        var ov = this.shapesOverlay();
+        if (!ov) return;
+        if (this.only === p.group) return this.clearSel();
+        this.only = p.group;
+        this.showAll = false;
+        ov.settings.only = p.group;
+        ov.settings.all = false;
+        this.syncForecast();
+        this.scrollTo(p);
+      },
+      barStep: function () {
+        var d = this.result.chart.data;
+        if (!d || d.length < 2) return 3600000;
+        return (d[d.length - 1][0] - d[0][0]) / (d.length - 1);
+      },
+      scrollTo: function (p) {
+        var self = this;
+        setTimeout(function () {
+          if (!self.$refs.tv || !self.result) return;
+          var d = self.result.chart.data;
+          var step = self.barStep();
+          var last = d[d.length - 1][0];
+          var a = p.at - step * 70;
+          // A projection lives past the last bar, so the window has to reach
+          // into the future or the whole point of it is cropped away.
+          var b = (p.projected || p.target) ? Math.max(self.result.draw_end, last) + step * 4
+                                            : p.at + step * 70;
+          if (b - a < step * 60) b = a + step * 60;
+          try { self.$refs.tv.setRange(a, b); } catch (e) {}
+        }, 60);
+      },
       // Patterns can span the whole series, but trading-vue opens on the last
-      // ~50 candles — so fit the range to the data or half a diagram is off-screen.
+      // ~50 candles — fit the range or half the geometry is off-screen.
       fitRange: function () {
         var self = this;
         setTimeout(function () {
           var d = self.result && self.result.chart.data;
           if (!d || d.length < 2 || !self.$refs.tv) return;
-          // Intraday windows run to ~1400 bars; showing every one of them
-          // shrinks the pattern diagrams to nothing. Open on the recent slice.
-          var first = Math.max(0, d.length - 400);
+          // Intraday windows run to ~700 bars; showing every one shrinks the
+          // diagrams to nothing. Open on the recent slice.
+          var first = Math.max(0, d.length - 260);
           var end = d[d.length - 1][0];
-          if (self.forecast && self.result.forecast_end) {
-            end = Math.max(end, self.result.forecast_end);
+          // Projections can reach eighty bars out. Letting the default view
+          // stretch that far would hand a fifth of the chart to empty space and
+          // shrink the candles — selecting a pattern is what zooms to its
+          // projection, so here only a hint of the future is needed.
+          if (self.result.draw_end) {
+            end = Math.min(self.result.draw_end, end + (end - d[first][0]) * 0.14);
           }
           var pad = (end - d[first][0]) * 0.02;
           try { self.$refs.tv.setRange(d[first][0] - pad, end + pad); } catch (e) {}
         }, 120);
       },
-      isDrawn: function (p) { return this.drawnNow.indexOf(p.group) >= 0; },
-      overlay: function (name) {
-        if (!this.result) return null;
-        return this.result.onchart.filter(function (o) { return o.name === name; })[0] || null;
-      },
-      toggleForecast: function () {
-        this.forecast = !this.forecast;
-        var ov = this.overlay('Forecast (beta)');
-        if (ov) ov.settings.display = this.forecast;   // deep-watched by the overlay
-      },
-      isolate: function (p) {
-        if (!p.drawn || !this.result) return;
-        this.only = this.only === p.group ? null : p.group;
-        var ov = this.result.onchart.filter(function (o) { return o.type === 'CVShapes'; })[0];
-        if (ov) ov.settings.only = this.only;   // deep-watched by the overlay
-      },
-      setTf: function (tf) {
-        if (tf === this.timeframe) return;
-        this.timeframe = tf;
-        if (this.result) this.analyze();
-      },
-      analyze: function () {
+
+      // `quiet` marks a background refresh. Vue hands the DOM event to a bare
+      // method reference in a template, so anything truthy would otherwise pass
+      // for one — and a user-triggered failure would show no error at all.
+      analyze: function (quiet) {
+        quiet = quiet === true;
         var self = this;
         var sym = (this.symbol || '').trim().toUpperCase();
         if (!sym || this.busy) return;
         this.symbol = sym;
         this.busy = true;
-        this.error = '';
-        this.status = 'Fetching ' + sym + ' …';
+        if (!quiet) this.error = '';
+
+        var keep = quiet ? { only: this.only, all: this.showAll } : null;
 
         fetch('/api/analyze?symbol=' + encodeURIComponent(sym) + '&tf=' + this.timeframe)
           .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (res) {
             if (!res.ok || res.j.error) throw new Error(res.j.error || 'Request failed');
-            self.only = null;
+            self.error = '';
+            self.livePrice = null;
             self.result = res.j;
-            var fc = self.overlay('Forecast (beta)');
-            if (fc) fc.settings.display = self.forecast;
-            self.status = res.j.stats.bars + ' bars · ' + res.j.stats.patterns + ' patterns';
-            self.$nextTick(function () { self.resize(); self.fitRange(); });
+
+            // A background refresh must not yank the view out from under
+            // someone who is reading one pattern.
+            var ov = self.shapesOverlay();
+            if (keep && ov) {
+              var stillThere = ov.settings.groups.indexOf(keep.only) >= 0;
+              self.only = stillThere ? keep.only : null;
+              self.showAll = keep.all;
+              ov.settings.only = self.only;
+              ov.settings.all = keep.all;
+            } else {
+              self.only = null;
+              self.showAll = false;
+            }
+            self.syncForecast();
+            self.$nextTick(function () {
+              self.resize();
+              if (!quiet) self.fitRange();
+            });
           })
-          .catch(function (e) { self.error = e.message; })
+          .catch(function (e) { if (!quiet) { self.error = e.message; self.result = null; } })
           .then(function () { self.busy = false; });
       }
     }

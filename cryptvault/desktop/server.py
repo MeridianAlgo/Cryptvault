@@ -1,10 +1,13 @@
 """
 Local HTTP server backing the desktop chart.
 
-Three routes, no framework:
+A handful of routes, no framework:
     GET /                     the single-page UI
     GET /vendor/<file>        Vue 2 + trading-vue-js, downloaded once and cached
-    GET /api/analyze?...      JSON analysis payload
+    GET /api/meta             version, timeframes, the market rail
+    GET /api/analyze?...      full JSON analysis payload
+    GET /api/tick?...         live price and the bar still forming (polled)
+    GET /api/markets          live mids for the watchlist
 
 Binds to 127.0.0.1 only — nothing is exposed off the machine.
 """
@@ -81,13 +84,23 @@ class _Handler(BaseHTTPRequestHandler):
                 from ..__version__ import __version__
                 self._json(200, {"version": __version__,
                                  "timeframes": list(api.TIMEFRAMES),
-                                 "default": api.DEFAULT_TF})
+                                 "default": api.DEFAULT_TF,
+                                 "markets": api.markets()})
 
             elif path == "/api/analyze":
                 q = parse_qs(route.query)
                 symbol = (q.get("symbol") or [""])[0]
                 tf = (q.get("tf") or [api.DEFAULT_TF])[0]
                 self._json(200, api.analyze(symbol, tf))
+
+            elif path == "/api/tick":
+                q = parse_qs(route.query)
+                symbol = (q.get("symbol") or [""])[0]
+                tf = (q.get("tf") or [api.DEFAULT_TF])[0]
+                self._json(200, api.tick(symbol, tf))
+
+            elif path == "/api/markets":
+                self._json(200, {"markets": api.markets()})
 
             else:
                 self._json(404, {"error": "not found"})

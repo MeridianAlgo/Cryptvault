@@ -5,7 +5,7 @@
 ### AI-powered cryptocurrency & stock analysis — desktop, CLI, and Python API.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-6.4.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
+[![Version](https://img.shields.io/badge/version-6.5.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml)
 [![Lint](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml)
@@ -29,23 +29,26 @@
 
 CryptVault is a research-grade analysis platform for crypto and equities that combines:
 
-- A **desktop terminal** built on [trading-vue-js](https://github.com/tvjsx/trading-vue-js), with real candles, pan and zoom, and pattern geometry drawn directly onto the chart.
+- A **desktop terminal** built on [trading-vue-js](https://github.com/tvjsx/trading-vue-js), with live Hyperliquid candles, pan and zoom, and every detected pattern drawn directly onto the chart.
 - A **production ML ensemble** (67+ engineered features, validation-weighted stacking) achieving 1.6-2.4% MAPE on major pairs.
-- **50+ classical patterns** across 7 categories, all drawn as geometric shapes rather than markers.
+- **70+ classical patterns** across 8 categories — every one drawn as geometry on the chart, including the ones still forming.
 - **Reinforcement-learning agents** (DQN, PPO, Transformer) for trading research.
 - A **Python API**, command-line interface, and portfolio tools.
 
 ---
 
-## What's new in 6.4.0
+## What's new in 6.5.0
 
 | Area | What's new |
 |---|---|
-| **Intraday** | New `1m`, `5m`, `15m` and `1H` timeframes. Labels are now the bar interval, each with a window that stays inside Yahoo's intraday history caps. |
-| **Forecast (beta)** | The trend estimate is projected onto the chart — a dashed path to the target, a volatility envelope that widens with the horizon, and a divider at the last bar. Toggle it in the top bar. |
-| **Charting** | Charts render with **trading-vue-js**: real pan, zoom, crosshair, log scale and resizable panes *(6.3.0)*. |
-| **Diagrams** | Pattern geometry is drawn in chart coordinates and **snapped to swing wicks** — sloped H&S necklines, parabolic Cup & Handle, XABCD harmonics, divergence lines, shaded triangles *(6.3.0)*. |
-| **Tests** | Forecast and timeframe coverage added; full suite green (26/26), `cryptvault/` stays ruff-clean. |
+| **Every pattern is visible** | Previously only eight patterns got geometry and the rest did nothing when clicked. Now **all of them draw** — structures get their diagram, candlestick signals get a bracket around the exact candles — and selecting one **scrolls the chart to it**. A pattern you can list is a pattern you can see. |
+| **Live prices** | Market data now comes from the **[Hyperliquid](https://hyperliquid.xyz) public API** — the venue itself, so the newest bar is the one still forming. The chart polls the live mid every few seconds and rescans for patterns in the background. Yahoo remains the fallback for anything Hyperliquid does not list, and the panel always says which fed the chart. |
+| **Patterns projected forward** | Any pattern with a target now draws its **future**: the trigger level carried past the last bar, the measured move as a dashed path, and the target marked where and roughly when it would be reached. Trendlines keep converging past the right edge. |
+| **Forming patterns** | A new detector finds structures that have **not completed yet** and draws the missing pivots — a right shoulder that has not printed, the second peak of a double top, the apex a triangle is converging on with both breakout legs. Confirmed geometry is solid; projections are dashed, always. |
+| **New patterns** | Rectangle, Rounding Top/Bottom, Broadening Formation, Diamond Top/Bottom, Three Drives, Island Reversal, plus Three Inside/Outside, Rising & Falling Three Methods, Kicker, Belt Hold and Tri-Star. |
+| **Fewer duplicates** | The pivot scanners used to emit dozens of near-identical Double Tops stretching back months, burying everything worth seeing. Repeats are now capped per name and ranked by category. |
+| **Redesigned shell** | New three-column layout: a live market rail, one authoritative price readout, and a pattern panel with category grouping, filtering, targets and stops. Green and red now mean *the market*, and nothing else — every piece of app state speaks in amber. |
+| **Tests** | Coverage for drawability, projection, forming geometry and symbol mapping; full suite green (32/32), `cryptvault/` stays ruff-clean. |
 
 Full history: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -88,28 +91,57 @@ Pan, zoom, crosshair, log scale and pane splitters come from the chart engine.
 A local `http.server` on `127.0.0.1` serves the page and the analysis JSON —
 no Electron, no build step, no npm.
 
-### Patterns are drawn, not just labeled
+### Live by default
+
+Candles come from the Hyperliquid public info endpoint, so the last bar is the
+one still forming rather than a delayed vendor copy. While **LIVE** is on the
+chart polls the mid price every few seconds and rescans for patterns in the
+background — without moving the view out from under whatever you are reading.
+Anything Hyperliquid does not list falls back to Yahoo, and the panel names the
+source either way.
+
+### Every pattern is drawn, and clicking one shows it to you
 
 Every diagram lives in `[timestamp, price]` space, so it stays welded to the
 candles through any pan or zoom — and pivots snap to the real swing high/low so
 lines touch the wicks, not the closes.
 
-The three strongest diagrams are drawn by default; **click any pattern in the
-sidebar to isolate it** on the chart.
+Nothing is listed that cannot be shown. **Click any pattern to isolate it**, and
+the chart scrolls to where it happened; click it again to go back.
 
 | Pattern | Rendered as |
 |---|---|
 | Double / Triple Top · Bottom | M/W zigzag through the true extremes + neckline |
 | Head & Shoulders (+ inverse) | LS → armpit → Head → armpit → RS with a **sloped** neckline |
-| Triangles · Wedges | Both fitted trendlines with a shaded body |
+| Triangles · Wedges · Broadening | Both fitted trendlines, shaded when converging |
 | Flags · Pennants | Pole line + consolidation channel |
+| Rectangle | The range box, with both edges carried to the right edge |
+| Rounding Top · Bottom | The fitted arc, sampled, with its rim line |
+| Diamond · Three Drives | Four-corner ring / numbered pushes through the extremes |
+| Island Reversal | The stranded cluster, with the gaps either side marked |
 | Cup & Handle | Parabola through rim → bottom → rim, dotted handle |
 | Harmonics (Gartley, Bat, Crab…) | Labelled XABCD zigzag with shaded legs |
 | RSI · MACD Divergence | Dotted line between the diverging price pivots |
-| Any pattern with a target | Dotted horizontal target line |
-| Candlestick | Triangle marker pointing at the bar |
+| Candlestick | A bracket around the exact candles the signal is made of |
 | Always on | Swing pivot dots + fitted support/resistance |
-| Forecast *(beta)* | Dashed path to the predicted price inside a widening volatility envelope |
+
+### What happens next
+
+Two different projections, both dashed so they can never be mistaken for price
+that already printed:
+
+- **Pattern targets.** Any pattern with a measured move draws its trigger level
+  carried past the last bar, a path to the target, and the stop — placed roughly
+  as far ahead as the pattern took to form.
+- **Forming patterns.** Structures that have *not* completed yet are detected
+  separately and drawn with their missing pivots projected: a right shoulder that
+  has not printed, the second peak of a double top, or the apex a triangle is
+  converging on with both breakout legs and their measured distance.
+
+The **Forecast** toggle adds a separate short-horizon trend estimate — a dashed
+path inside a volatility envelope that widens with the square root of the
+horizon. It is an envelope, not a calibrated prediction interval, which is why
+it is labelled beta.
 
 See [`docs/DESKTOP_APP.md`](docs/DESKTOP_APP.md).
 
@@ -160,24 +192,31 @@ python cryptvault_cli.py SYMBOL [DAYS] [INTERVAL] [OPTIONS]
 
 ## Pattern library
 
-**50+ classical patterns across 7 categories.** Full reference: [`docs/PATTERNS.md`](docs/PATTERNS.md).
+**70+ classical patterns across 8 categories**, every one drawn on the chart.
+Full reference: [`docs/PATTERNS.md`](docs/PATTERNS.md).
 
 <details>
-<summary><b>Reversal (8)</b> — Head & Shoulders, Inverse H&S, Double/Triple Top & Bottom, Rising/Falling Wedge</summary>
+<summary><b>Reversal</b> — Head & Shoulders, Inverse H&S, Double/Triple Top & Bottom, Rising/Falling Wedge, Rounding Top/Bottom, Broadening, Diamond, Three Drives, Island Reversal</summary>
 
-Detected via local pivot extraction, neckline fitting, and symmetry scoring. Drawn with the actual peak/trough connectors plus a dashed neckline and projected target.
+Detected via local pivot extraction, neckline fitting, and symmetry scoring. Broadening and diamond shapes are measured pivot-to-pivot rather than by regressing every bar — the formation lives in the envelope, and a bar-wise fit averages the oscillation away. Drawn with the actual peak/trough connectors plus a dashed neckline and projected target.
 </details>
 
 <details>
-<summary><b>Continuation</b> — Triangles (Sym/Asc/Desc), Bull/Bear Flag, Pennants, Cup & Handle</summary>
+<summary><b>Continuation</b> — Triangles (Sym/Asc/Desc), Bull/Bear Flag, Pennants, Rectangle, Cup & Handle</summary>
 
-Trendline regression on swing highs and swing lows; convergence and slope tests determine the sub-type. Targets projected from breakout range.
+Trendline regression on swing highs and swing lows; convergence and slope tests determine the sub-type. A rectangle only counts once price has been rejected from each edge at least twice, otherwise every quiet stretch of chart qualifies. Targets projected from breakout range.
 </details>
 
 <details>
-<summary><b>Candlestick</b> — Doji (3 variants), Hammer, Hanging Man, Inverted Hammer, Shooting Star, Engulfing, Harami, Piercing, Dark Cloud, Morning/Evening Star, Three Soldiers/Crows</summary>
+<summary><b>Forming</b> — Head & Shoulders, Double/Triple Top & Bottom, Apex Breakout</summary>
 
-Body/wick ratio analysis with trend-context filters. Rendered as a triangle marker above or below the candle.
+Structures that have not completed yet, with the missing pivots projected into the future: a right shoulder that has not printed, the second peak of a double top, or where and when converging trendlines must cross. The payload separates confirmed pivots from projected ones so the chart never draws a hypothesis the same way it draws history.
+</details>
+
+<details>
+<summary><b>Candlestick</b> — Doji (3 variants), Hammer, Hanging Man, Inverted Hammer, Shooting Star, Marubozu, Spinning Top, Belt Hold, Engulfing, Harami, Piercing, Dark Cloud, Tweezers, Kicker, Morning/Evening Star, Three Soldiers/Crows, Three Inside/Outside, Abandoned Baby, Tri-Star, Rising/Falling Three Methods</summary>
+
+Body/wick ratio analysis with trend-context filters. Each pattern reports the number of candles it occupies, and the chart brackets exactly those — a Morning Star highlighted as one candle is a lie about the setup.
 </details>
 
 <details>
@@ -328,7 +367,7 @@ MIT — see [`LICENSE`](LICENSE).
 
 ## Credits
 
-Built with scikit-learn, yfinance, NumPy, pandas, SciPy, Matplotlib, XGBoost, and LightGBM. Charts render with [trading-vue-js](https://github.com/tvjsx/trading-vue-js).
+Market data from the [Hyperliquid](https://hyperliquid.xyz) public API, with Yahoo as a fallback. Built with scikit-learn, yfinance, NumPy, pandas, SciPy, Matplotlib, XGBoost, and LightGBM. Charts render with [trading-vue-js](https://github.com/tvjsx/trading-vue-js).
 
 Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research organization focused on open-source financial ML. Not a licensed broker or financial advisor.
 
@@ -336,6 +375,6 @@ Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research
 
 <div align="center">
 
-Version 6.4.0 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
+Version 6.5.0 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
 
 </div>
