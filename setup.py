@@ -202,6 +202,7 @@ setup(
     },
     package_data={
         "cryptvault": ["py.typed", "*.yaml", "*.yml", "*.json"],
+        "cryptvault.desktop": ["*.html"],
     },
     include_package_data=True,
     zip_safe=False,

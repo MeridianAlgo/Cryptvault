@@ -5,6 +5,27 @@ All notable changes to CryptVault will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0] - 2026-08-03
+
+### Changed
+- **Charting engine is now [trading-vue-js](https://github.com/tvjsx/trading-vue-js)**. The hand-rolled Tkinter + Matplotlib chart is gone. The desktop app is a single-page UI served by a stdlib `http.server` on `127.0.0.1`, opened in a native window via `pywebview` (optional) or the default browser. Pan, zoom, crosshair, log scaling and pane splitters now come from the chart engine instead of custom event handlers.
+- Vue 2.6.14 and trading-vue-js 1.0.2 are pinned and cached to `~/.cryptvault/vendor` on first launch — no npm, no build step, and the UI runs offline afterwards.
+
+### Added
+- `cryptvault/desktop/shapes.py` — the diagram engine. Turns pattern pivots into drawing primitives (`poly` / `dot` / `text` / `mark`) in `[timestamp, price]` space, so diagrams stay welded to the candles through any pan or zoom. Ships with a runnable `demo()` self-check.
+- `CVShapes`, a custom trading-vue overlay that renders those four primitives. New pattern diagrams are now a Python-only change.
+- Pivot **snapping**: vertices are pulled to the true swing high/low within ±2 bars, so pattern lines touch the wicks instead of floating at the close.
+- Geometry for patterns that previously had none — Bull/Bear Flags and Pennants (pole + channel), Cup & Handle (parabola through rim→bottom→rim plus the handle), harmonics (labelled XABCD zigzag with shaded legs), and RSI/MACD divergence (line between the diverging price pivots).
+- Head & Shoulders necklines are now fitted **through both armpits and sloped**, rather than drawn as a flat horizontal line.
+- `cryptvault/desktop/api.py` and `server.py` — analysis payload builder and the three-route local server (`/`, `/vendor/<file>`, `/api/analyze`).
+- `tests/test_desktop_chart.py` — geometry bounds, wick snapping, malformed-pivot resilience, and trading-vue payload schema.
+
+### Fixed
+- `Pattern.to_dict()` leaked numpy scalars (`np.bool_`, `np.float64`), which are not JSON-serializable; all fields are now coerced to plain Python types.
+
+### Removed
+- `desktop/main_window.py`, `desktop/theme.py`, and `desktop/panels/` (~1,400 lines of Tk/Matplotlib UI), replaced by ~700 lines plus one HTML page.
+
 ## [6.2.0] - 2026-06-08
 
 ### Fixed

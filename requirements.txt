@@ -11,9 +11,13 @@ yfinance>=0.2.0
 ccxt>=4.0.0
 cryptocompare>=0.7.0
 
-# Desktop Charting
+# Charting
+# Desktop app charts render with trading-vue-js in a local page (no Python dep).
+# matplotlib is still used by the CLI chart renderer.
 matplotlib>=3.5.0
-# tkinter is built-in with Python
+
+# Optional: native desktop window instead of the default browser
+# pywebview>=4.0
 
 # Optional ML Dependencies
 # torch>=1.12.0 # Uncomment for LSTM neural networks

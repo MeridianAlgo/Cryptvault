@@ -5,7 +5,7 @@
 ### AI-powered cryptocurrency & stock analysis — desktop, CLI, and Python API.
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-6.2.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
+[![Version](https://img.shields.io/badge/version-6.3.0-2ea44f)](https://github.com/MeridianAlgo/Cryptvault/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/tests.yml)
 [![Lint](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml/badge.svg)](https://github.com/MeridianAlgo/Cryptvault/actions/workflows/lint.yml)
@@ -27,7 +27,7 @@
 
 CryptVault is a research-grade analysis platform for crypto and equities that combines:
 
-- 🖥️  A **native desktop terminal** with candlestick charts, drawn pattern overlays, and ML predictions side-by-side.
+- 🖥️  A **desktop terminal** built on [trading-vue-js](https://github.com/tvjsx/trading-vue-js) — real candles, pan/zoom, and pattern geometry drawn straight onto the chart.
 - 🧠  A **production ML ensemble** (67+ engineered features, validation-weighted stacking) achieving 1.6–2.4% MAPE on major pairs.
 - 🔍  **50+ classical patterns** across 7 categories — all drawn as actual geometric shapes, not just markers.
 - 🤖  **Reinforcement-learning agents** (DQN, PPO, Transformer) for trading research.
@@ -35,15 +35,15 @@ CryptVault is a research-grade analysis platform for crypto and equities that co
 
 ---
 
-## ✨ Highlights (v6.2.0)
+## ✨ Highlights (v6.3.0)
 
 | Area | What's new |
 |---|---|
-| **Reliability** | Fixed broken `DataCache` / `portfolio` imports and a phantom `--live` module — caching, portfolio, and live analysis all work again. |
-| **Out-of-the-box** | Sensible CLI defaults (`days=100`) so `python cryptvault_cli.py BTC` runs with no extra args. |
-| **Versioning** | Single source of truth for the version — no more drift between demo, constants, and package. |
-| **Cleanup** | Removed dead shims/stubs and stray duplicate docs; consolidated docs under `docs/`. |
-| **Tests** | yfinance MultiIndex handling fixed; full suite green (18/18), `cryptvault/` stays ruff-clean. |
+| **Charting** | Dropped the hand-rolled Matplotlib canvas for **trading-vue-js** — real pan/zoom/crosshair, log scale, resizable panes. |
+| **Diagrams** | Pattern geometry is now drawn in chart coordinates and **snapped to swing wicks**: sloped H&S necklines, parabolic Cup & Handle, XABCD harmonics, divergence lines, shaded triangles. |
+| **Less code** | ~1,400 lines of Tk/Matplotlib UI replaced by ~700 lines and one HTML page. |
+| **Extensible** | One custom overlay (`CVShapes`) renders 4 primitives — new pattern diagrams are a Python change, no JavaScript. |
+| **Tests** | New geometry + payload suite; full suite green (23/23), `cryptvault/` stays ruff-clean. |
 
 Full history: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
@@ -73,34 +73,48 @@ python launch_desktop.py
 
 ## 🖥️ Desktop App
 
-A dark-themed trading terminal with three synchronized surfaces — chart, patterns, and ML.
+```bash
+python launch_desktop.py          # add `pip install pywebview` for a native window
+```
+
+A dark trading terminal rendered by **[trading-vue-js](https://github.com/tvjsx/trading-vue-js)**.
+Python computes; the chart engine draws.
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│ CryptVault 6.1   [BTC-USD]  [Analyze]   1D 5D 1M 3M 6M 1Y YTD  │
-├────────────┬──────────────────────────────────┬────────────────┤
-│            │                                  │  ML PREDICTION │
-│   Chart    │    📈 Candlestick + Patterns     │  ────────────  │
-│            │    📊 Bollinger Bands            │                │
-│  Analysis  │    📉 Volume  · RSI              │  DETECTED      │
-│            │                                  │  PATTERNS      │
-│  History   │    (pattern shapes drawn live)   │  (scrollable)  │
-├────────────┴──────────────────────────────────┴────────────────┤
-│ Status: connected · last fetch 2s · 120 candles · 12 patterns  │
-└────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│ CryptVault  [BTC-USD] [Analyze]  BTC ETH SOL …    1D 5D 1M 3M 6M 1Y   │
+├──────────────────────────────────────────────┬────────────────────────┤
+│                                              │  Overview              │
+│   Candles + Bollinger channel                │   price · change       │
+│   Pattern diagrams (CVShapes overlay)        │   range · bars         │
+│   Volume                                     │   signal               │
+│   ───────────────────────────────────────    │  Forecast              │
+│   RSI 14                                     │  Patterns (ranked)     │
+└──────────────────────────────────────────────┴────────────────────────┘
 ```
+
+Pan, zoom, crosshair, log scale and pane splitters come from the chart engine.
+A local `http.server` on `127.0.0.1` serves the page and the analysis JSON —
+no Electron, no build step, no npm.
 
 ### Patterns are drawn, not just labeled
 
+Every diagram lives in `[timestamp, price]` space, so it stays welded to the
+candles through any pan or zoom — and pivots snap to the real swing high/low so
+lines touch the wicks, not the closes.
+
 | Pattern | Rendered as |
 |---|---|
-| Double Top / Bottom | Peak-to-peak line + dashed neckline |
-| Head & Shoulders | LS → Head → RS connectors + neckline |
-| Triple Top / Bottom | Three-pivot polyline |
-| Triangles (Sym/Asc/Desc) | Fitted upper + lower trendlines |
-| Rising / Falling Wedge | Converging trendlines |
-| Any pattern with target | Dotted horizontal target line |
+| Double / Triple Top · Bottom | M/W zigzag through the true extremes + neckline |
+| Head & Shoulders (+ inverse) | LS → armpit → Head → armpit → RS with a **sloped** neckline |
+| Triangles · Wedges | Both fitted trendlines with a shaded body |
+| Flags · Pennants | Pole line + consolidation channel |
+| Cup & Handle | Parabola through rim → bottom → rim, dotted handle |
+| Harmonics (Gartley, Bat, Crab…) | Labelled XABCD zigzag with shaded legs |
+| RSI · MACD Divergence | Dotted line between the diverging price pivots |
+| Any pattern with a target | Dotted horizontal target line |
 | Candlestick | `▲` bullish / `▼` bearish marker |
+| Always on | Swing pivot dots + fitted support/resistance |
 
 See [`docs/DESKTOP_APP.md`](docs/DESKTOP_APP.md).
 
@@ -228,7 +242,7 @@ See [`cryptvault/rl/README.md`](cryptvault/rl/README.md).
 ```
 Cryptvault/
 ├── cryptvault/
-│   ├── desktop/         # Native Tk GUI (app, panels, theme)
+│   ├── desktop/         # trading-vue-js terminal (server, api, shapes, index.html)
 │   ├── patterns/        # 50+ pattern detectors (7 categories)
 │   ├── ml/              # Ensemble + feature engineering
 │   ├── rl/              # DQN / PPO / Transformer agents
@@ -326,6 +340,6 @@ Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research
 
 <div align="center">
 
-**Version 6.2.0** · Last updated June 2026 · Built for researchers, by researchers.
+**Version 6.3.0** · Last updated August 2026 · Built for researchers, by researchers.
 
 </div>

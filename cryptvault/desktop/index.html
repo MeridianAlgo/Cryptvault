@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CryptVault</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#111621; --border:#1e2635; --hover:#1a2130;
+    --text:#e6ebf5; --text-2:#9aa7bd; --muted:#5f6b80;
+    --blue:#3f8cff; --green:#26a69a; --red:#ef5350; --yellow:#f0b90b;
+    --topbar:52px; --side:290px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text); overflow:hidden;
+    font:13px/1.45 "Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{display:flex; flex-direction:column; height:100vh}
+
+  /* ── Top bar ───────────────────────────────────────────────── */
+  .topbar{
+    height:var(--topbar); flex:0 0 auto; display:flex; align-items:center; gap:8px;
+    padding:0 16px; background:var(--bg); border-bottom:1px solid var(--border);
+  }
+  .brand{font-size:16px; font-weight:700; color:var(--blue); letter-spacing:-.2px}
+  .ver{font-size:10px; color:var(--muted); margin-left:2px}
+  .sep{width:1px; height:22px; background:var(--border); margin:0 6px}
+  input.sym{
+    width:130px; padding:7px 10px; border:1px solid var(--border); border-radius:6px;
+    background:var(--hover); color:var(--text); font:inherit; outline:none;
+    text-transform:uppercase;
+  }
+  input.sym:focus{border-color:var(--blue)}
+  button{
+    padding:6px 11px; border:1px solid transparent; border-radius:6px; cursor:pointer;
+    background:transparent; color:var(--text-2); font:inherit; transition:.12s;
+  }
+  button:hover{background:var(--hover); color:var(--text)}
+  button.primary{background:var(--blue); color:#fff; font-weight:600}
+  button.primary:hover{background:#5a9dff}
+  button.on{background:var(--panel); color:var(--blue); font-weight:600}
+  button:disabled{opacity:.45; cursor:default}
+  .chip{font-size:12px; padding:5px 9px}
+  .spacer{flex:1}
+  .status{font-size:11px; color:var(--muted); white-space:nowrap}
+  .status.err{color:var(--red)}
+  .status.busy{color:var(--yellow)}
+
+  /* ── Body ──────────────────────────────────────────────────── */
+  .body{flex:1; display:flex; min-height:0}
+  .chart-wrap{flex:1; min-width:0; position:relative; background:var(--bg)}
+  .placeholder{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:10px; color:var(--muted);
+  }
+  .placeholder h2{margin:0; font-size:15px; font-weight:600; color:var(--text-2)}
+  .spin{
+    width:22px; height:22px; border:2px solid var(--border);
+    border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── Sidebar ───────────────────────────────────────────────── */
+  aside{
+    width:var(--side); flex:0 0 var(--side); background:var(--panel);
+    border-left:1px solid var(--border); overflow-y:auto; padding:14px;
+  }
+  aside::-webkit-scrollbar{width:8px}
+  aside::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px}
+  h3{
+    margin:0 0 8px; font-size:10px; font-weight:700; letter-spacing:.9px;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .card{background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:11px; margin-bottom:14px}
+  .row{display:flex; justify-content:space-between; align-items:baseline; padding:3px 0; font-size:12px}
+  .row span:first-child{color:var(--muted)}
+  .row b{font-weight:600; font-variant-numeric:tabular-nums}
+  .big{font-size:22px; font-weight:700; letter-spacing:-.5px; font-variant-numeric:tabular-nums}
+  .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--yellow)}
+  .bar{height:4px; border-radius:2px; background:var(--border); overflow:hidden; margin-top:7px}
+  .bar>i{display:block; height:100%; background:var(--blue)}
+
+  .pat{
+    display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px;
+    border-left:2px solid transparent; margin-bottom:3px; background:var(--bg);
+  }
+  .pat:hover{background:var(--hover)}
+  .pat .nm{flex:1; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .pat .cat{font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px}
+  .pat .st{font-size:11px; font-variant-numeric:tabular-nums; color:var(--text-2)}
+  .empty{color:var(--muted); font-size:12px; padding:6px 2px}
+  .foot{color:var(--muted); font-size:10px; text-align:center; padding-top:6px}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <span class="brand">CryptVault</span><span class="ver">v{{ version }}</span>
+    <span class="sep"></span>
+    <input class="sym" v-model="symbol" @keyup.enter="analyze" spellcheck="false" placeholder="BTC-USD">
+    <button class="primary" @click="analyze" :disabled="busy">Analyze</button>
+    <span class="sep"></span>
+    <button class="chip" v-for="q in quick" :key="q" @click="pick(q)">{{ q }}</button>
+    <span class="spacer"></span>
+    <span class="status" :class="{err:error, busy:busy}">{{ error || status }}</span>
+    <span class="sep"></span>
+    <button class="chip" v-for="tf in timeframes" :key="tf"
+            :class="{on: tf === timeframe}" @click="setTf(tf)">{{ tf }}</button>
+  </div>
+
+  <div class="body">
+    <div class="chart-wrap" ref="wrap">
+      <trading-vue v-if="chart"
+        :data="chart" :width="w" :height="h" :title-txt="title"
+        :overlays="overlays" :toolbar="false"
+        :color-back="c.bg" :color-grid="c.grid" :color-text="c.muted"
+        :color-title="c.text" :color-cross="c.text2" :color-scale="c.border"
+        :color-panel="c.panel" :color-text-h-l="c.text"
+        font='11px "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif'>
+      </trading-vue>
+      <div class="placeholder" v-if="!chart">
+        <div class="spin" v-if="busy"></div>
+        <h2 v-else>Enter a symbol and press Analyze</h2>
+        <div v-if="!busy" style="font-size:12px">Charts by trading-vue-js · patterns by CryptVault</div>
+      </div>
+    </div>
+
+    <aside>
+      <h3>Overview</h3>
+      <div class="card">
+        <div class="big" :class="dirClass">{{ stats ? fmt(stats.price) : '—' }}</div>
+        <div class="row" style="padding-top:2px">
+          <span>{{ result ? result.symbol : 'No symbol' }}</span>
+          <b :class="stats && stats.change >= 0 ? 'up' : 'down'" v-if="stats">
+            {{ stats.change >= 0 ? '+' : '' }}{{ stats.change.toFixed(2) }}%
+          </b>
+        </div>
+        <template v-if="stats">
+          <div class="row"><span>Range</span><b>{{ fmt(stats.low) }} – {{ fmt(stats.high) }}</b></div>
+          <div class="row"><span>Bars</span><b>{{ stats.bars }}</b></div>
+          <div class="row"><span>Signal</span><b :class="signalClass">{{ stats.signal }}</b></div>
+          <div class="row"><span>Bull / Bear</span><b><span class="up">{{ stats.bullish }}</span> / <span class="down">{{ stats.bearish }}</span></b></div>
+        </template>
+      </div>
+
+      <h3>Forecast</h3>
+      <div class="card">
+        <template v-if="prediction">
+          <div class="row"><span>Direction</span><b :class="dirClass">{{ prediction.direction }}</b></div>
+          <div class="row"><span>Target</span><b>{{ fmt(prediction.predicted_price) }}</b></div>
+          <div class="row"><span>Horizon</span><b>{{ prediction.horizon }}</b></div>
+          <div class="row"><span>Confidence</span><b>{{ (prediction.confidence * 100).toFixed(0) }}%</b></div>
+          <div class="bar"><i :style="{width: (prediction.confidence * 100) + '%'}"></i></div>
+        </template>
+        <div class="empty" v-else>Run an analysis to see the forecast.</div>
+      </div>
+
+      <h3>Patterns <span v-if="patterns.length">({{ patterns.length }})</span></h3>
+      <div v-if="patterns.length">
+        <div class="pat" v-for="(p, i) in patterns" :key="i"
+             :style="{borderLeftColor: p.bullish ? c.green : c.red}">
+          <div style="min-width:0;flex:1">
+            <div class="nm">{{ p.name }}</div>
+            <div class="cat">{{ p.category }}<span v-if="p.extra"> · drawn</span></div>
+          </div>
+          <div class="st">{{ (p.strength * 100).toFixed(0) }}%</div>
+        </div>
+      </div>
+      <div class="empty" v-else>No patterns detected yet.</div>
+
+      <div class="foot">CryptVault v{{ version }} · MeridianAlgo</div>
+    </aside>
+  </div>
+</div>
+
+<script src="/vendor/vue.min.js"></script>
+<script src="/vendor/trading-vue.min.js"></script>
+<script>
+(function () {
+  var lib = window.TradingVueLib || window.TradingVueJs;
+  var C = {
+    bg: '#0b0e14', panel: '#111621', grid: '#1a2130', border: '#1e2635',
+    text: '#e6ebf5', text2: '#9aa7bd', muted: '#5f6b80',
+    blue: '#3f8cff', green: '#26a69a', red: '#ef5350'
+  };
+  var FONT = '11px "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif';
+
+  // ── Custom overlay: renders the geometry Python computed ──────────────
+  // Every shape is expressed as [timestamp, price] pairs, so the diagram
+  // stays glued to the candles through any zoom or pan.
+  var CVShapes = {
+    name: 'CVShapes',
+    mixins: [lib.Overlay],
+    methods: {
+      meta_info: function () {
+        return { author: 'MeridianAlgo', version: '1.0.0', desc: 'CryptVault pattern geometry' };
+      },
+      use_for: function () { return ['CVShapes']; },
+      data_colors: function () { return [C.text2]; },
+      legend: function () { return []; },
+      draw: function (ctx) {
+        var layout = this.$props.layout;
+        var list = (this.$props.settings || {}).shapes || [];
+        var X = function (t) { return layout.t2screen(t); };
+        var Y = function (p) { return layout.$2screen(p); };
+
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.font = FONT;
+
+        for (var i = 0; i < list.length; i++) {
+          var s = list[i];
+          if (s.k === 'poly') this.poly(ctx, s, X, Y);
+          else if (s.k === 'dot') this.dot(ctx, s, X, Y);
+          else if (s.k === 'mark') this.mark(ctx, s, X, Y);
+          else if (s.k === 'text') this.label(ctx, s, X, Y);
+        }
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+      },
+
+      poly: function (ctx, s, X, Y) {
+        if (!s.pts || s.pts.length < 2) return;
+        ctx.beginPath();
+        for (var i = 0; i < s.pts.length; i++) {
+          var x = X(s.pts[i][0]), y = Y(s.pts[i][1]);
+          if (!isFinite(x) || !isFinite(y)) return;
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        if (s.f) {
+          ctx.closePath();
+          ctx.globalAlpha = 0.09;
+          ctx.fillStyle = s.f;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          if (!s.w) return;
+        }
+        ctx.setLineDash(s.d || []);
+        ctx.lineWidth = s.w || 1;
+        ctx.strokeStyle = s.c;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      },
+
+      dot: function (ctx, s, X, Y) {
+        var x = X(s.pt[0]), y = Y(s.pt[1]);
+        if (!isFinite(x) || !isFinite(y)) return;
+        ctx.beginPath();
+        ctx.arc(x, y, s.r || 4, 0, Math.PI * 2);
+        ctx.fillStyle = s.c;
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = C.bg;
+        ctx.stroke();
+      },
+
+      mark: function (ctx, s, X, Y) {
+        var x = X(s.pt[0]), y = Y(s.pt[1]);
+        if (!isFinite(x) || !isFinite(y)) return;
+        var d = s.up ? -1 : 1, h = 7;
+        ctx.beginPath();
+        ctx.moveTo(x, y - d * h);           // apex points at the candle
+        ctx.lineTo(x - 5, y + d * 2);
+        ctx.lineTo(x + 5, y + d * 2);
+        ctx.closePath();
+        ctx.fillStyle = s.c;
+        ctx.fill();
+      },
+
+      label: function (ctx, s, X, Y) {
+        var x = X(s.pt[0]), y = Y(s.pt[1]);
+        if (!isFinite(x) || !isFinite(y)) return;
+        var pad = 5, hh = 8;
+        var w = ctx.measureText(s.s).width + pad * 2;
+        var cy = y + (s.up ? -16 : 16);
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = C.bg;
+        this.roundRect(ctx, x - w / 2, cy - hh, w, hh * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = s.c;
+        ctx.stroke();
+        ctx.fillStyle = s.c;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(s.s, x, cy + 0.5);
+      },
+
+      roundRect: function (ctx, x, y, w, h) {
+        var r = 4;
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+    },
+    computed: { sett: function () { return this.$props.settings; } }
+  };
+
+  new Vue({
+    el: '#app',
+    data: {
+      c: C,
+      version: '—',
+      symbol: 'BTC-USD',
+      timeframe: '3M',
+      timeframes: ['1D', '5D', '1M', '3M', '6M', '1Y', '2Y'],
+      quick: ['BTC', 'ETH', 'SOL', 'BNB', 'XRP'],
+      overlays: [CVShapes],
+      result: null,
+      busy: false,
+      error: '',
+      status: 'Ready',
+      w: 800, h: 600
+    },
+    computed: {
+      chart: function () {
+        if (!this.result) return null;
+        return {
+          chart: this.result.chart,
+          onchart: this.result.onchart,
+          offchart: this.result.offchart
+        };
+      },
+      stats: function () { return this.result ? this.result.stats : null; },
+      prediction: function () { return this.result ? this.result.prediction : null; },
+      patterns: function () { return this.result ? this.result.patterns : []; },
+      title: function () { return this.result ? this.result.symbol + '  ·  ' + this.timeframe : 'CryptVault'; },
+      dirClass: function () {
+        if (!this.prediction) return '';
+        return { UP: 'up', DOWN: 'down' }[this.prediction.direction] || 'flat';
+      },
+      signalClass: function () {
+        if (!this.stats) return '';
+        return { Bullish: 'up', Bearish: 'down' }[this.stats.signal] || 'flat';
+      }
+    },
+    mounted: function () {
+      var self = this;
+      this.resize();
+      window.addEventListener('resize', this.resize);
+      fetch('/api/meta').then(function (r) { return r.json(); })
+        .then(function (m) { self.version = m.version; }).catch(function () {});
+      this.analyze();
+    },
+    methods: {
+      resize: function () {
+        var el = this.$refs.wrap;
+        if (!el) return;
+        this.w = el.clientWidth;
+        this.h = el.clientHeight;
+      },
+      fmt: function (v) {
+        if (v == null || !isFinite(v)) return '—';
+        var dp = Math.abs(v) >= 100 ? 2 : Math.abs(v) >= 1 ? 3 : 6;
+        return '$' + v.toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+      },
+      pick: function (q) { this.symbol = q + '-USD'; this.analyze(); },
+      setTf: function (tf) {
+        if (tf === this.timeframe) return;
+        this.timeframe = tf;
+        if (this.result) this.analyze();
+      },
+      analyze: function () {
+        var self = this;
+        var sym = (this.symbol || '').trim().toUpperCase();
+        if (!sym || this.busy) return;
+        this.symbol = sym;
+        this.busy = true;
+        this.error = '';
+        this.status = 'Fetching ' + sym + ' …';
+
+        fetch('/api/analyze?symbol=' + encodeURIComponent(sym) + '&tf=' + this.timeframe)
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok || res.j.error) throw new Error(res.j.error || 'Request failed');
+            self.result = res.j;
+            self.status = res.j.stats.bars + ' bars · ' + res.j.stats.patterns + ' patterns';
+            self.$nextTick(self.resize);
+          })
+          .catch(function (e) { self.error = e.message; })
+          .then(function () { self.busy = false; });
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

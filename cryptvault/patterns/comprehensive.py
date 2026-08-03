@@ -40,16 +40,18 @@ class Pattern:
     extra: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        # Detectors compare numpy scalars, so coerce to plain Python types —
+        # np.bool_/np.float64 are not JSON-serializable.
         d: Dict[str, Any] = {
             "name": self.name,
             "category": self.category,
-            "bullish": self.bullish,
+            "bullish": bool(self.bullish),
             "direction": "bullish" if self.bullish else "bearish",
-            "strength": self.strength,
-            "index": self.index,
+            "strength": float(self.strength),
+            "index": int(self.index),
             "description": self.description,
-            "target": self.target,
-            "stop_loss": self.stop_loss,
+            "target": None if self.target is None else float(self.target),
+            "stop_loss": None if self.stop_loss is None else float(self.stop_loss),
         }
         if self.extra:
             d["extra"] = self.extra
@@ -473,12 +475,29 @@ class _ChartPatternDetector:
         flag_slope = np.polyfit(np.arange(len(flag)), flag, 1)[0]
         bullish_pole = pole_move > 0
 
+        # Channel around the consolidation, for chart drawing.
+        fx = np.arange(len(flag))
+        c_hi = np.polyfit(fx, highs[pole_end:], 1)
+        c_lo = np.polyfit(fx, lows[pole_end:], 1)
+        extra_flag = {
+            "pole_start": int(pole_end - 5),
+            "pole_end": int(pole_end),
+            "start": int(pole_end),
+            "end": int(n - 1),
+            "high_start": float(np.polyval(c_hi, 0)),
+            "high_end": float(np.polyval(c_hi, len(flag) - 1)),
+            "low_start": float(np.polyval(c_lo, 0)),
+            "low_end": float(np.polyval(c_lo, len(flag) - 1)),
+        }
+
         if bullish_pole and flag_slope < 0:
             patterns.append(Pattern("Bull Flag", "continuation", True, 0.75, n-1,
-                                     "Strong up-move followed by consolidation pullback"))
+                                     "Strong up-move followed by consolidation pullback",
+                                     extra=extra_flag))
         elif not bullish_pole and flag_slope > 0:
             patterns.append(Pattern("Bear Flag", "continuation", False, 0.75, n-1,
-                                     "Strong down-move followed by consolidation bounce"))
+                                     "Strong down-move followed by consolidation bounce",
+                                     extra=extra_flag))
 
         # Pennant: flag with narrowing price range
         flag_range = np.max(flag) - np.min(flag)
@@ -486,13 +505,17 @@ class _ChartPatternDetector:
         if flag_range < pole_range * 0.4:
             tag = "Bull Pennant" if bullish_pole else "Bear Pennant"
             patterns.append(Pattern(tag, "continuation", bullish_pole, 0.72, n-1,
-                                     "Tight consolidation after strong move – trend continuation"))
+                                     "Tight consolidation after strong move – trend continuation",
+                                     extra=extra_flag))
 
     def _detect_cup_handle(self, closes, highs, lows, n, patterns):
         window = min(60, n)
+        start = n - window
         seg = closes[-window:]
         left_rim  = seg[:5].mean()
-        bottom    = seg[window//3: 2*window//3].min()
+        mid = seg[window//3: 2*window//3]
+        bottom    = mid.min()
+        bottom_i  = start + window//3 + int(np.argmin(mid))
         right_rim = seg[-10:].max()
 
         cup_depth = left_rim - bottom
@@ -501,8 +524,19 @@ class _ChartPatternDetector:
         if abs(left_rim - right_rim) / left_rim < 0.05:
             handle_low = seg[-5:].min()
             if handle_low > bottom and handle_low < right_rim * 0.97:
-                patterns.append(Pattern("Cup & Handle", "continuation", True, 0.82, n-1,
-                                         "U-shaped base with small handle – bullish breakout setup"))
+                patterns.append(Pattern(
+                    "Cup & Handle", "continuation", True, 0.82, n-1,
+                    "U-shaped base with small handle – bullish breakout setup",
+                    extra={
+                        "cup_start": int(start),
+                        "cup_bottom": int(bottom_i),
+                        "cup_end": int(n - 10),
+                        "handle_start": int(n - 5),
+                        "left_rim": float(left_rim),
+                        "right_rim": float(right_rim),
+                        "bottom": float(bottom),
+                    },
+                ))
 
 
 class _HarmonicDetector:
@@ -575,6 +609,16 @@ class _HarmonicDetector:
                         min(0.95, max(0.50, strength)),
                         di,
                         f"Harmonic {name} pattern at PRZ",
+                        extra={
+                            "xabcd": [
+                                [int(xi), float(xa_price)],
+                                [int(ai), float(aa_price)],
+                                [int(bi), float(ab_price)],
+                                [int(ci), float(ac_price)],
+                                [int(di), float(ad_price)],
+                            ],
+                            "ratios": [round(xb_ratio, 3), round(ac_ratio, 3), round(bd_ratio, 3)],
+                        },
                     ))
 
         return patterns
@@ -605,6 +649,7 @@ class _DivergenceDetector:
                 patterns.append(Pattern(
                     "RSI Bearish Divergence", "divergence", False, 0.75, cp2,
                     "Price making higher highs while RSI making lower highs",
+                    extra={"div": [int(cp1), int(cp2)], "at": "high"},
                 ))
 
         # ── RSI Bullish Divergence (lower price lows, higher RSI lows) ───
@@ -617,6 +662,7 @@ class _DivergenceDetector:
                 patterns.append(Pattern(
                     "RSI Bullish Divergence", "divergence", True, 0.75, ct2,
                     "Price making lower lows while RSI making higher lows",
+                    extra={"div": [int(ct1), int(ct2)], "at": "low"},
                 ))
 
         # ── MACD Divergence ───────────────────────────────────────────
@@ -635,6 +681,7 @@ class _DivergenceDetector:
                 patterns.append(Pattern(
                     "MACD Bearish Divergence", "divergence", False, 0.70, cp2,
                     "Price making higher highs while MACD making lower highs",
+                    extra={"div": [int(cp1), int(cp2)], "at": "high"},
                 ))
 
         for i in range(1, min(len(troughs), len(m_troughs))):
@@ -646,6 +693,7 @@ class _DivergenceDetector:
                 patterns.append(Pattern(
                     "MACD Bullish Divergence", "divergence", True, 0.70, ct2,
                     "Price making lower lows while MACD making higher lows",
+                    extra={"div": [int(ct1), int(ct2)], "at": "low"},
                 ))
 
         return patterns

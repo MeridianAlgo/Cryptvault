@@ -188,6 +188,7 @@ exclude = ["tests*", "docs*", "examples*", "scripts*"]
 
 [tool.setuptools.package-data]
 cryptvault = ["py.typed", "*.yaml", "*.yml", "*.json"]
+"cryptvault.desktop" = ["*.html"]
 
 # ============================================================================
 # Testing Configuration
