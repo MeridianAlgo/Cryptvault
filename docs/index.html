@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CryptVault — chart patterns, drawn properly</title>
+<meta name="description" content="CryptVault detects 50+ classical chart patterns and draws each one as real geometry on a trading-vue-js chart. Open source, MIT, Python.">
+<meta property="og:title" content="CryptVault — chart patterns, drawn properly">
+<meta property="og:description" content="50+ classical chart patterns, drawn as real geometry welded to the candles. Open source Python.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e9ecf1; --plate:#f5f7fa; --rule:#c6ced9; --rule-soft:#d9e0e9;
+    --ink:#0f1620; --ink-2:#54627a; --ink-3:#7c8798;
+    --plot:#1f3fa8; --bull:#0d8a72; --bear:#cf3f3c;
+    --gut:clamp(20px,5vw,64px);
+    --display:'Archivo',system-ui,sans-serif;
+    --body:'Source Serif 4',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--body); font-size:17px; line-height:1.6;
+    /* plotting grid: the page is drafting stock */
+    background-image:
+      linear-gradient(var(--rule-soft) 1px,transparent 1px),
+      linear-gradient(90deg,var(--rule-soft) 1px,transparent 1px);
+    background-size:88px 88px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 var(--gut)}
+  a{color:var(--plot);text-decoration:none;border-bottom:1px solid rgba(31,63,168,.3)}
+  a:hover{border-bottom-color:var(--plot)}
+  :focus-visible{outline:2px solid var(--plot);outline-offset:3px}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; font-weight:500;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3);
+  }
+
+  /* ── masthead ─────────────────────────────────────────── */
+  .mast{border-bottom:1px solid var(--rule);background:rgba(233,236,241,.9);
+        backdrop-filter:blur(6px);position:sticky;top:0;z-index:10}
+  .mast .wrap{display:flex;align-items:center;gap:14px;height:56px}
+  @media(max-width:700px){
+    .mast .eyebrow{display:none}
+    .mast nav{gap:14px;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+    .mast nav::-webkit-scrollbar{display:none}
+    .mast nav a{white-space:nowrap}
+  }
+  .mark{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.02em}
+  .mark b{color:var(--plot)}
+  .mast .eyebrow{margin-right:auto}
+  .mast nav{display:flex;gap:20px}
+  .mast nav a{font-family:var(--mono);font-size:12px;letter-spacing:.06em;
+              text-transform:uppercase;color:var(--ink-2);border:0}
+  .mast nav a:hover{color:var(--plot)}
+
+  /* ── hero ─────────────────────────────────────────────── */
+  .hero{padding:clamp(48px,8vw,92px) 0 0}
+  h1{
+    font-family:var(--display); font-weight:700;
+    font-size:clamp(38px,6.6vw,78px); line-height:.98; letter-spacing:-.035em;
+    margin:14px 0 0; max-width:15ch;
+  }
+  h1 em{font-style:normal;color:var(--plot)}
+  .lede{
+    font-size:clamp(17px,2vw,21px); color:var(--ink-2);
+    max-width:56ch; margin:20px 0 0;
+  }
+  .cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:26px 0 0}
+  .btn{
+    font-family:var(--mono);font-size:13px;letter-spacing:.02em;
+    padding:10px 16px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    border-radius:0;display:inline-block
+  }
+  .btn:hover{background:var(--plot);border-color:var(--plot)}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+  .btn.ghost:hover{background:transparent;color:var(--plot);border-color:var(--plot)}
+  code.cmd{
+    font-family:var(--mono);font-size:13px;background:var(--plate);
+    border:1px solid var(--rule);padding:9px 14px;color:var(--ink-2);white-space:nowrap;
+    max-width:100%;overflow-x:auto
+  }
+
+  /* ── figure plates ────────────────────────────────────── */
+  figure{margin:0;background:var(--plate);border:1px solid var(--rule);position:relative}
+  figure svg{display:block;width:100%;height:auto}
+  .fig-tag{
+    position:absolute;top:0;left:0;font-family:var(--mono);font-size:10px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+    background:var(--paper);border-right:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);padding:5px 9px;z-index:2
+  }
+  .fig-live{
+    position:absolute;top:0;right:0;font-family:var(--mono);font-size:10px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--plot);
+    background:var(--paper);border-left:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);padding:5px 9px;z-index:2
+  }
+  figcaption{
+    font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--ink-2);
+    border-top:1px solid var(--rule);padding:9px 12px;background:var(--paper)
+  }
+  .hero-fig{margin-top:clamp(34px,5vw,54px)}
+
+  /* ── generic section ──────────────────────────────────── */
+  section{padding:clamp(56px,9vw,110px) 0;border-top:1px solid var(--rule)}
+  section.flush{border-top:0}
+  h2{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(27px,3.6vw,42px);line-height:1.04;letter-spacing:-.028em;
+    margin:12px 0 0;max-width:20ch
+  }
+  h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-.01em;margin:0}
+  .sec-head{max-width:62ch;margin-bottom:clamp(30px,4vw,48px)}
+  .sec-head p{color:var(--ink-2);margin:14px 0 0}
+
+  /* ── pipeline (a real sequence, so it is numbered) ────── */
+  .steps{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  .steps>*{min-width:0}
+  @media(min-width:820px){.steps{grid-template-columns:repeat(5,1fr)}}
+  .step{background:var(--plate);padding:20px 18px 22px}
+  .step .n{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--plot);
+    display:block;margin-bottom:12px
+  }
+  .step p{font-size:14.5px;color:var(--ink-2);margin:8px 0 0;line-height:1.5}
+  .step code{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+
+  /* ── plate gallery ────────────────────────────────────── */
+  .gallery{display:grid;gap:clamp(18px,2.4vw,26px)}
+  @media(min-width:700px){.gallery{grid-template-columns:1fr 1fr}}
+  @media(min-width:1080px){.gallery{grid-template-columns:1fr 1fr 1fr}}
+  .gallery h3{padding:2px 13px 0}
+  .gallery .kind{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+                 text-transform:uppercase;color:var(--ink-3);padding:12px 13px 0}
+  .gallery .kind i{font-style:normal;color:var(--plot)}
+
+  /* ── primitives table ─────────────────────────────────── */
+  .split{display:grid;gap:clamp(24px,4vw,48px);align-items:start}
+  .split>*{min-width:0}
+  @media(min-width:900px){.split{grid-template-columns:1fr 1fr}}
+  table{width:100%;border-collapse:collapse;font-size:15px;table-layout:fixed}
+  td:last-child,th:last-child{word-break:break-word}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule)}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+     color:var(--ink-3);font-weight:500;border-bottom-color:var(--ink)}
+  td:first-child{font-family:var(--mono);font-size:13px;color:var(--plot);white-space:nowrap}
+  td{color:var(--ink-2)}
+  pre{
+    margin:0;background:var(--ink);color:#dfe5ee;padding:18px 20px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.65;border:1px solid var(--ink)
+  }
+  pre .c{color:#7f8ea8}
+  pre .s{color:#8fd3bf}
+  pre .k{color:#9db4ff}
+
+  ul.plain{list-style:none;padding:0;margin:18px 0 0}
+  ul.plain li{padding:11px 0;border-bottom:1px solid var(--rule);color:var(--ink-2);font-size:15.5px}
+  ul.plain b{color:var(--ink);font-weight:600}
+
+  .shot{border:1px solid var(--rule);display:block;width:100%;height:auto;background:#0b0e14}
+
+  /* ── footer ───────────────────────────────────────────── */
+  footer{border-top:1px solid var(--ink);padding:38px 0 60px;font-size:14px;color:var(--ink-2)}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline}
+  footer .sp{margin-left:auto}
+  .warn{
+    border:1px solid var(--rule);border-left:3px solid var(--bear);
+    background:var(--plate);padding:14px 16px;font-size:14px;color:var(--ink-2);margin-top:26px
+  }
+
+  /* ── draw-on animation ────────────────────────────────── */
+  .cv-poly{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+           transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)}
+  .cv-fill,.cv-dot,.cv-label,.cv-mark{opacity:0;transition:opacity .45s ease}
+  .cv-candle{opacity:0;transform-origin:center;transition:opacity .3s ease}
+  figure.on .cv-poly{stroke-dashoffset:0}
+  figure.on .cv-fill,figure.on .cv-dot,figure.on .cv-label,
+  figure.on .cv-mark,figure.on .cv-candle{opacity:1}
+  @media(prefers-reduced-motion:reduce){
+    .cv-poly{stroke-dasharray:none;stroke-dashoffset:0;transition:none}
+    .cv-fill,.cv-dot,.cv-label,.cv-mark,.cv-candle{opacity:1;transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap">
+    <span class="mark">Crypt<b>Vault</b></span>
+    <span class="eyebrow">v6.3.0 &nbsp;/&nbsp; MIT</span>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#patterns">Patterns</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/MeridianAlgo/Cryptvault">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero flush">
+  <div class="wrap">
+    <span class="eyebrow">Open-source technical analysis / Python</span>
+    <h1>Chart patterns, <em>drawn</em> — not just labelled.</h1>
+    <p class="lede">
+      Most libraries tell you a Head &amp; Shoulders exists and hand you a bar index.
+      CryptVault computes the geometry — shoulders, armpits, the sloped neckline, the
+      projected target — and draws it onto the candles, where you can actually judge it.
+    </p>
+    <div class="cta">
+      <a class="btn" href="#install">Get started</a>
+      <a class="btn ghost" href="https://github.com/MeridianAlgo/Cryptvault">Source on GitHub</a>
+      <code class="cmd">python launch_desktop.py</code>
+    </div>
+  </div>
+
+  <div class="wrap hero-fig">
+    <figure data-plate="hero" data-w="1240" data-h="470">
+      <span class="fig-tag">Fig. 01</span>
+      <span class="fig-live">Real data / live detection</span>
+    </figure>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">How it works</span>
+      <h2>Geometry is computed in Python. The browser only paints it.</h2>
+      <p>
+        Pattern maths lives next to pattern detection, not in a rendering layer. The chart
+        receives a flat list of primitives in <code>[timestamp, price]</code> space, so a
+        diagram stays welded to the candles through any pan or zoom.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <span class="n">Step 1</span>
+        <h3>Fetch</h3>
+        <p>OHLCV for any Yahoo Finance symbol — crypto, equities, indices.</p>
+      </div>
+      <div class="step">
+        <span class="n">Step 2</span>
+        <h3>Detect</h3>
+        <p>Every detector runs and returns pivot indices in an <code>extra</code> payload.</p>
+      </div>
+      <div class="step">
+        <span class="n">Step 3</span>
+        <h3>Snap</h3>
+        <p>Pivots move to the true swing high or low within &plusmn;2 bars, so lines touch the wicks.</p>
+      </div>
+      <div class="step">
+        <span class="n">Step 4</span>
+        <h3>Emit</h3>
+        <p><code>shapes.build()</code> returns primitives tagged with the pattern they belong to.</p>
+      </div>
+      <div class="step">
+        <span class="n">Step 5</span>
+        <h3>Paint</h3>
+        <p>One trading-vue overlay maps time and price to screen and strokes the canvas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="patterns">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Plates</span>
+      <h2>Every family gets its own construction.</h2>
+      <p>
+        These figures are not illustrations. Each one is rendered from the output of
+        <code>cryptvault.desktop.shapes</code> — the same function the desktop chart calls.
+      </p>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </div>
+</section>
+
+<section id="contract">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The contract</span>
+      <h2>Four primitives, and no JavaScript to add a pattern.</h2>
+      <p>
+        Because the renderer only understands four shapes, teaching CryptVault a new
+        diagram means writing a Python function that returns them. Nothing in the browser
+        changes.
+      </p>
+    </div>
+
+    <div class="split">
+      <div>
+        <table>
+          <thead><tr><th>Primitive</th><th>Draws</th></tr></thead>
+          <tbody>
+            <tr><td>poly</td><td>Polyline, optionally dashed and filled</td></tr>
+            <tr><td>dot</td><td>Pivot marker</td></tr>
+            <tr><td>text</td><td>Boxed label, nudged clear of its neighbours</td></tr>
+            <tr><td>mark</td><td>Triangle pointing at a bar</td></tr>
+          </tbody>
+        </table>
+        <ul class="plain">
+          <li><b>Grouped.</b> Every primitive is tagged <code>name@bar</code>, so two detections of the same pattern stay separate.</li>
+          <li><b>Selective.</b> The three strongest draw on load; clicking a pattern isolates it.</li>
+          <li><b>Resilient.</b> A malformed pivot payload is skipped, never raised — a bad pattern cannot blank the chart.</li>
+        </ul>
+      </div>
+      <div>
+<pre><span class="c"># cryptvault/desktop/shapes.py</span>
+<span class="k">def</span> _head_shoulders(f, extra, idx, color, inverse, name):
+    ls, head, rs = extra[<span class="s">"ls"</span>], extra[<span class="s">"head"</span>], extra[<span class="s">"rs"</span>]
+    pick    = f.trough <span class="k">if</span> inverse <span class="k">else</span> f.peak
+    between = f.ridge_between <span class="k">if</span> inverse <span class="k">else</span> f.valley_between
+
+    p_ls, p_h, p_rs = pick(ls), pick(head), pick(rs)
+    n1, n2 = between(ls, head), between(head, rs)
+
+    <span class="c"># the neckline slopes through both armpits</span>
+    slope = (n2[<span class="s">1</span>] - n1[<span class="s">1</span>]) / (n2[<span class="s">0</span>] - n1[<span class="s">0</span>])
+
+    <span class="k">return</span> [
+        _poly([p_ls, n1, p_h, n2, p_rs], color, <span class="s">2.2</span>),
+        _poly([n1, [t_end, neck_end]], color, <span class="s">1.6</span>, DASH),
+        _dot(p_ls, color), _dot(p_h, color, <span class="s">5.0</span>), _dot(p_rs, color),
+        _text(p_ls, <span class="s">"LS"</span>, NEUTRAL), _text(p_rs, <span class="s">"RS"</span>, NEUTRAL),
+    ]</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="app">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The desktop terminal</span>
+      <h2>A local page, a stdlib server, no build step.</h2>
+      <p>
+        <code>python launch_desktop.py</code> starts an <code>http.server</code> on
+        127.0.0.1 and opens a native window if <code>pywebview</code> is installed, your
+        browser otherwise. Charts render with
+        <a href="https://github.com/tvjsx/trading-vue-js">trading-vue-js</a>; Vue and the
+        chart bundle are pinned and cached on first launch, so the interface runs offline
+        afterwards. No Electron, no npm.
+      </p>
+    </div>
+    <img class="shot" src="assets/desktop.png" alt="The CryptVault desktop terminal showing BTC-USD over six months with an Inverse Head and Shoulders, Triple Top and Double Bottom drawn on the candles." loading="lazy" width="1600" height="900">
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <span class="eyebrow">Install</span>
+        <h2>Three commands to a chart.</h2>
+        <p style="color:var(--ink-2);margin-top:14px">
+          Python 3.9 or newer. Add <code>pip install pywebview</code> for a native window
+          instead of a browser tab.
+        </p>
+        <div class="warn">
+          Educational and research use only. CryptVault is not financial advice and must
+          not be used for live trading decisions.
+        </div>
+      </div>
+      <div>
+<pre>git clone https://github.com/MeridianAlgo/Cryptvault.git
+cd Cryptvault
+pip install -r requirements.txt
+
+<span class="c"># desktop terminal</span>
+python launch_desktop.py
+
+<span class="c"># or the command line</span>
+python cryptvault_cli.py BTC 90 1d</pre>
+        <ul class="plain">
+          <li><b>50+ patterns</b> across reversal, continuation, candlestick, harmonic and divergence families.</li>
+          <li><b>ML ensemble</b> at 1.6&ndash;2.4% MAPE on major pairs, weighted by rolling out-of-fold validation.</li>
+          <li><b>Python API and CLI</b> for portfolio analysis, comparison and batch runs.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="mark">Crypt<b>Vault</b></span>
+    <span class="eyebrow">MIT licensed</span>
+    <span class="sp"></span>
+    <a href="https://github.com/MeridianAlgo/Cryptvault">Repository</a>
+    <a href="https://github.com/MeridianAlgo/Cryptvault/blob/main/docs/DESKTOP_APP.md">Desktop docs</a>
+    <a href="https://github.com/MeridianAlgo/Cryptvault/releases">Releases</a>
+    <a href="https://github.com/MeridianAlgo">MeridianAlgo</a>
+  </div>
+</footer>
+
+<script id="plates" type="application/json">{"head-shoulders":{"note":"Left shoulder, head, right shoulder with the neckline fitted through both armpits.","ohlc":[[1767225600000,100.8164,102.0267,99.6061,100.8164],[1767312000000,100.8164,102.1527,98.8378,100.1655],[1767398400000,100.1655,103.9202,98.8482,102.5713],[1767484800000,102.5713,104.9917,100.9567,103.3647],[1767571200000,103.3647,106.0653,101.927,104.6102],[1767657600000,104.6102,107.6206,102.9192,105.9086],[1767744000000,105.9086,107.6367,104.6109,106.3338],[1767830400000,106.3338,110.2086,104.4593,108.2994],[1767916800000,108.2994,110.7571,106.776,109.2207],[1768003200000,109.2207,113.9126,107.6254,112.2728],[1768089600000,112.2728,113.851,110.5253,112.1012],[1768176000000,112.1012,113.6144,109.3472,110.8434],[1768262400000,110.8434,112.2226,108.5091,109.8762],[1768348800000,109.8762,111.6241,106.9794,108.7087],[1768435200000,108.7087,110.0266,106.2404,107.5442],[1768521600000,107.5442,109.1488,105.2388,106.8327],[1768608000000,106.8327,108.7179,104.3303,106.2043],[1768694400000,106.2043,107.6829,103.4394,104.8998],[1768780800000,104.8998,106.9962,102.312,104.3984],[1768867200000,104.3984,107.5905,102.5802,105.7488],[1768953600000,105.7488,109.8022,103.6618,107.6771],[1769040000000,107.6771,111.608,106.2787,110.1771],[1769126400000,110.1771,113.509,108.2684,111.5761],[1769212800000,111.5761,114.4219,110.1101,112.938],[1769299200000,112.938,116.3705,111.5084,114.9159],[1769385600000,114.9159,118.5829,113.4467,117.0859],[1769472000000,117.0859,122.2843,114.4433,119.5852],[1769558400000,119.5852,122.0868,117.8796,120.37],[1769644800000,120.37,123.7056,118.9011,122.2142],[1769731200000,122.2142,126.2198,120.6894,124.6645],[1769817600000,124.6645,127.8667,122.3673,125.5532],[1769904000000,125.5532,127.3118,122.2026,123.9385],[1769990400000,123.9385,125.9352,120.6229,122.5979],[1770076800000,122.5979,124.4856,118.6733,120.5291],[1770163200000,120.5291,122.5125,116.4287,118.3767],[1770249600000,118.3767,120.1987,114.9321,116.7287],[1770336000000,116.7287,118.1454,111.8308,113.2047],[1770422400000,113.2047,114.9836,111.2669,113.0433],[1770508800000,113.0433,114.6769,108.6487,110.2419],[1770595200000,110.2419,111.6165,106.6772,108.0242],[1770681600000,108.0242,109.3706,105.6184,106.9515],[1770768000000,106.9515,108.2635,103.9199,105.2107],[1770854400000,105.2107,107.0145,101.0539,102.8168],[1770940800000,102.8168,104.94,101.5501,103.6628],[1771027200000,103.6628,107.0966,101.8273,105.2332],[1771113600000,105.2332,108.2774,103.2866,106.3109],[1771200000000,106.3109,109.7351,104.6514,108.0485],[1771286400000,108.0485,110.2412,106.6978,108.8801],[1771372800000,108.8801,111.3644,107.2802,109.7517],[1771459200000,109.7517,113.5405,107.5126,111.2704],[1771545600000,111.2704,113.4964,109.5789,111.7969],[1771632000000,111.7969,114.4995,109.8922,112.5815],[1771718400000,112.5815,113.9677,110.4669,111.844],[1771804800000,111.844,113.457,108.8308,110.4234],[1771891200000,110.4234,111.836,107.2665,108.6565],[1771977600000,108.6565,110.2721,105.4064,106.9972],[1772064000000,106.9972,108.3111,104.712,106.0138],[1772150400000,106.0138,107.583,101.9261,103.4576],[1772236800000,103.4576,105.3241,101.503,103.3679],[1772323200000,103.3679,104.9016,100.355,101.8665],[1772409600000,101.8665,103.1758,98.3127,99.5928],[1772496000000,99.5928,100.9817,97.4789,98.8576],[1772582400000,98.8576,100.0967,95.8246,97.041]],"shapes":[{"k":"dot","pt":[1768003200000,113.91260861312645],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769817600000,127.86673948989421],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1771632000000,114.49954580297839],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1768780800000,102.31201089770214],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1770854400000,101.05393842238324],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1768003200000,118.46616270707374],[1772582400000,119.20682154188688]],"c":"#ef5350","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1768780800000,102.31201089770214],[1772582400000,100.00554469295079]],"c":"#26a69a","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1768003200000,113.91260861312645],[1768780800000,102.31201089770214],[1769817600000,127.86673948989421],[1770854400000,101.05393842238324],[1771459200000,113.54046470735256]],"c":"#ef5350","w":2.2,"g":"Head & Shoulders@58"},{"k":"poly","pts":[[1768780800000,102.31201089770214],[1772582400000,100.00554469295082]],"c":"#ef5350","w":1.6,"d":[6,4],"g":"Head & Shoulders@58"},{"k":"dot","pt":[1768003200000,113.91260861312645],"c":"#ef5350","r":4.0,"g":"Head & Shoulders@58"},{"k":"dot","pt":[1769817600000,127.86673948989421],"c":"#ef5350","r":5.0,"g":"Head & Shoulders@58"},{"k":"dot","pt":[1771459200000,113.54046470735256],"c":"#ef5350","r":4.0,"g":"Head & Shoulders@58"},{"k":"text","pt":[1768003200000,113.91260861312645],"s":"LS","c":"#8b95a7","up":true,"g":"Head & Shoulders@58"},{"k":"text","pt":[1769817600000,127.86673948989421],"s":"Head & Shoulders","c":"#ef5350","up":true,"g":"Head & Shoulders@58"},{"k":"text","pt":[1771459200000,113.54046470735256],"s":"RS","c":"#8b95a7","up":true,"g":"Head & Shoulders@58"}],"groups":["Head & Shoulders@58"]},"double-bottom":{"note":"Two equal troughs and the neckline they project from.","ohlc":[[1767225600000,125.0123,126.5131,123.5115,125.0123],[1767312000000,125.0123,126.6693,119.2918,120.8942],[1767398400000,120.8942,122.4842,118.9023,120.4869],[1767484800000,120.4869,122.3834,116.2997,118.1596],[1767571200000,118.1596,119.8032,114.7418,116.3604],[1767657600000,116.3604,118.2413,112.7626,114.6154],[1767744000000,114.6154,116.0197,110.5736,111.9453],[1767830400000,111.9453,113.9187,108.942,110.897],[1767916800000,110.897,112.457,107.2351,108.7651],[1768003200000,108.7651,110.3538,107.1239,108.7118],[1768089600000,108.7118,110.24,104.0404,105.5238],[1768176000000,105.5238,106.9482,102.0292,103.4253],[1768262400000,103.4253,104.7122,100.3357,101.5998],[1768348800000,101.5998,103.2161,98.006,99.5903],[1768435200000,99.5903,100.7976,96.4034,97.5864],[1768521600000,97.5864,101.1307,96.1304,99.644],[1768608000000,99.644,103.5921,97.8857,101.7959],[1768694400000,101.7959,104.7395,100.3787,103.3013],[1768780800000,103.3013,107.7135,101.2368,105.603],[1768867200000,105.603,108.7765,103.7638,106.9145],[1768953600000,106.9145,110.958,104.8045,108.8106],[1769040000000,108.8106,112.7292,107.3974,111.2839],[1769126400000,111.2839,114.5965,109.3561,112.6451],[1769212800000,112.6451,115.4667,111.165,113.9692],[1769299200000,113.9692,117.3825,112.5265,115.9152],[1769385600000,115.9152,117.3972,113.0556,114.5198],[1769472000000,114.5198,117.1046,110.8567,113.4166],[1769558400000,113.4166,115.0342,109.1198,110.6987],[1769644800000,110.6987,112.0496,107.6546,108.9846],[1769731200000,108.9846,110.3443,106.4493,107.7941],[1769817600000,107.7941,109.7804,103.3222,105.2618],[1769904000000,105.2618,106.7362,102.3341,103.7878],[1769990400000,103.7878,105.4598,100.8906,102.5425],[1770076800000,102.5425,104.1214,99.1374,100.6877],[1770163200000,100.6877,102.3446,97.1382,98.7634],[1770249600000,98.7634,100.2835,95.763,97.26],[1770336000000,97.26,98.79,96.0796,97.6054],[1770422400000,97.6054,102.4397,96.0716,100.8548],[1770508800000,100.8548,103.2452,99.3973,101.7745],[1770595200000,101.7745,104.4822,100.5055,103.1955],[1770681600000,103.1955,107.0457,101.9093,105.7279],[1770768000000,105.7279,108.9545,104.4308,107.6341],[1770854400000,107.6341,110.728,105.7887,108.8615],[1770940800000,108.8615,111.6597,107.5204,110.3008],[1771027200000,110.3008,114.504,108.3477,112.5118],[1771113600000,112.5118,116.3106,110.4305,114.1981],[1771200000000,114.1981,118.4163,112.4156,116.5963],[1771286400000,116.5963,119.4938,115.1387,118.0184],[1771372800000,118.0184,121.2371,116.2843,119.4814],[1771459200000,119.4814,124.1315,117.0438,121.6496],[1771545600000,121.6496,124.5981,119.8004,122.7324],[1771632000000,122.7324,126.2084,120.6414,124.0943],[1771718400000,124.0943,128.1313,122.5663,126.5728]],"shapes":[{"k":"dot","pt":[1769385600000,117.39715081800236],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1768521600000,96.13036549789872],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1770249600000,95.7630090275409],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1768521600000,96.1303654978987],[1771718400000,95.45075602773673]],"c":"#26a69a","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1768521600000,96.13036549789872],[1769385600000,117.39715081800236],[1770249600000,95.7630090275409]],"c":"#26a69a","w":2.2,"g":"Double Bottom@35"},{"k":"poly","pts":[[1768348800000,117.39715081800236],[1770768000000,117.39715081800236]],"c":"#26a69a","w":1.4,"d":[6,4],"g":"Double Bottom@35"},{"k":"dot","pt":[1768521600000,96.13036549789872],"c":"#26a69a","r":4.0,"g":"Double Bottom@35"},{"k":"dot","pt":[1770249600000,95.7630090275409],"c":"#26a69a","r":4.0,"g":"Double Bottom@35"},{"k":"dot","pt":[1769385600000,117.39715081800236],"c":"#26a69a","r":3.0,"g":"Double Bottom@35"},{"k":"text","pt":[1770249600000,95.7630090275409],"s":"Double Bottom","c":"#26a69a","up":false,"g":"Double Bottom@35"}],"groups":["Double Bottom@35"]},"triangle":{"note":"Flat resistance, rising support, and the shaded body between the fitted trendlines.","ohlc":[[1767225600000,100.6123,101.8201,99.4044,100.6123],[1767312000000,100.6123,102.9366,99.2787,101.5901],[1767398400000,101.5901,106.2607,100.254,104.8814],[1767484800000,104.8814,108.6259,103.2305,106.9425],[1767571200000,106.9425,110.8723,105.455,109.3513],[1767657600000,109.3513,113.6099,107.5837,111.8026],[1767744000000,111.8026,114.949,110.4328,113.5576],[1767830400000,113.5576,118.5984,111.5558,116.5439],[1767916800000,116.5439,120.3608,114.9044,118.6911],[1768003200000,118.6911,120.4247,116.2983,118.0221],[1768089600000,118.0221,119.6812,113.1783,114.792],[1768176000000,114.792,116.3416,110.9344,112.4523],[1768262400000,112.4523,113.8516,108.9625,110.3354],[1768348800000,110.3354,112.0906,106.3495,108.0687],[1768435200000,108.0687,109.3788,104.5242,105.8069],[1768521600000,105.8069,107.3855,102.3282,103.8781],[1768608000000,103.8781,108.172,102.0451,106.2963],[1768694400000,106.2963,109.7147,104.8165,108.2082],[1768780800000,108.2082,112.9591,106.0457,110.7459],[1768867200000,110.7459,114.4633,108.8171,112.504],[1768953600000,112.504,116.9867,110.2837,114.7226],[1769040000000,114.7226,118.9238,113.2327,117.3991],[1769126400000,117.3991,121.2594,115.3653,119.1946],[1769212800000,119.1946,120.7607,115.6162,117.1555],[1769299200000,117.1555,118.6385,114.1399,115.6032],[1769385600000,115.6032,117.0812,112.725,114.1849],[1769472000000,114.1849,116.7621,110.4353,112.9855],[1769558400000,112.9855,114.5969,109.0,110.5772],[1769644800000,110.5772,111.9266,107.5911,108.9204],[1769731200000,108.9204,112.3843,107.5615,110.9994],[1769817600000,110.9994,114.099,108.9541,112.0346],[1769904000000,112.0346,115.4956,110.4654,113.9002],[1769990400000,113.9002,117.8412,112.0653,115.9729],[1770076800000,115.9729,119.3474,114.1873,117.5376],[1770163200000,117.5376,120.9914,115.6034,119.0327],[1770249600000,119.0327,120.8648,116.22,118.0368],[1770336000000,118.0368,119.4694,114.2076,115.6107],[1770422400000,115.6107,117.5726,113.794,115.7536],[1770508800000,115.7536,117.4263,112.2257,113.8712],[1770595200000,113.8712,115.2911,111.0324,112.4343],[1770681600000,112.4343,115.7193,111.033,114.2947],[1770768000000,114.2947,117.0612,112.8926,115.6425],[1770854400000,115.6425,118.4409,113.6598,116.4444],[1770940800000,116.4444,118.8662,115.0098,117.4196],[1771027200000,117.4196,121.1166,115.3404,119.0093],[1771113600000,119.0093,122.7096,116.8079,120.4809],[1771200000000,120.4809,124.4268,118.6003,122.5144],[1771286400000,122.5144,125.3243,120.9829,123.7769],[1771372800000,123.7769,126.9105,121.9581,125.0727],[1771459200000,125.0727,129.5113,122.521,126.9219],[1771545600000,126.9219,129.8657,124.9925,127.9211],[1771632000000,127.9211,131.3405,125.7417,129.1403]],"shapes":[{"k":"dot","pt":[1768003200000,120.42472077149166],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769126400000,121.25944357866412],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1770163200000,120.99144622925986],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1768608000000,102.04506871950547],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1769731200000,107.56147708465677],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1770595200000,111.03237745294878],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1768003200000,120.59743683837853],[1771632000000,121.57371585679321]],"c":"#ef5350","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1768608000000,102.17091306616857],[1771632000000,115.90470312314582]],"c":"#26a69a","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1767571200000,120.4],[1771027200000,120.4],[1771027200000,116.0],[1767571200000,100.5]],"c":"#26a69a","w":0,"f":"#26a69a","g":"Ascending Triangle@51"},{"k":"poly","pts":[[1767571200000,120.4],[1771027200000,120.4]],"c":"#26a69a","w":2.0,"g":"Ascending Triangle@51"},{"k":"poly","pts":[[1767571200000,100.5],[1771027200000,116.0]],"c":"#26a69a","w":2.0,"g":"Ascending Triangle@51"},{"k":"text","pt":[1771027200000,120.4],"s":"Ascending Triangle","c":"#26a69a","up":true,"g":"Ascending Triangle@51"}],"groups":["Ascending Triangle@51"]},"cup-handle":{"note":"A parabola fitted through rim, bottom and rim, with the handle pullback dotted.","ohlc":[[1767225600000,108.6613,109.9658,107.3568,108.6613],[1767312000000,108.6613,110.1015,106.4042,107.8335],[1767398400000,107.8335,110.9102,106.4154,109.4705],[1767484800000,109.4705,111.5411,107.7474,109.8126],[1767571200000,109.8126,112.0536,108.2852,110.5164],[1767657600000,110.5164,113.0599,108.7299,111.2613],[1767744000000,111.2613,112.6853,109.8981,111.3213],[1767830400000,111.3213,113.2838,108.1651,110.1061],[1767916800000,110.1061,111.655,106.649,108.1706],[1768003200000,108.1706,109.7506,106.2972,107.8728],[1768089600000,107.8728,109.3892,103.8412,105.3217],[1768176000000,105.3217,106.7434,102.2701,103.6696],[1768262400000,103.6696,104.9595,101.0354,102.3084],[1768348800000,102.3084,103.9359,99.2892,100.8942],[1768435200000,100.8942,102.1173,98.3621,99.5692],[1768521600000,99.5692,101.0548,97.1728,98.6446],[1768608000000,98.6446,100.3853,96.1364,97.8633],[1768694400000,97.8633,99.2258,95.3546,96.7009],[1768780800000,96.7009,98.6335,94.2582,96.1804],[1768867200000,96.1804,97.8555,93.4133,95.069],[1768953600000,95.069,96.9452,92.5768,94.4406],[1769040000000,94.4406,95.6672,93.0389,94.2631],[1769126400000,94.2631,95.8961,91.8423,93.4614],[1769212800000,93.4614,94.6894,91.5169,92.7354],[1769299200000,92.7354,93.9093,91.3086,92.4793],[1769385600000,92.4793,93.6616,91.2384,92.42],[1769472000000,92.42,94.7227,90.3341,92.632],[1769558400000,92.632,93.9532,90.6251,91.9364],[1769644800000,91.9364,93.0656,90.8144,91.9436],[1769731200000,91.9436,93.5267,90.7965,92.3743],[1769817600000,92.3743,94.0764,90.3293,92.025],[1769904000000,92.025,93.7439,90.7361,92.449],[1769990400000,92.449,94.6222,90.9597,93.122],[1770076800000,93.122,94.9105,91.6882,93.4713],[1770163200000,93.4713,95.3982,91.9331,93.8538],[1770249600000,93.8538,96.08,92.4092,94.6236],[1770336000000,94.6236,95.772,93.1742,94.3189],[1770422400000,94.3189,97.7104,92.8367,96.1987],[1770508800000,96.1987,97.886,94.8085,96.4916],[1770595200000,96.4916,98.4452,95.2884,97.2328],[1770681600000,97.2328,100.0743,96.0209,98.8423],[1770768000000,98.8423,101.3232,97.6297,100.0953],[1770854400000,100.0953,102.6929,98.3791,100.9619],[1770940800000,100.9619,103.3216,99.7181,102.0642],[1771027200000,102.0642,105.6252,100.2569,103.7875],[1771113600000,103.7875,107.1804,101.8676,105.2338],[1771200000000,105.2338,108.9326,103.5911,107.2584],[1771286400000,107.2584,110.0541,105.9175,108.6953],[1771372800000,108.6953,111.8669,107.0981,110.2469],[1771459200000,110.2469,114.6661,107.9976,112.3735],[1771545600000,112.3735,114.0818,110.2294,111.9309],[1771632000000,111.9309,113.8379,108.6424,110.5255],[1771718400000,110.5255,111.8864,108.5061,109.8588],[1771804800000,109.8588,111.4432,107.1221,108.6896],[1771891200000,108.6896,110.0801,105.8919,107.2642],[1771977600000,107.2642,108.859,104.3425,105.9173],[1772064000000,105.9173,107.2179,103.782,105.0722],[1772150400000,105.0722,107.4693,103.5169,105.9017],[1772236800000,105.9017,110.5842,103.991,108.6244],[1772323200000,108.6244,111.8983,107.0127,110.2623],[1772409600000,110.2623,112.6802,108.8451,111.2503],[1772496000000,111.2503,115.104,109.6988,113.5209],[1772582400000,113.5209,116.3066,112.098,114.8668],[1772668800000,114.8668,119.1558,112.9157,117.1656],[1772755200000,117.1656,119.5776,115.4745,117.8762],[1772841600000,117.8762,121.5085,116.3646,119.97]],"shapes":[{"k":"dot","pt":[1767830400000,113.28375690453262],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769472000000,94.72273978302925],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1771459200000,114.6661249324482],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769472000000,90.33408346187122],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1769817600000,90.32932859984979],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1772150400000,103.5168588141981],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1767830400000,106.30032157387272],[1772841600000,109.88648714939279]],"c":"#ef5350","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1769472000000,89.49720212684004],[1772841600000,106.97885685028476]],"c":"#26a69a","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1767744000000,112.00000000000006],[1767830400000,110.22314049586782],[1767916800000,108.52892561983475],[1768003200000,106.91735537190087],[1768089600000,105.38842975206614],[1768176000000,103.94214876033061],[1768262400000,102.57851239669424],[1768348800000,101.29752066115705],[1768435200000,100.09917355371903],[1768521600000,98.98347107438019],[1768608000000,97.95041322314052],[1768694400000,97.00000000000001],[1768780800000,96.13223140495869],[1768867200000,95.34710743801654],[1768953600000,94.64462809917356],[1769040000000,94.02479338842976],[1769126400000,93.48760330578513],[1769212800000,93.03305785123968],[1769299200000,92.6611570247934],[1769385600000,92.37190082644628],[1769472000000,92.16528925619835],[1769558400000,92.04132231404958],[1769644800000,92.0],[1769731200000,92.04132231404958],[1769817600000,92.16528925619835],[1769904000000,92.37190082644628],[1769990400000,92.66115702479338],[1770076800000,93.03305785123966],[1770163200000,93.48760330578511],[1770249600000,94.02479338842974],[1770336000000,94.64462809917354],[1770422400000,95.34710743801652],[1770508800000,96.13223140495867],[1770595200000,97.0],[1770681600000,97.95041322314049],[1770768000000,98.98347107438018],[1770854400000,100.09917355371903],[1770940800000,101.29752066115704],[1771027200000,102.57851239669424],[1771113600000,103.9421487603306],[1771200000000,105.38842975206613],[1771286400000,106.91735537190084],[1771372800000,108.52892561983474],[1771459200000,110.22314049586781],[1771545600000,112.00000000000004],[1771545600000,112.0]],"c":"#26a69a","w":2.2,"g":"Cup & Handle@65"},{"k":"poly","pts":[[1771545600000,112.0],[1772150400000,103.5168588141981],[1772841600000,119.96995892123775]],"c":"#26a69a","w":1.8,"d":[2,4],"g":"Cup & Handle@65"},{"k":"poly","pts":[[1767744000000,112.0],[1772841600000,112.0]],"c":"#26a69a","w":1.4,"d":[6,4],"g":"Cup & Handle@65"},{"k":"dot","pt":[1769644800000,92.0],"c":"#26a69a","r":4.0,"g":"Cup & Handle@65"},{"k":"text","pt":[1771545600000,112.0],"s":"Cup & Handle","c":"#26a69a","up":true,"g":"Cup & Handle@65"}],"groups":["Cup & Handle@65"]},"harmonic":{"note":"The XABCD structure with both legs shaded and every pivot labelled.","ohlc":[[1767225600000,100.6123,101.8201,99.4044,100.6123],[1767312000000,100.6123,103.0623,99.2787,101.7141],[1767398400000,101.7141,106.5143,100.3765,105.1317],[1767484800000,105.1317,109.0061,103.4769,107.3169],[1767571200000,107.3169,111.3786,105.8242,109.8506],[1767657600000,109.8506,114.2446,108.0749,112.4272],[1767744000000,112.4272,115.7036,111.0497,114.3031],[1767830400000,114.3031,119.4882,112.2881,117.4182],[1767916800000,117.4182,121.3722,115.7665,119.6885],[1768003200000,119.6885,125.5283,117.9404,123.7212],[1768089600000,123.7212,126.843,121.982,125.0847],[1768176000000,125.0847,129.0844,123.3962,127.3651],[1768262400000,127.3651,131.5065,125.7803,129.8903],[1768348800000,129.8903,131.9566,125.8095,127.8433],[1768435200000,127.8433,129.3931,124.2755,125.8005],[1768521600000,125.8005,127.6775,122.3019,124.1543],[1768608000000,124.1543,126.3451,120.414,122.577],[1768694400000,122.577,124.2835,118.7374,120.4138],[1768780800000,120.4138,122.8202,116.5637,118.9408],[1768867200000,118.9408,121.0122,114.5988,116.63],[1768953600000,116.63,118.9318,112.5426,114.8084],[1769040000000,114.8084,116.2994,111.9505,113.4236],[1769126400000,113.4236,115.3884,109.2555,111.1815],[1769212800000,111.1815,113.7492,109.7207,112.274],[1769299200000,112.274,115.2673,110.8528,113.8264],[1769385600000,113.8264,116.9973,112.3711,115.5204],[1769472000000,115.5204,120.1067,112.913,117.4557],[1769558400000,117.4557,119.8114,115.7805,118.1266],[1769644800000,118.1266,121.0385,116.685,119.5792],[1769731200000,119.5792,122.9908,118.0874,121.4753],[1769817600000,121.4753,124.4819,119.2369,122.2296],[1769904000000,122.2296,125.6268,120.5176,123.8915],[1769990400000,123.8915,125.8873,120.6215,122.5965],[1770076800000,122.5965,124.4841,118.896,120.7553],[1770163200000,120.7553,122.7425,116.895,118.8508],[1770249600000,118.8508,120.6801,115.5205,117.3263],[1770336000000,117.3263,118.7502,112.9966,114.3848],[1770422400000,114.3848,116.1823,112.1933,113.9845],[1770508800000,113.9845,115.6317,109.9744,111.5869],[1770595200000,111.5869,112.9783,108.2633,109.6303],[1770681600000,109.6303,110.9967,107.1916,108.5445],[1770768000000,108.5445,109.8761,105.6395,106.9516],[1770854400000,106.9516,108.7853,103.0621,104.8599],[1770940800000,104.8599,107.2621,103.568,105.9567],[1771027200000,105.9567,109.5139,104.0806,107.6084],[1771113600000,107.6084,110.8969,105.6179,108.8828],[1771200000000,108.8828,112.3921,107.1832,110.6647],[1771286400000,110.6647,113.147,109.2812,111.75],[1771372800000,111.75,114.5241,110.1079,112.8656],[1771459200000,112.8656,116.8161,110.5629,114.4805],[1771545600000,114.4805,117.082,112.7402,115.3288],[1771632000000,115.3288,118.3585,113.364,116.3758]],"shapes":[{"k":"dot","pt":[1768348800000,131.9565883221881],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769990400000,125.88734457722937],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769126400000,109.25549206607873],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1770854400000,103.06205070933824],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1768348800000,131.95658832218814],[1771632000000,119.81810083227066]],"c":"#ef5350","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1769126400000,109.25549206607867],[1771632000000,100.27500209880495]],"c":"#26a69a","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1767225600000,100.0],[1768176000000,130.0],[1769040000000,111.0],[1769817600000,124.0],[1770768000000,105.0]],"c":"#26a69a","w":2.0,"g":"Gartley (Bullish)@42"},{"k":"poly","pts":[[1767225600000,100.0],[1768176000000,130.0],[1769040000000,111.0]],"c":"#26a69a","w":0,"f":"#26a69a","g":"Gartley (Bullish)@42"},{"k":"poly","pts":[[1769040000000,111.0],[1769817600000,124.0],[1770768000000,105.0]],"c":"#26a69a","w":0,"f":"#26a69a","g":"Gartley (Bullish)@42"},{"k":"dot","pt":[1767225600000,100.0],"c":"#26a69a","r":3.5,"g":"Gartley (Bullish)@42"},{"k":"text","pt":[1767225600000,100.0],"s":"X","c":"#8b95a7","up":true,"g":"Gartley (Bullish)@42"},{"k":"dot","pt":[1768176000000,130.0],"c":"#26a69a","r":3.5,"g":"Gartley (Bullish)@42"},{"k":"text","pt":[1768176000000,130.0],"s":"A","c":"#8b95a7","up":true,"g":"Gartley (Bullish)@42"},{"k":"dot","pt":[1769040000000,111.0],"c":"#26a69a","r":3.5,"g":"Gartley (Bullish)@42"},{"k":"text","pt":[1769040000000,111.0],"s":"B","c":"#8b95a7","up":true,"g":"Gartley (Bullish)@42"},{"k":"dot","pt":[1769817600000,124.0],"c":"#26a69a","r":3.5,"g":"Gartley (Bullish)@42"},{"k":"text","pt":[1769817600000,124.0],"s":"C","c":"#8b95a7","up":true,"g":"Gartley (Bullish)@42"},{"k":"dot","pt":[1770768000000,105.0],"c":"#26a69a","r":3.5,"g":"Gartley (Bullish)@42"},{"k":"text","pt":[1770768000000,105.0],"s":"D","c":"#8b95a7","up":true,"g":"Gartley (Bullish)@42"},{"k":"text","pt":[1770768000000,105.0],"s":"Gartley (Bullish)","c":"#26a69a","up":false,"g":"Gartley (Bullish)@42"}],"groups":["Gartley (Bullish)@42"]},"divergence":{"note":"Price makes a higher high while the oscillator makes a lower high.","ohlc":[[1767225600000,100.8164,102.0267,99.6061,100.8164],[1767312000000,100.8164,102.1527,99.1308,100.4624],[1767398400000,100.4624,104.5291,99.1412,103.1723],[1767484800000,103.1723,105.9038,101.5483,104.2627],[1767571200000,104.2627,107.2798,102.8124,105.8081],[1767657600000,105.8081,109.1435,104.0977,107.4073],[1767744000000,107.4073,109.444,106.0913,108.1193],[1767830400000,108.1193,112.3437,106.2133,110.3975],[1767916800000,110.3975,113.1825,108.8445,111.6124],[1768003200000,111.6124,116.6885,109.9822,115.0086],[1768089600000,115.0086,116.7219,113.3919,115.1039],[1768176000000,115.1039,117.9061,113.5501,116.3357],[1768262400000,116.3357,119.3338,114.8881,117.8672],[1768348800000,117.8672,119.7423,114.5857,116.438],[1768435200000,116.438,117.8496,113.6182,115.0125],[1768521600000,115.0125,116.7285,112.3694,114.0714],[1768608000000,114.0714,116.0843,111.22,113.2178],[1768694400000,113.2178,114.7941,110.0891,111.6434],[1768780800000,111.6434,113.8746,108.7065,110.9233],[1768867200000,110.9233,112.8552,107.2615,109.1627],[1768953600000,109.1627,111.317,105.8789,108.0105],[1769040000000,108.0105,111.608,106.6077,110.1771],[1769126400000,110.1771,113.1691,108.2684,111.242],[1769212800000,111.242,113.7478,109.7804,112.2726],[1769299200000,112.2726,115.3586,110.8515,113.9166],[1769385600000,113.9166,117.2296,112.4602,115.7497],[1769472000000,115.7497,120.5668,113.1372,117.9056],[1769558400000,117.9056,120.0605,116.224,118.3722],[1769644800000,118.3722,121.3461,116.9276,119.8831],[1769731200000,119.8831,123.509,118.3874,121.9871],[1769817600000,121.9871,124.8223,119.7393,122.5639],[1769904000000,122.5639,126.0965,120.8472,124.3547],[1769990400000,124.3547,128.4818,122.3514,126.4448],[1770076800000,126.4448,128.3917,122.7971,124.7174],[1770163200000,124.7174,126.7697,120.8797,122.9021],[1770249600000,122.9021,124.7938,119.739,121.6108],[1770336000000,121.6108,123.0868,116.9235,118.36],[1770422400000,118.36,120.4896,116.5,118.6255],[1770508800000,118.6255,120.3398,114.4458,116.124],[1770595200000,116.124,117.5719,112.8081,114.2324],[1770681600000,114.2324,115.6562,112.1387,113.554],[1770768000000,113.554,114.9471,110.7945,112.1706],[1770854400000,112.1706,114.0938,108.202,110.0895],[1770940800000,110.0895,111.4458,106.9126,108.2462],[1771027200000,108.2462,110.1629,105.2567,107.1541],[1771113600000,107.1541,109.1362,103.5967,105.5492]],"shapes":[{"k":"dot","pt":[1768348800000,119.7422602381752],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1769990400000,128.48179756010052],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1768953600000,105.87886229055408],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1768348800000,119.74226023817522],[1771113600000,134.46148099089152]],"c":"#ef5350","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1768348800000,119.7422602381752],[1769990400000,128.48179756010052]],"c":"#ef5350","w":2.0,"d":[2,4],"g":"RSI Bearish Divergence@31"},{"k":"dot","pt":[1768348800000,119.7422602381752],"c":"#ef5350","r":3.5,"g":"RSI Bearish Divergence@31"},{"k":"dot","pt":[1769990400000,128.48179756010052],"c":"#ef5350","r":3.5,"g":"RSI Bearish Divergence@31"},{"k":"text","pt":[1769990400000,128.48179756010052],"s":"RSI Bearish Divergence","c":"#ef5350","up":true,"g":"RSI Bearish Divergence@31"}],"groups":["RSI Bearish Divergence@31"]},"hero":{"note":"BTC-USD, 3 months. Detected live: Inverse Head & Shoulders. Solid line is the construction, dashed is the neckline through both armpits, and the line above is the projected target.","label":"Inverse Head & Shoulders","ohlc":[[1778025600000,80930.73,82792.21,80751.02,81427.53],[1778112000000,81428.85,81684.95,79522.66,80009.99],[1778198400000,80009.62,80447.27,79205.52,80186.77],[1778284800000,80187.74,81030.06,80119.93,80664.37],[1778371200000,80665.61,82430.17,80274.13,82138.93],[1778457600000,82139.05,82326.23,80451.42,81728.3],[1778544000000,81725.35,81753.03,79832.1,80477.49],[1778630400000,80476.79,81276.67,78725.51,79277.12],[1778716800000,79276.95,82005.96,78909.68,81051.25],[1778803200000,81046.87,81634.84,78635.37,79065.68],[1778889600000,79066.0,79173.5,77630.73,78131.44],[1778976000000,78133.59,78539.4,76783.41,77429.35],[1779062400000,77426.34,77749.32,76029.23,76954.17],[1779148800000,76954.75,77346.87,76082.37,76750.91],[1779235200000,76749.45,77775.57,76463.65,77457.77],[1779321600000,77462.51,78100.56,76655.44,77539.17],[1779408000000,77538.12,77819.45,75323.88,75488.24],[1779494400000,75488.31,77288.12,74255.23,76673.37],[1779580800000,76670.66,77372.54,76019.89,76981.12],[1779667200000,76981.12,77804.92,76833.04,77279.93],[1779753600000,77280.12,77990.87,75569.47,75825.73],[1779840000000,75825.3,76014.3,74136.5,74344.7],[1779926400000,74339.57,74460.12,72493.41,73536.55],[1780012800000,73537.03,74218.56,72435.62,73372.52],[1780099200000,73370.85,74020.76,73125.23,73754.84],[1780185600000,73753.75,74153.5,73315.02,73579.69],[1780272000000,73580.21,73969.57,70599.51,71319.77],[1780358400000,71321.03,71334.95,66127.27,66703.66],[1780444800000,66694.01,67402.93,64009.68,64014.37],[1780531200000,64020.07,64664.45,61335.75,63801.57],[1780617600000,63807.69,63901.52,59108.92,60922.67],[1780704000000,60924.48,61491.7,59496.62,60867.41],[1780790400000,60866.94,64128.04,60724.07,63239.52],[1780876800000,63244.09,64185.77,62384.67,63090.59],[1780963200000,63092.89,63486.09,60756.69,61643.78],[1781049600000,61643.21,62788.28,60788.02,61449.29],[1781136000000,61448.88,63851.95,61447.97,63561.05],[1781222400000,63547.44,64334.02,62778.79,63543.2],[1781308800000,63541.52,64700.88,63431.32,64421.32],[1781395200000,64420.17,65749.78,63634.02,65710.4],[1781481600000,65711.11,67248.13,65315.84,66289.5],[1781568000000,66289.46,66928.61,65315.07,65600.64],[1781654400000,65600.43,66354.62,63870.93,64418.45],[1781740800000,64419.64,64736.92,62201.14,62896.47],[1781827200000,62897.52,63568.22,62275.58,63540.84],[1781913600000,63535.81,64307.14,63149.66,64239.68],[1782000000000,64242.32,64506.58,63221.0,63237.54],[1782086400000,63240.79,65544.0,63233.53,63952.11],[1782172800000,63952.79,64196.56,61893.21,62668.02],[1782259200000,62663.03,63097.76,59029.86,60995.13],[1782345600000,60992.07,61868.91,58075.92,59721.68],[1782432000000,59712.05,60647.19,58269.12,60016.43],[1782518400000,60016.31,60835.05,59794.62,59940.1],[1782604800000,59940.35,60432.71,58879.63,59532.34],[1782691200000,59522.79,60682.34,58856.19,60138.38],[1782777600000,60136.45,60173.22,58111.67,58558.86],[1782864000000,58562.45,61223.77,57747.77,60003.76],[1782950400000,60004.77,62117.88,59532.32,61485.3],[1783036800000,61492.07,62879.01,61176.72,62544.2],[1783123200000,62545.13,63398.41,62287.59,63088.3],[1783209600000,63089.06,63935.85,62413.99,63547.88],[1783296000000,63551.02,64597.57,61275.83,63995.02],[1783382400000,63994.6,64257.63,62623.93,63297.39],[1783468800000,63293.52,63706.89,61492.65,62257.57],[1783555200000,62257.32,63422.94,61645.75,63193.15],[1783641600000,63194.36,64658.97,62902.06,64127.14],[1783728000000,64127.97,64445.46,63785.62,63802.03],[1783814400000,63791.4,64243.13,63606.82,63758.22],[1783900800000,63757.17,64340.88,61769.0,62239.12],[1783987200000,62238.59,65046.13,62207.52,64956.11],[1784073600000,64959.81,65507.59,64442.82,64712.38],[1784160000000,64713.3,64931.86,63701.8,63789.28],[1784246400000,63789.91,64332.02,62489.45,63899.46],[1784332800000,63899.18,64816.5,63845.02,64796.6],[1784419200000,64799.28,64909.89,64250.91,64690.8],[1784505600000,64684.42,65735.72,63720.39,65230.03],[1784592000000,65228.87,66910.06,65113.66,66505.12],[1784678400000,66506.79,66694.65,65514.18,66100.8],[1784764800000,66100.13,66282.38,64610.61,65044.81],[1784851200000,65044.96,65760.48,63686.04,64098.5],[1784937600000,64098.49,64386.06,63753.03,64311.81],[1785024000000,64311.79,65503.77,64233.45,65340.3],[1785110400000,65340.59,65658.34,63562.48,63724.9],[1785196800000,63723.49,64026.92,62714.8,63871.36],[1785283200000,63871.39,64638.7,63206.21,63908.17],[1785369600000,63908.62,65071.45,63533.91,64725.31],[1785456000000,64723.97,65328.18,62410.87,62813.75],[1785542400000,62813.66,63091.6,62233.01,62763.32],[1785628800000,62763.45,63714.61,62745.25,63482.0],[1785715200000,63497.25,63895.17,62235.13,63721.61]],"shapes":[{"k":"dot","pt":[1778371200000,82430.171875],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1779321600000,78100.5625],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1779753600000,77990.8671875],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1780876800000,64185.765625],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1781481600000,67248.1328125],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1782086400000,65544.0],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1783296000000,64597.5703125],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1783641600000,64658.96875],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1784073600000,65507.59375],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1784592000000,66910.0625],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1785456000000,65328.18359375],"c":"#ef5350","r":2.5,"g":""},{"k":"dot","pt":[1779062400000,76029.2265625],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1779494400000,74255.234375],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1780617600000,59108.91796875],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1781740800000,62201.14453125],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1782345600000,58075.921875],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1782864000000,57747.765625],"c":"#26a69a","r":2.5,"g":""},{"k":"dot","pt":[1783900800000,61769.0],"c":"#26a69a","r":2.5,"g":""},{"k":"poly","pts":[[1784073600000,66107.49071269133],[1785715200000,65609.4900948661]],"c":"#ef5350","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1782345600000,57407.70089285714],[1785715200000,66133.27622767857]],"c":"#26a69a","w":1.2,"d":[6,4],"g":""},{"k":"poly","pts":[[1780617600000,59108.91796875],[1781481600000,67248.1328125],[1782864000000,57747.765625],[1783641600000,64658.96875],[1783900800000,61769.0]],"c":"#26a69a","w":2.2,"g":"Inverse Head & Shoulders@68"},{"k":"poly","pts":[[1781481600000,67248.1328125],[1784592000000,63519.7365625]],"c":"#26a69a","w":1.6,"d":[6,4],"g":"Inverse Head & Shoulders@68"},{"k":"dot","pt":[1780617600000,59108.91796875],"c":"#26a69a","r":4.0,"g":"Inverse Head & Shoulders@68"},{"k":"dot","pt":[1782864000000,57747.765625],"c":"#26a69a","r":5.0,"g":"Inverse Head & Shoulders@68"},{"k":"dot","pt":[1783900800000,61769.0],"c":"#26a69a","r":4.0,"g":"Inverse Head & Shoulders@68"},{"k":"text","pt":[1780617600000,59108.91796875],"s":"LS","c":"#8b95a7","up":false,"g":"Inverse Head & Shoulders@68"},{"k":"text","pt":[1782864000000,57747.765625],"s":"Inverse Head & Shoulders","c":"#26a69a","up":false,"g":"Inverse Head & Shoulders@68"},{"k":"text","pt":[1783900800000,61769.0],"s":"RS","c":"#8b95a7","up":false,"g":"Inverse Head & Shoulders@68"},{"k":"poly","pts":[[1783900800000,74020.140625],[1785715200000,74020.140625]],"c":"#26a69a","w":1.0,"d":[2,4],"g":"Inverse Head & Shoulders@68"},{"k":"mark","pt":[1784764800000,66613.7947265625],"c":"#ef5350","up":false,"g":""},{"k":"mark","pt":[1780790400000,60420.44607421875],"c":"#26a69a","up":true,"g":""},{"k":"mark","pt":[1783036800000,60870.83904296875],"c":"#26a69a","up":true,"g":""},{"k":"mark","pt":[1782345600000,62178.25078124999],"c":"#ef5350","up":false,"g":""},{"k":"mark","pt":[1785110400000,65986.62761718749],"c":"#ef5350","up":false,"g":""},{"k":"mark","pt":[1785024000000,63912.285859375],"c":"#26a69a","up":true,"g":""},{"k":"mark","pt":[1784505600000,63401.788671875],"c":"#26a69a","up":true,"g":""},{"k":"mark","pt":[1784332800000,63525.790546875],"c":"#26a69a","up":true,"g":""}],"groups":["Inverse Head & Shoulders@68"]}}</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('plates').textContent);
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
+  // The engine emits the app's dark-theme colors; remap to the paper palette.
+  var PALETTE = { '#26a69a': '#0d8a72', '#ef5350': '#cf3f3c', '#8b95a7': '#54627a' };
+  var ink = function (c) { return PALETTE[c] || c; };
+
+  var GALLERY = [
+    ['head-shoulders', 'Head &amp; Shoulders', 'Reversal'],
+    ['double-bottom',  'Double Bottom',        'Reversal'],
+    ['triangle',       'Ascending Triangle',   'Continuation'],
+    ['cup-handle',     'Cup &amp; Handle',     'Continuation'],
+    ['harmonic',       'Gartley',              'Harmonic'],
+    ['divergence',     'Bearish Divergence',   'Divergence']
+  ];
+
+  function el(name, attrs) {
+    var n = document.createElementNS(SVGNS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  function render(fig, plate, w, h) {
+    var pad = { l: 14, r: 14, t: 26, b: 26 };
+    var bars = plate.ohlc;
+    var t0 = bars[0][0], t1 = bars[bars.length - 1][0];
+
+    var lo = Infinity, hi = -Infinity;
+    bars.forEach(function (b) { lo = Math.min(lo, b[3]); hi = Math.max(hi, b[2]); });
+    plate.shapes.forEach(function (s) {
+      (s.pts || [s.pt]).forEach(function (p) { lo = Math.min(lo, p[1]); hi = Math.max(hi, p[1]); });
+    });
+    var span = (hi - lo) || 1;
+    lo -= span * 0.09; hi += span * 0.09;
+
+    var X = function (t) { return pad.l + (t - t0) / (t1 - t0) * (w - pad.l - pad.r); };
+    var Y = function (p) { return h - pad.b - (p - lo) / (hi - lo) * (h - pad.t - pad.b); };
+
+    var svg = el('svg', {
+      viewBox: '0 0 ' + w + ' ' + h, role: 'img',
+      preserveAspectRatio: 'xMidYMid meet'
+    });
+
+    // geometry can extend past the data window; keep it inside the plate
+    var cid = 'clip-' + Math.random().toString(36).slice(2, 8);
+    var defs = el('defs', {});
+    var cp = el('clipPath', { id: cid });
+    cp.appendChild(el('rect', { x: 1, y: 1, width: w - 2, height: h - 2 }));
+    defs.appendChild(cp);
+    svg.appendChild(defs);
+
+    // baseline rules — drafting reference, not decoration
+    var rules = el('g', { stroke: '#d9e0e9', 'stroke-width': 1 });
+    [0.25, 0.5, 0.75].forEach(function (f) {
+      rules.appendChild(el('line', { x1: pad.l, x2: w - pad.r,
+        y1: (pad.t + (h - pad.t - pad.b) * f).toFixed(1),
+        y2: (pad.t + (h - pad.t - pad.b) * f).toFixed(1) }));
+    });
+    svg.appendChild(rules);
+
+    // candles
+    var cw = Math.max(1.4, (w - pad.l - pad.r) / bars.length * 0.58);
+    var candles = el('g', {});
+    bars.forEach(function (b, i) {
+      var up = b[4] >= b[1], col = up ? '#0d8a72' : '#cf3f3c';
+      var g = el('g', { class: 'cv-candle', style: 'transition-delay:' + (i * 5) + 'ms' });
+      g.appendChild(el('line', { x1: X(b[0]), x2: X(b[0]), y1: Y(b[2]), y2: Y(b[3]),
+        stroke: col, 'stroke-width': 1, opacity: .55 }));
+      var top = Y(Math.max(b[1], b[4])), bot = Y(Math.min(b[1], b[4]));
+      g.appendChild(el('rect', { x: X(b[0]) - cw / 2, y: top, width: cw,
+        height: Math.max(1, bot - top), fill: col, opacity: up ? .34 : .40 }));
+      candles.appendChild(g);
+    });
+    svg.appendChild(candles);
+
+    // primitives, in the order the overlay draws them
+    var clip = { 'clip-path': 'url(#' + cid + ')' };
+    var fills = el('g', clip), lines = el('g', clip), dots = el('g', clip), labels = el('g', clip);
+    var delay = bars.length * 5 + 120;
+
+    plate.shapes.forEach(function (s) {
+      var col = ink(s.c);
+      if (s.k === 'poly') {
+        var d = s.pts.map(function (p, i) {
+          return (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1);
+        }).join(' ');
+        if (s.f) {
+          fills.appendChild(el('path', { d: d + ' Z', fill: ink(s.f), 'fill-opacity': .1,
+            class: 'cv-fill', style: 'transition-delay:' + (delay + 420) + 'ms' }));
+          if (!s.w) return;
+        }
+        var path = el('path', {
+          d: d, fill: 'none', stroke: col,
+          'stroke-width': Math.max(1, s.w || 1),
+          'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+          class: 'cv-poly'
+        });
+        if (s.d) path.setAttribute('stroke-dasharray', s.d.join(' '));
+        lines.appendChild(path);
+      } else if (s.k === 'dot') {
+        dots.appendChild(el('circle', { cx: X(s.pt[0]), cy: Y(s.pt[1]),
+          r: Math.max(2, s.r || 3), fill: col, stroke: '#f5f7fa', 'stroke-width': 1,
+          class: 'cv-dot', style: 'transition-delay:' + (delay + 460) + 'ms' }));
+      } else if (s.k === 'mark') {
+        var x = X(s.pt[0]), y = Y(s.pt[1]), dir = s.up ? -1 : 1;
+        dots.appendChild(el('path', {
+          d: 'M' + x + ' ' + (y - dir * 6) + 'L' + (x - 4) + ' ' + (y + dir * 2) +
+             'L' + (x + 4) + ' ' + (y + dir * 2) + 'Z',
+          fill: col, 'fill-opacity': .8, class: 'cv-mark',
+          style: 'transition-delay:' + (delay + 480) + 'ms' }));
+      } else if (s.k === 'text') {
+        var g = el('g', { class: 'cv-label', style: 'transition-delay:' + (delay + 620) + 'ms' });
+        var tx = X(s.pt[0]), ty = Y(s.pt[1]) + (s.up ? -15 : 17);
+        var bw = s.s.length * 6.1 + 12;
+        tx = Math.max(pad.l + bw / 2, Math.min(w - pad.r - bw / 2, tx));
+        g.appendChild(el('rect', { x: tx - bw / 2, y: ty - 8.5, width: bw, height: 17,
+          fill: '#f5f7fa', stroke: col, 'stroke-width': 1 }));
+        var txt = el('text', { x: tx, y: ty + 4, 'text-anchor': 'middle', fill: col,
+          'font-family': "'IBM Plex Mono',monospace", 'font-size': 10.5 });
+        txt.textContent = s.s;
+        g.appendChild(txt);
+        labels.appendChild(g);
+      }
+    });
+
+    // stagger the stroke-on so the construction reads in order
+    Array.prototype.forEach.call(lines.children, function (p, i) {
+      var len = 0;
+      try { len = p.getTotalLength ? p.getTotalLength() : 0; } catch (e) {}
+      p.style.setProperty('--len', (len || 600).toFixed(0));
+      p.style.transitionDelay = (delay + i * 130) + 'ms';
+    });
+
+    svg.appendChild(fills); svg.appendChild(lines);
+    svg.appendChild(dots); svg.appendChild(labels);
+    fig.appendChild(svg);
+
+    // getTotalLength needs the node in the document
+    Array.prototype.forEach.call(lines.children, function (p) {
+      var len = p.getTotalLength();
+      p.style.setProperty('--len', len.toFixed(0));
+    });
+
+    var cap = document.createElement('figcaption');
+    cap.textContent = plate.note;
+    fig.appendChild(cap);
+  }
+
+  // hero
+  var hero = document.querySelector('[data-plate="hero"]');
+  render(hero, DATA.hero, +hero.dataset.w, +hero.dataset.h);
+
+  // gallery
+  var gal = document.getElementById('gallery');
+  GALLERY.forEach(function (row, i) {
+    var fig = document.createElement('figure');
+    var kind = document.createElement('div');
+    kind.className = 'kind';
+    kind.innerHTML = '<i>Fig. 0' + (i + 2) + '</i> &nbsp;/&nbsp; ' + row[2];
+    var h3 = document.createElement('h3'); h3.innerHTML = row[1];
+    fig.appendChild(kind); fig.appendChild(h3);
+    render(fig, DATA[row[0]], 520, 300);
+    gal.appendChild(fig);
+  });
+
+  // draw each plate once, when it is seen
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('figure').forEach(function (f) { io.observe(f); });
+  } else {
+    document.querySelectorAll('figure').forEach(function (f) { f.classList.add('on'); });
+  }
+})();
+</script>
+</body>
+</html>

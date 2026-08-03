@@ -12,7 +12,9 @@
 [![Coverage](https://codecov.io/gh/MeridianAlgo/Cryptvault/branch/main/graph/badge.svg)](https://codecov.io/gh/MeridianAlgo/Cryptvault)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-**[Quick Start](#-quick-start)** · **[Desktop App](#-desktop-app)** · **[CLI](#-cli)** · **[Patterns](#-pattern-library)** · **[ML](#-machine-learning)** · **[Docs](#-documentation)**
+**[meridianalgo.github.io/Cryptvault](https://meridianalgo.github.io/Cryptvault/)**
+
+[Quick start](#quick-start) · [Desktop application](#desktop-application) · [Command line](#command-line) · [Patterns](#pattern-library) · [Machine learning](#machine-learning) · [Documentation](#documentation)
 
 </div>
 
@@ -23,19 +25,19 @@
 
 ---
 
-## 🧭 What is CryptVault?
+## Overview
 
 CryptVault is a research-grade analysis platform for crypto and equities that combines:
 
-- 🖥️  A **desktop terminal** built on [trading-vue-js](https://github.com/tvjsx/trading-vue-js) — real candles, pan/zoom, and pattern geometry drawn straight onto the chart.
-- 🧠  A **production ML ensemble** (67+ engineered features, validation-weighted stacking) achieving 1.6–2.4% MAPE on major pairs.
-- 🔍  **50+ classical patterns** across 7 categories — all drawn as actual geometric shapes, not just markers.
-- 🤖  **Reinforcement-learning agents** (DQN, PPO, Transformer) for trading research.
-- 🛠️  A **clean Python API**, CLI, and portfolio tools.
+- A **desktop terminal** built on [trading-vue-js](https://github.com/tvjsx/trading-vue-js), with real candles, pan and zoom, and pattern geometry drawn directly onto the chart.
+- A **production ML ensemble** (67+ engineered features, validation-weighted stacking) achieving 1.6-2.4% MAPE on major pairs.
+- **50+ classical patterns** across 7 categories, all drawn as geometric shapes rather than markers.
+- **Reinforcement-learning agents** (DQN, PPO, Transformer) for trading research.
+- A **Python API**, command-line interface, and portfolio tools.
 
 ---
 
-## ✨ Highlights (v6.3.0)
+## What's new in 6.3.0
 
 | Area | What's new |
 |---|---|
@@ -49,7 +51,7 @@ Full history: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 
 ---
 
-## 🚀 Quick Start
+## Quick start
 
 ```bash
 git clone https://github.com/MeridianAlgo/Cryptvault.git
@@ -71,7 +73,7 @@ python launch_desktop.py
 
 ---
 
-## 🖥️ Desktop App
+## Desktop application
 
 ```bash
 python launch_desktop.py          # add `pip install pywebview` for a native window
@@ -105,14 +107,14 @@ sidebar to isolate it** on the chart.
 | Harmonics (Gartley, Bat, Crab…) | Labelled XABCD zigzag with shaded legs |
 | RSI · MACD Divergence | Dotted line between the diverging price pivots |
 | Any pattern with a target | Dotted horizontal target line |
-| Candlestick | `▲` bullish / `▼` bearish marker |
+| Candlestick | Triangle marker pointing at the bar |
 | Always on | Swing pivot dots + fitted support/resistance |
 
 See [`docs/DESKTOP_APP.md`](docs/DESKTOP_APP.md).
 
 ---
 
-## ⚡ CLI
+## Command line
 
 ```bash
 # Analyze Bitcoin with chart
@@ -155,7 +157,7 @@ python cryptvault_cli.py SYMBOL [DAYS] [INTERVAL] [OPTIONS]
 
 ---
 
-## 🔍 Pattern Library
+## Pattern library
 
 **50+ classical patterns across 7 categories.** Full reference: [`docs/PATTERNS.md`](docs/PATTERNS.md).
 
@@ -174,7 +176,7 @@ Trendline regression on swing highs and swing lows; convergence and slope tests 
 <details>
 <summary><b>Candlestick</b> — Doji (3 variants), Hammer, Hanging Man, Inverted Hammer, Shooting Star, Engulfing, Harami, Piercing, Dark Cloud, Morning/Evening Star, Three Soldiers/Crows</summary>
 
-Body/wick ratio analysis with trend-context filters. Rendered as `▲` or `▼` above/below the candle.
+Body/wick ratio analysis with trend-context filters. Rendered as a triangle marker above or below the candle.
 </details>
 
 <details>
@@ -191,7 +193,7 @@ Peak/trough alignment between price and oscillator detects hidden and regular di
 
 ---
 
-## 🧠 Machine Learning
+## Machine learning
 
 **Ensemble** — each base learner weighted by rolling out-of-fold validation:
 
@@ -215,7 +217,7 @@ Stacked via a meta-learner on validation residuals.
 | Predictions within ±2 % | **80 – 100 %** |
 | R² | **0.50 – 0.81** |
 
-Tested on BTC, ETH, SOL, BNB — 120-day windows.
+Tested on BTC, ETH, SOL and BNB over 120-day windows.
 
 ### Reinforcement learning research
 
@@ -229,7 +231,7 @@ See [`cryptvault/rl/README.md`](cryptvault/rl/README.md).
 
 ---
 
-## 🗂️ Project Structure
+## Project structure
 
 ```
 Cryptvault/
@@ -251,7 +253,7 @@ Cryptvault/
 
 ---
 
-## 🖥️ System Requirements
+## Requirements
 
 |  | Minimum | Recommended |
 |---|---|---|
@@ -260,11 +262,11 @@ Cryptvault/
 | Disk | 2 GB | 5 GB |
 | Network | Required (data fetch) | — |
 
-**Platforms:** Windows 10/11 · Ubuntu 20.04+ · macOS 10.15+ (including Apple Silicon).
+Platforms: Windows 10/11, Ubuntu 20.04+, macOS 10.15+ (including Apple Silicon).
 
 ---
 
-## 🧪 Development
+## Development
 
 ```bash
 # Install dev tooling
@@ -286,10 +288,11 @@ The project is **ruff-clean** as of v6.1.0 — CI blocks on ruff violations.
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Doc | About |
 |---|---|
+| [Project site](https://meridianalgo.github.io/Cryptvault/) | How the pattern drawing works, with live figures |
 | [Desktop App](docs/DESKTOP_APP.md) | Full GUI walkthrough |
 | [Patterns](docs/PATTERNS.md) | Every detector, how it works |
 | [Architecture](docs/ARCHITECTURE.md) | System design & data flow |
@@ -304,7 +307,7 @@ The project is **ruff-clean** as of v6.1.0 — CI blocks on ruff violations.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork and branch from `main`.
 2. `pip install -r requirements.txt`
@@ -316,15 +319,15 @@ See [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) and [`docs/CODE_OF_CONDUCT.md
 
 ---
 
-## 📝 License
+## License
 
 MIT — see [`LICENSE`](LICENSE).
 
 ---
 
-## 🙏 Credits
+## Credits
 
-Built with: **scikit-learn** · **yfinance** · **NumPy** · **pandas** · **SciPy** · **Matplotlib** · **XGBoost** · **LightGBM**.
+Built with scikit-learn, yfinance, NumPy, pandas, SciPy, Matplotlib, XGBoost, and LightGBM. Charts render with [trading-vue-js](https://github.com/tvjsx/trading-vue-js).
 
 Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research organization focused on open-source financial ML. Not a licensed broker or financial advisor.
 
@@ -332,6 +335,6 @@ Maintained by **[MeridianAlgo](https://github.com/MeridianAlgo)** — a research
 
 <div align="center">
 
-**Version 6.3.0** · Last updated August 2026 · Built for researchers, by researchers.
+Version 6.3.0 &nbsp;|&nbsp; Last updated August 2026 &nbsp;|&nbsp; [MeridianAlgo](https://github.com/MeridianAlgo)
 
 </div>
